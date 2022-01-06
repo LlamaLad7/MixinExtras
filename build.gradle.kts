@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.llamalad7"
-version = "1.0-SNAPSHOT"
+version = "0.0.1"
 
 repositories {
     mavenCentral()
@@ -12,9 +12,9 @@ repositories {
 }
 
 dependencies {
-    implementation("org.spongepowered:mixin:0.8.5")
-    implementation("org.apache.commons:commons-lang3:3.3.2")
-    implementation("org.ow2.asm:asm-debug-all:5.2")
+    compileOnly("org.spongepowered:mixin:0.8.5")
+    compileOnly("org.apache.commons:commons-lang3:3.3.2")
+    compileOnly("org.ow2.asm:asm-debug-all:5.2")
 }
 
 publishing {
@@ -22,7 +22,6 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "com.llamalad7"
             artifactId = "MixinExtras"
-            version = "1.0-SNAPSHOT"
 
             from(components["java"])
         }
