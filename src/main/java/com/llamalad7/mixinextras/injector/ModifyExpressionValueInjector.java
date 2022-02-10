@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector;
 
+import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -7,7 +8,6 @@ import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
-import org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException;
 import org.spongepowered.asm.util.Bytecode;
 
 public class ModifyExpressionValueInjector extends Injector {
@@ -25,7 +25,7 @@ public class ModifyExpressionValueInjector extends Injector {
     private void checkTargetReturnsAValue(Target target, InjectionNode node) {
         Type returnType = getReturnType(node.getCurrentTarget());
         if (returnType == Type.VOID_TYPE) {
-            throw new InvalidInjectionException(this.info,
+            throw CompatibilityHelper.makeInvalidInjectionException(this.info,
                     String.format(
                             "%s annotation is targeting an instruction with a return type of 'void' in %s in %s",
                             this.annotationType, target, this
@@ -33,7 +33,7 @@ public class ModifyExpressionValueInjector extends Injector {
         }
 
         if (returnType == null) {
-            throw new InvalidInjectionException(this.info, String.format("%s annotation is targeting an invalid insn in %s in %s",
+            throw CompatibilityHelper.makeInvalidInjectionException(this.info, String.format("%s annotation is targeting an invalid insn in %s in %s",
                     this.annotationType, target, this));
         }
     }

@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector;
 
+import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -8,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
-import org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException;
 
 public class WrapWithConditionInjector extends Injector {
     public WrapWithConditionInjector(InjectionInfo info) {
@@ -25,12 +25,12 @@ public class WrapWithConditionInjector extends Injector {
     private void checkTargetIsLogicallyVoid(Target target, InjectionNode node) {
         Type returnType = getReturnType(node.getCurrentTarget());
         if (returnType == null) {
-            throw new InvalidInjectionException(this.info, String.format("%s annotation is targeting an invalid insn in %s in %s",
+            throw CompatibilityHelper.makeInvalidInjectionException(this.info, String.format("%s annotation is targeting an invalid insn in %s in %s",
                     this.annotationType, target, this));
         }
 
         if (returnType != Type.VOID_TYPE) {
-            throw new InvalidInjectionException(this.info,
+            throw CompatibilityHelper.makeInvalidInjectionException(this.info,
                     String.format(
                             "%s annotation is targeting an instruction with a non-void return type in %s in %s",
                             this.annotationType, target, this
