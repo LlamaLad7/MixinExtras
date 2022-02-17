@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 public class MixinExtrasBootstrap {
     private static boolean initialized = false;
 
-    public static final String VERSION = "0.0.5";
+    public static final String VERSION = "0.0.6";
 
     public static void init() {
         if (!initialized) {
