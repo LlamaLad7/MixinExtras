@@ -17,8 +17,12 @@ public class MixinExtrasAP extends AbstractProcessor {
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
-        MessageRouter.setMessager(processingEnv.getMessager());
-        MixinExtrasBootstrap.init();
+        try {
+            MessageRouter.setMessager(processingEnv.getMessager());
+            MixinExtrasBootstrap.init();
+        } catch (NoClassDefFoundError e) {
+            // The Mixin AP probably isn't available, e.g. if loom has excluded it from IDEA.
+        }
     }
 
     @Override
