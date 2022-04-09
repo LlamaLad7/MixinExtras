@@ -12,8 +12,8 @@ repository to your build script, you can depend on it like so
 
 ```gradle
 dependencies {
-    implementation("com.github.LlamaLad7:MixinExtras:0.0.6")
-    annotationProcessor("com.github.LlamaLad7:MixinExtras:0.0.6")
+    implementation("com.github.LlamaLad7:MixinExtras:0.0.7")
+    annotationProcessor("com.github.LlamaLad7:MixinExtras:0.0.7")
 }
 ```
 
