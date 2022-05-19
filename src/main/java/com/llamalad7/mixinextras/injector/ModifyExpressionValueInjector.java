@@ -19,7 +19,14 @@ public class ModifyExpressionValueInjector extends Injector {
     protected void inject(Target target, InjectionNode node) {
         this.checkTargetReturnsAValue(target, node);
         this.checkTargetModifiers(target, false);
-        this.injectValueModifier(target, node.getCurrentTarget());
+
+        AbstractInsnNode valueNode = node.getCurrentTarget();
+        Type valueType = getReturnType(valueNode);
+        if (valueNode instanceof TypeInsnNode && valueNode.getOpcode() == Opcodes.NEW) {
+            valueNode = target.findInitNodeFor(((TypeInsnNode) valueNode));
+        }
+
+        this.injectValueModifier(target, valueNode, valueType);
     }
 
     private void checkTargetReturnsAValue(Target target, InjectionNode node) {
@@ -38,10 +45,10 @@ public class ModifyExpressionValueInjector extends Injector {
         }
     }
 
-    private void injectValueModifier(Target target, AbstractInsnNode valueNode) {
+    private void injectValueModifier(Target target, AbstractInsnNode valueNode, Type valueType) {
         Target.Extension extraStack = target.extendStack();
         final InsnList after = new InsnList();
-        this.invokeHandler(getReturnType(valueNode), target, extraStack, after);
+        this.invokeHandler(valueType, target, extraStack, after);
         extraStack.apply();
         target.insns.insert(valueNode, after);
     }
@@ -83,6 +90,11 @@ public class ModifyExpressionValueInjector extends Injector {
 
         if (Bytecode.isConstant(node)) {
             return Bytecode.getConstantType(node);
+        }
+
+        if (node instanceof TypeInsnNode && node.getOpcode() == Opcodes.NEW) {
+            TypeInsnNode typeInsnNode = ((TypeInsnNode) node);
+            return Type.getObjectType(typeInsnNode.desc);
         }
 
         return null;
