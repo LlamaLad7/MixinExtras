@@ -15,7 +15,7 @@ public class MixinExtrasBootstrap {
      */
     @Deprecated
     @SuppressWarnings("DeprecatedIsStillUsed")
-    public static final String VERSION = "0.0.10";
+    public static final String VERSION = "0.0.11";
 
     public static void init() {
         if (!initialized) {
