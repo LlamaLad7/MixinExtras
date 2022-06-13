@@ -23,6 +23,11 @@ public class WrapWithConditionInjector extends Injector {
     }
 
     private void checkTargetIsLogicallyVoid(Target target, InjectionNode node) {
+        if (node.hasDecoration(WrapWithConditionInjectionInfo.POPPED_OPERATION_DECORATOR)) {
+            // We have already checked that the operation's return value is immediately popped, therefore it is effectively void.
+            return;
+        }
+
         Type returnType = getReturnType(node.getCurrentTarget());
         if (returnType == null) {
             throw CompatibilityHelper.makeInvalidInjectionException(this.info, String.format("%s annotation is targeting an invalid insn in %s in %s",
@@ -40,16 +45,17 @@ public class WrapWithConditionInjector extends Injector {
 
     private void wrapTargetWithCondition(Target target, InjectionNode node) {
         AbstractInsnNode currentTarget = node.getCurrentTarget();
+        Type returnType = getReturnType(currentTarget);
         Type[] originalArgTypes = getEffectiveArgTypes(node.getOriginalTarget());
         Type[] currentArgTypes = getEffectiveArgTypes(currentTarget);
         InsnList before = new InsnList();
         InsnList after = new InsnList();
         boolean isVirtualRedirect = node.hasDecoration("redirector") && currentTarget.getOpcode() != Opcodes.INVOKESTATIC;
-        this.invokeHandler(target, originalArgTypes, currentArgTypes, isVirtualRedirect, before, after);
+        this.invokeHandler(target, returnType, originalArgTypes, currentArgTypes, isVirtualRedirect, before, after);
         target.wrapNode(currentTarget, currentTarget, before, after);
     }
 
-    private void invokeHandler(Target target, Type[] originalArgTypes, Type[] currentArgTypes, boolean isVirtualRedirect, InsnList before, InsnList after) {
+    private void invokeHandler(Target target, Type returnType, Type[] originalArgTypes, Type[] currentArgTypes, boolean isVirtualRedirect, InsnList before, InsnList after) {
         InjectorData handler = new InjectorData(target, "condition wrapper");
         this.validateParams(handler, Type.BOOLEAN_TYPE, originalArgTypes);
 
@@ -62,12 +68,18 @@ public class WrapWithConditionInjector extends Injector {
 
         this.invokeHandlerWithArgs(this.methodArgs, before, handlerArgMap);
 
-        LabelNode jumpTarget = new LabelNode();
-        before.add(new JumpInsnNode(Opcodes.IFEQ, jumpTarget));
+        LabelNode afterOperation = new LabelNode();
+        LabelNode afterDummy = new LabelNode();
+        before.add(new JumpInsnNode(Opcodes.IFEQ, afterOperation));
 
         this.pushArgs(currentArgTypes, before, argMap, 0, argMap.length);
         // Target instruction will be here
-        after.add(jumpTarget);
+        after.add(new JumpInsnNode(Opcodes.GOTO, afterDummy));
+        after.add(afterOperation);
+        if (returnType != Type.VOID_TYPE) {
+            after.add(new InsnNode(this.getDummyOpcodeForType(returnType)));
+        }
+        after.add(afterDummy);
     }
 
     private Type getReturnType(AbstractInsnNode node) {
@@ -105,5 +117,27 @@ public class WrapWithConditionInjector extends Injector {
         }
 
         throw new UnsupportedOperationException();
+    }
+
+    private int getDummyOpcodeForType(Type type) {
+        switch (type.getSort()) {
+            case Type.BOOLEAN:
+            case Type.CHAR:
+            case Type.BYTE:
+            case Type.SHORT:
+            case Type.INT:
+                return Opcodes.ICONST_0;
+            case Type.FLOAT:
+                return Opcodes.FCONST_0;
+            case Type.LONG:
+                return Opcodes.LCONST_0;
+            case Type.DOUBLE:
+                return Opcodes.DCONST_0;
+            case Type.ARRAY:
+            case Type.OBJECT:
+                return Opcodes.ACONST_NULL;
+            default:
+                throw new UnsupportedOperationException();
+        }
     }
 }
