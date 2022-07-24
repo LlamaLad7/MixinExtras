@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.injector;
 
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
+import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -42,7 +43,7 @@ public class ModifyReceiverInjector extends Injector {
         Type[] originalArgTypes = getEffectiveArgTypes(node.getOriginalTarget());
         Type[] currentArgTypes = getEffectiveArgTypes(currentTarget);
         InsnList insns = new InsnList();
-        boolean isVirtualRedirect = node.hasDecoration("redirector") && currentTarget.getOpcode() != Opcodes.INVOKESTATIC;
+        boolean isVirtualRedirect = InjectorUtils.isVirtualRedirect(node);
         this.injectReceiverModifier(target, originalArgTypes, currentArgTypes, isVirtualRedirect, insns);
         target.insertBefore(node, insns);
     }

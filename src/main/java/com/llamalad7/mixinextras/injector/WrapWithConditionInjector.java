@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.injector;
 
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
+import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -50,7 +51,7 @@ public class WrapWithConditionInjector extends Injector {
         Type[] currentArgTypes = getEffectiveArgTypes(currentTarget);
         InsnList before = new InsnList();
         InsnList after = new InsnList();
-        boolean isVirtualRedirect = node.hasDecoration("redirector") && currentTarget.getOpcode() != Opcodes.INVOKESTATIC;
+        boolean isVirtualRedirect = InjectorUtils.isVirtualRedirect(node);
         this.invokeHandler(target, returnType, originalArgTypes, currentArgTypes, isVirtualRedirect, before, after);
         target.wrapNode(currentTarget, currentTarget, before, after);
     }
