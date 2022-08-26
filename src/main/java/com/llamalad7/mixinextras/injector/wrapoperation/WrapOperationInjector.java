@@ -147,7 +147,12 @@ class WrapOperationInjector extends Injector {
                 ASM.API_VERSION,
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | (virtual ? 0 : Opcodes.ACC_STATIC),
                 "mixinextras$bridge$" + UUID.randomUUID() + '$' + getName(target.getCurrentTarget()),
-                Bytecode.generateDescriptor(returnType == Type.VOID_TYPE ? Type.getType(Void.class) : returnType, ArrayUtils.add(boundParams, Type.getType(Object[].class))),
+                Bytecode.generateDescriptor(
+                        returnType.getDescriptor().length() == 1 ?
+                                Type.getObjectType(
+                                        returnType == Type.VOID_TYPE ? "java/lang/Void" : Bytecode.getBoxingType(returnType)
+                                ) : returnType,
+                        ArrayUtils.add(boundParams, Type.getType(Object[].class))),
                 null, null
         );
         method.instructions = new InsnList() {{
@@ -198,6 +203,15 @@ class WrapOperationInjector extends Injector {
             if (returnType == Type.VOID_TYPE) {
                 add(new InsnNode(Opcodes.ACONST_NULL));
                 add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Void"));
+            } else if (returnType.getDescriptor().length() == 1) {
+                // Primitive, needs boxing
+                add(new MethodInsnNode(
+                        Opcodes.INVOKESTATIC,
+                        Bytecode.getBoxingType(returnType),
+                        "valueOf",
+                        Bytecode.generateDescriptor(Type.getObjectType(Bytecode.getBoxingType(returnType)), returnType),
+                        false
+                ));
             }
             add(new InsnNode(Opcodes.ARETURN));
         }};
