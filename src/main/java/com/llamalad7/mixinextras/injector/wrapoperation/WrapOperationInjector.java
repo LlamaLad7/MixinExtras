@@ -108,7 +108,7 @@ class WrapOperationInjector extends Injector {
         // The trailing params are any arguments which come after the original args, and should therefore be bound to the lambda.
         this.makeSupplier(originalArgs, returnType, node, insns, hasExtraThis, ArrayUtils.subarray(argTypes, originalArgs.length, argTypes.length));
         if (handler.captureTargetArgs > 0) {
-            this.pushArgs(this.methodArgs, insns, target.getArgIndices(), 0, handler.captureTargetArgs);
+            this.pushArgs(target.arguments, insns, target.getArgIndices(), 0, handler.captureTargetArgs);
         }
         return super.invokeHandler(insns);
     }
