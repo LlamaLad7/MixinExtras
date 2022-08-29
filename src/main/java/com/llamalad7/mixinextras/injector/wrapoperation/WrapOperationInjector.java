@@ -222,7 +222,7 @@ class WrapOperationInjector extends Injector {
                 this.classNode.name,
                 method.name,
                 method.desc,
-                false
+                (this.classNode.access & Opcodes.ACC_INTERFACE) != 0
         );
     }
 
