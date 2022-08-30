@@ -39,10 +39,25 @@ The final step after setting up your build script is to initialize MixinExtras. 
 MixinExtrasBootstrap.init();
 ```
 
-somewhere suitably early in your program. On Fabric, this would be a `PreLaunch` entrypoint. If you cannot find a
+somewhere suitably early in your program.
+On Fabric, this would be a `PreLaunch` entrypoint.
+
+Here's an example of using that:
+
+```json
+"entrypoints": [
+    "preLaunch": [
+      "com.llamalad7.mixinextras.MixinExtrasBootstrap::init"
+    ]
+]
+```
+
+If you cannot find a
 suitable place for your platform, you might like to use
 an [IMixinConfigPlugin](https://github.com/SpongePowered/Mixin/blob/master/src/main/java/org/spongepowered/asm/mixin/extensibility/IMixinConfigPlugin.java)
 . Initializing MixinExtras in your plugin's `onLoad` method should work fine on any platform.
+
+On fabric you could also just add 
 
 ### You're good to go!
 
