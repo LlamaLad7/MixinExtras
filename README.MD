@@ -57,8 +57,6 @@ suitable place for your platform, you might like to use
 an [IMixinConfigPlugin](https://github.com/SpongePowered/Mixin/blob/master/src/main/java/org/spongepowered/asm/mixin/extensibility/IMixinConfigPlugin.java)
 . Initializing MixinExtras in your plugin's `onLoad` method should work fine on any platform.
 
-On fabric you could also just add 
-
 ### You're good to go!
 
 Enjoy using the library, and don't hesitate to open an [issue](https://github.com/LlamaLad7/MixinExtras/issues) if you
