@@ -48,8 +48,4 @@ public class CompatibilityHelper {
             throw new RuntimeException(e);
         }
     }
-
-    public static void main(String[] args) {
-        System.out.println(INJECTION_INFO_GET_MIXIN_METHOD);
-    }
 }
