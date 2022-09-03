@@ -24,6 +24,12 @@ java {
     withSourcesJar()
 }
 
+tasks.withType<Jar> {
+    from("LICENSE") {
+        rename { "${it}_MixinExtras"}
+    }
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
