@@ -42,13 +42,20 @@ public class WrapWithConditionInjector extends Injector {
                             this.annotationType, target, this
                     ));
         }
+        if(InjectorUtils.exitsMethod(node.getCurrentTarget()) && !InjectorUtils.isExitOptional(node.getCurrentTarget(), target.arguments.length)) {
+            throw CompatibilityHelper.makeInvalidInjectionException(this.info,
+                    String.format(
+                            "%s annotation is targeting a method exiting instruction that is not safe to remove in %s in %s",
+                            this.annotationType, target, this
+                    ));
+        }
     }
 
     private void wrapTargetWithCondition(Target target, InjectionNode node) {
         AbstractInsnNode currentTarget = node.getCurrentTarget();
         Type returnType = getReturnType(currentTarget);
-        Type[] originalArgTypes = getEffectiveArgTypes(node.getOriginalTarget());
-        Type[] currentArgTypes = getEffectiveArgTypes(currentTarget);
+        Type[] originalArgTypes = getEffectiveArgTypes(node.getOriginalTarget(), target);
+        Type[] currentArgTypes = getEffectiveArgTypes(currentTarget, target);
         InsnList before = new InsnList();
         InsnList after = new InsnList();
         boolean isVirtualRedirect = InjectorUtils.isVirtualRedirect(node);
@@ -96,11 +103,14 @@ public class WrapWithConditionInjector extends Injector {
             }
             return Type.VOID_TYPE;
         }
+        if(InjectorUtils.exitsMethod(node)) {
+            return Type.VOID_TYPE;
+        }
 
         return null;
     }
 
-    private Type[] getEffectiveArgTypes(AbstractInsnNode node) {
+    private Type[] getEffectiveArgTypes(AbstractInsnNode node, Target target) {
         if (node instanceof MethodInsnNode) {
             MethodInsnNode methodInsnNode = ((MethodInsnNode) node);
             return node.getOpcode() == Opcodes.INVOKESTATIC ?
@@ -114,6 +124,26 @@ public class WrapWithConditionInjector extends Injector {
             }
             if (fieldInsnNode.getOpcode() == Opcodes.PUTSTATIC) {
                 return new Type[]{Type.getType(fieldInsnNode.desc)};
+            }
+        }
+        if(node.getOpcode() == Opcodes.ATHROW) {
+            return new Type[]{Type.getType(Throwable.class)};
+        }
+        if(node.getOpcode() >= Opcodes.IRETURN && node.getOpcode() <= Opcodes.RETURN) {
+            switch(node.getOpcode()) {
+                case Opcodes.IRETURN:
+                    return new Type[]{Type.INT_TYPE};
+                case Opcodes.LRETURN:
+                    return new Type[]{Type.LONG_TYPE};
+                case Opcodes.FRETURN:
+                    return new Type[]{Type.FLOAT_TYPE};
+                case Opcodes.DRETURN:
+                    return new Type[]{Type.DOUBLE_TYPE};
+                case Opcodes.ARETURN:
+                    return new Type[]{target.returnType};
+                case Opcodes.RETURN:
+                    return new Type[]{};
+
             }
         }
 
