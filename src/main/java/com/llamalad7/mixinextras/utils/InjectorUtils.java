@@ -21,13 +21,15 @@ public class InjectorUtils {
      * in all paths following the node are initialized. If that is case, the node can be removed or
      * conditionally surpassed and the method will still have valid bytecode, making the exit optional.
      */
-    public static boolean isExitOptional(AbstractInsnNode node, int methodArgumentCount) {
+    public static boolean isExitOptional(AbstractInsnNode node, int[] argIndices) {
         Set<Integer> unassignedVariables = new HashSet<>();
         Set<Integer> assignedVariables = new HashSet<>();
-        // We add already initialized method parameters and 'this'
-        for(int i = 0; i <= methodArgumentCount; i++) {
-            assignedVariables.add(i);
+
+        for(int i = 0; i < argIndices.length; i++) {
+            assignedVariables.add(argIndices[i]);
         }
+        assignedVariables.add(0);
+
         boolean exits = checkAllFollowingPathsExitingAndFindLocals(node, new HashSet<>(64), true, false, assignedVariables, unassignedVariables);
         if(!exits || unassignedVariables.size() == 0) {
             return exits;
