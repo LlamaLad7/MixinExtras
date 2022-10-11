@@ -130,21 +130,12 @@ public class WrapWithConditionInjector extends Injector {
             return new Type[]{Type.getType(Throwable.class)};
         }
         if(node.getOpcode() >= Opcodes.IRETURN && node.getOpcode() <= Opcodes.RETURN) {
-            switch(node.getOpcode()) {
-                case Opcodes.IRETURN:
-                    return new Type[]{Type.INT_TYPE};
-                case Opcodes.LRETURN:
-                    return new Type[]{Type.LONG_TYPE};
-                case Opcodes.FRETURN:
-                    return new Type[]{Type.FLOAT_TYPE};
-                case Opcodes.DRETURN:
-                    return new Type[]{Type.DOUBLE_TYPE};
-                case Opcodes.ARETURN:
-                    return new Type[]{target.returnType};
-                case Opcodes.RETURN:
-                    return new Type[]{};
-
+            if(node.getOpcode() == Opcodes.RETURN) {
+                return new Type[]{ };
             }
+
+            // We can use the return type of the target method
+            return new Type[]{target.returnType};
         }
 
         throw new UnsupportedOperationException();
