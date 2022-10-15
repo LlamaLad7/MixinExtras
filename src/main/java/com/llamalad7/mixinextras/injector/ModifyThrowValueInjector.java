@@ -2,42 +2,39 @@ package com.llamalad7.mixinextras.injector;
 
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 
-public class ModifyReturnValueInjector extends Injector {
-    public ModifyReturnValueInjector(InjectionInfo info) {
-        super(info, "@ModifyReturnValue");
+public class ModifyThrowValueInjector extends Injector {
+    public ModifyThrowValueInjector(InjectionInfo info) {
+        super(info, "@ModifyThrowValue");
     }
 
     @Override
     protected void inject(Target target, InjectionNode node) {
-        int opcode = node.getOriginalTarget().getOpcode();
-        if (opcode < Opcodes.IRETURN || opcode >= Opcodes.RETURN) {
+        if (node.getOriginalTarget().getOpcode() != Opcodes.ATHROW) {
             throw CompatibilityHelper.makeInvalidInjectionException(this.info, String.format("%s annotation is targeting an invalid insn in %s in %s",
                     this.annotationType, target, this));
         }
         this.checkTargetModifiers(target, false);
-        this.injectReturnValueModifier(target, node);
+        this.injectThrowValueModifier(target, node);
     }
 
-    private void injectReturnValueModifier(Target target, InjectionNode node) {
-        InjectorData handler = new InjectorData(target, "return value modifier");
+    private final static Type THROWABLE_TYPE = Type.getType(Throwable.class);
+
+    private void injectThrowValueModifier(Target target, InjectionNode node) {
+        InjectorData handler = new InjectorData(target, "throw value modifier");
         InsnList insns = new InsnList();
 
-        this.validateParams(handler, target.returnType, target.returnType);
+        this.validateParams(handler, THROWABLE_TYPE, THROWABLE_TYPE);
 
         if (!this.isStatic) {
             insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            if (target.returnType.getSize() == 2) {
-                insns.add(new InsnNode(Opcodes.DUP_X2));
-                insns.add(new InsnNode(Opcodes.POP));
-            } else {
-                insns.add(new InsnNode(Opcodes.SWAP));
-            }
+            insns.add(new InsnNode(Opcodes.SWAP));
         }
 
         if (handler.captureTargetArgs > 0) {

@@ -28,6 +28,7 @@ public class MixinExtrasBootstrap {
             InjectionInfo.register(WrapWithConditionInjectionInfo.class);
             InjectionInfo.register(InitVariableInjectionInfo.class);
             InjectionInfo.register(RedirectExitInjectionInfo.class);
+            InjectionInfo.register(ModifyThrowValueInjectionInfo.class);
 
             CompatibilityHelper.registerInjectionPoint(BeforeThrow.class, "MixinExtras", BeforeThrow.BeforeThrowNamespaced.class);
         }
