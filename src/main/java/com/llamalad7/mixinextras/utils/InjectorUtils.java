@@ -3,13 +3,14 @@ package com.llamalad7.mixinextras.utils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes;
+import org.spongepowered.asm.mixin.injection.struct.Target;
 
 import java.util.*;
 import java.util.stream.Stream;
 
 public class InjectorUtils {
     public static boolean isVirtualRedirect(InjectionNodes.InjectionNode node) {
-        return node.isReplaced() && node.hasDecoration("redirector") && node.getCurrentTarget().getOpcode() != Opcodes.INVOKESTATIC;
+        return node.isReplaced() && (node.hasDecoration("redirector") || node.hasDecoration("mixinextras_exitRedirector")) && node.getCurrentTarget().getOpcode() != Opcodes.INVOKESTATIC;
     }
 
     public static boolean exitsMethod(AbstractInsnNode node) {
@@ -21,14 +22,17 @@ public class InjectorUtils {
      * in all paths following the node are initialized. If that is case, the node can be removed or
      * conditionally surpassed and the method will still have valid bytecode, making the exit optional.
      */
-    public static boolean isExitOptional(AbstractInsnNode node, int[] argIndices) {
+    public static boolean isExitOptional(AbstractInsnNode node, Target target) {
         Set<Integer> unassignedVariables = new HashSet<>();
         Set<Integer> assignedVariables = new HashSet<>();
 
-        for(int i = 0; i < argIndices.length; i++) {
-            assignedVariables.add(argIndices[i]);
+        int[] argIndices = target.getArgIndices();
+        for (int argIndex : argIndices) {
+            assignedVariables.add(argIndex);
         }
-        assignedVariables.add(0);
+        if(!target.isStatic) {
+            assignedVariables.add(0);
+        }
 
         boolean exits = checkAllFollowingPathsExitingAndFindLocals(node, new HashSet<>(64), true, false, assignedVariables, unassignedVariables);
         if(!exits || unassignedVariables.size() == 0) {
@@ -81,25 +85,25 @@ public class InjectorUtils {
                     if(checkAllFollowingPathsExitingAndFindLocals(jumpInsnNode.label, visitedNodes, false, true, assignedVariables, unassignedVariables)) {
                         return true; // We know that the subroutine always exits
                     }
-                } else if(!checkAllFollowingPathsExitingAndFindLocals(jumpInsnNode.label, visitedNodes, true, stopAtRet, assignedVariables, new HashSet<>(unassignedVariables))) {
+                } else if(!checkAllFollowingPathsExitingAndFindLocals(jumpInsnNode.label, visitedNodes, true, stopAtRet, new HashSet<>(assignedVariables), unassignedVariables)) {
                     return false; // We know that the conditional jump doesn't always return
                 }
             } else if(node instanceof TableSwitchInsnNode) {
                 TableSwitchInsnNode tableSwitchInsnNode = (TableSwitchInsnNode) node;
                 for(LabelNode labelNode : tableSwitchInsnNode.labels) {
-                    if (!checkAllFollowingPathsExitingAndFindLocals(labelNode, visitedNodes, true, stopAtRet, assignedVariables, new HashSet<>(unassignedVariables))) {
+                    if (!checkAllFollowingPathsExitingAndFindLocals(labelNode, visitedNodes, true, stopAtRet, new HashSet<>(assignedVariables), unassignedVariables)) {
                         return false;
                     }
                 }
-                return checkAllFollowingPathsExitingAndFindLocals(tableSwitchInsnNode.dflt, visitedNodes, true, stopAtRet, assignedVariables, new HashSet<>(unassignedVariables));
+                return checkAllFollowingPathsExitingAndFindLocals(tableSwitchInsnNode.dflt, visitedNodes, true, stopAtRet, new HashSet<>(assignedVariables), unassignedVariables);
             } else if(node instanceof LookupSwitchInsnNode) {
                 LookupSwitchInsnNode lookupSwitchInsnNode = (LookupSwitchInsnNode) node;
                 for(LabelNode labelNode : lookupSwitchInsnNode.labels) {
-                    if (!checkAllFollowingPathsExitingAndFindLocals(labelNode, visitedNodes, true, stopAtRet, assignedVariables, new HashSet<>(unassignedVariables))) {
+                    if (!checkAllFollowingPathsExitingAndFindLocals(labelNode, visitedNodes, true, stopAtRet, new HashSet<>(assignedVariables), unassignedVariables)) {
                         return false;
                     }
                 }
-                return checkAllFollowingPathsExitingAndFindLocals(lookupSwitchInsnNode.dflt, visitedNodes, true, stopAtRet, assignedVariables, new HashSet<>(unassignedVariables));
+                return checkAllFollowingPathsExitingAndFindLocals(lookupSwitchInsnNode.dflt, visitedNodes, true, stopAtRet, new HashSet<>(assignedVariables), unassignedVariables);
             } else if(node instanceof VarInsnNode) {
                 int var = ((VarInsnNode) node).var;
                 if(node.getOpcode() >= Opcodes.ISTORE && node.getOpcode() <= Opcodes.ASTORE) {

@@ -58,4 +58,12 @@ public class BeforeThrow extends InjectionPoint {
 
         return found;
     }
+
+    @AtCode("MIXINEXTRAS:THROW")
+    public static class BeforeThrowNamespaced extends BeforeThrow {
+
+        public BeforeThrowNamespaced(InjectionPointData data) {
+            super(data);
+        }
+    }
 }

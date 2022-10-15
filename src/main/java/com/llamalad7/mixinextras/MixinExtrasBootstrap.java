@@ -2,7 +2,7 @@ package com.llamalad7.mixinextras;
 
 import com.llamalad7.mixinextras.injector.*;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
-import org.spongepowered.asm.mixin.injection.InjectionPoint;
+import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 
 public class MixinExtrasBootstrap {
@@ -26,8 +26,9 @@ public class MixinExtrasBootstrap {
             InjectionInfo.register(WrapOperationInjectionInfo.class);
             InjectionInfo.register(WrapWithConditionInjectionInfo.class);
             InjectionInfo.register(InitVariableInjectionInfo.class);
+            InjectionInfo.register(RedirectExitInjectionInfo.class);
 
-            InjectionPoint.register(BeforeThrow.class, "MixinExtras");
+            CompatibilityHelper.registerInjectionPoint(BeforeThrow.class, "MixinExtras", BeforeThrow.BeforeThrowNamespaced.class);
         }
     }
 

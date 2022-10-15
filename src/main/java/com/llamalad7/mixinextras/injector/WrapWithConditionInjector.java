@@ -42,7 +42,7 @@ public class WrapWithConditionInjector extends Injector {
                             this.annotationType, target, this
                     ));
         }
-        if(InjectorUtils.exitsMethod(node.getCurrentTarget()) && !InjectorUtils.isExitOptional(node.getCurrentTarget(), target.getArgIndices())) {
+        if(InjectorUtils.exitsMethod(node.getCurrentTarget()) && !InjectorUtils.isExitOptional(node.getCurrentTarget(), target)) {
             throw CompatibilityHelper.makeInvalidInjectionException(this.info,
                     String.format(
                             "%s annotation is targeting a method exiting instruction that is not safe to remove in %s in %s",

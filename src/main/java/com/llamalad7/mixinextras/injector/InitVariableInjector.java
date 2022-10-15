@@ -8,10 +8,10 @@ import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.modify.InvalidImplicitDiscriminatorException;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
+import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
-import org.spongepowered.asm.mixin.injection.throwables.InjectionError;
 
 import java.util.List;
 
@@ -20,15 +20,6 @@ import java.util.List;
  */
 public class InitVariableInjector extends Injector {
 
-    static class Context extends LocalVariableDiscriminator.Context {
-
-        final InsnList insns = new InsnList();
-
-        public Context(InjectionInfo info, Type returnType, boolean argsOnly, Target target, AbstractInsnNode node) {
-            super(info, returnType, argsOnly, target, node);
-        }
-    }
-
     private final LocalVariableDiscriminator discriminator;
 
     public InitVariableInjector(InjectionInfo info, LocalVariableDiscriminator discriminator) {
@@ -36,16 +27,8 @@ public class InitVariableInjector extends Injector {
         this.discriminator = discriminator;
     }
 
-    protected String getTargetNodeKey(Target target, InjectionNode node) {
-        return String.format("localcontext(%s,%s,#%s)", this.returnType, this.discriminator.isArgsOnly() ? "argsOnly" : "fullFrame", node.getId());
-    }
-
     @Override
-    protected void preInject(Target target, InjectionNode injectionNode) {
-        String key = this.getTargetNodeKey(target, injectionNode);
-        if (injectionNode.hasDecoration(key)) {
-            return; // already have a suitable context
-        }
+    protected void inject(Target target, InjectionNode injectionNode) {
 
         // We go to the next frame to get the locals there, since
         // the uninitialized variable is probably not present yet
@@ -57,37 +40,9 @@ public class InitVariableInjector extends Injector {
             node = node.getNext();
         }
 
-        Context context = new Context(this.info, this.returnType, this.discriminator.isArgsOnly(), target, node);
-        injectionNode.decorate(key, context);
-    }
+        Context context = CompatibilityHelper.createModifyVariableContext(this.info, this.returnType, this.discriminator.isArgsOnly(), target, node);
 
-    @Override
-    protected void inject(Target target, InjectionNode node) {
-        if (node.isReplaced()) {
-            throw CompatibilityHelper.makeInvalidInjectionException(this.info,
-                String.format(
-                        "Target of %s annotation was removed by another injector in %s in %s",
-                        this.annotationType, target, this
-                ));
-        }
-
-        Context context = node.getDecoration(this.getTargetNodeKey(target, node));
-        if (context == null) {
-            throw new InjectionError(String.format(
-                    "%s injector target is missing CONTEXT decoration for %s. PreInjection failure or illegal internal state change",
-                    this.annotationType, this.info));
-        }
-
-        // If the context is being reused (because two identical injectors are targetting this node)
-        // then the insns SHOULD have been drained by the previous insertBefore. If the list hasn't
-        // been cleared for some reason then something probably went wrong during the previous inject
-        if (context.insns.size() > 0) {
-            throw new InjectionError(String.format(
-                    "%s injector target has contaminated CONTEXT decoration for %s. Check for previous errors.",
-                    this.annotationType, this.info));
-        }
-
-        this.checkTargetForNode(target, node, InjectionPoint.RestrictTargetLevel.ALLOW_ALL);
+        this.checkTargetForNode(target, injectionNode, InjectionPoint.RestrictTargetLevel.ALLOW_ALL);
 
         InjectorData handler = new InjectorData(target, "handler", false);
 
@@ -95,7 +50,7 @@ public class InitVariableInjector extends Injector {
             throw CompatibilityHelper.makeInvalidInjectionException(this.info,
                     String.format(
                             "%s %s method %s from %s has invalid signature, cannot return a VOID type.",
-                            this.annotationType, handler, this, this.info.getMixin()
+                            this.annotationType, handler, this, CompatibilityHelper.getMixin(info)
                     ));
         }
 
@@ -117,23 +72,24 @@ public class InitVariableInjector extends Injector {
         }
 
         extraStack.apply();
-        target.insns.insertBefore(node.getCurrentTarget(), context.insns);
+        target.insns.insertBefore(injectionNode.getCurrentTarget(), CompatibilityHelper.getModifyVariableContextInsns(context));
     }
 
     private void inject(Context context, InjectorData handler, Target.Extension extraStack, int local) {
+        InsnList insns = CompatibilityHelper.getModifyVariableContextInsns(context);
         if (!this.isStatic) {
-            context.insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
+            insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
             extraStack.add();
         }
 
         // Unlike ModifyVariable, SetVariable doesn't load the previous value
 
         if (handler.captureTargetArgs > 0) {
-            this.pushArgs(handler.target.arguments, context.insns, handler.target.getArgIndices(), 0, handler.captureTargetArgs, extraStack);
+            this.pushArgs(handler.target.arguments, insns, handler.target.getArgIndices(), 0, handler.captureTargetArgs, extraStack);
         }
 
-        this.invokeHandler(context.insns);
-        context.insns.add(new VarInsnNode(this.returnType.getOpcode(Opcodes.ISTORE), local));
+        this.invokeHandler(insns);
+        insns.add(new VarInsnNode(this.returnType.getOpcode(Opcodes.ISTORE), local));
     }
 
     @Override
