@@ -1,4 +1,4 @@
-package com.llamalad7.mixinextras.injector;
+package com.llamalad7.mixinextras.point;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;

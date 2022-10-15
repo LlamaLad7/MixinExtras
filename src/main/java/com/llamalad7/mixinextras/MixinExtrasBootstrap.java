@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras;
 
 import com.llamalad7.mixinextras.injector.*;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
+import com.llamalad7.mixinextras.point.BeforeThrow;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 
