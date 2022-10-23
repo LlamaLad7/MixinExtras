@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Slice;
 
 import java.lang.annotation.ElementType;
@@ -13,7 +14,15 @@ import java.lang.annotation.Target;
 public @interface WrapOperation {
     String[] method();
 
-    At[] at();
+    /**
+     * Selector for targeting method calls and field gets/sets.
+     */
+    At[] at() default {};
+
+    /**
+     * Selector for targeting `instanceof`s.
+     */
+    Constant[] constant() default {};
 
     Slice[] slice() default {};
 
