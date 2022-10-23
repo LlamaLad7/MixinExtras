@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 
 public class MixinExtrasBootstrap {
     private static boolean initialized = false;
-    private static final String VERSION = "0.1.0-rc5";
+    private static final String VERSION = "0.1.0";
 
     public static void init() {
         if (!initialized) {
