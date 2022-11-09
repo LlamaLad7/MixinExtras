@@ -3,7 +3,6 @@ package com.llamalad7.mixinextras.injector.wrapoperation;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -32,29 +31,15 @@ class WrapOperationInjector extends Injector {
     );
     private static final String NPE = Type.getInternalName(NullPointerException.class);
 
-    private final List<Pair<Target, InjectionNode>> queuedInjections = new ArrayList<>();
-
     public WrapOperationInjector(InjectionInfo info) {
         super(info, "@WrapOperation");
     }
 
     @Override
     protected void inject(Target target, InjectionNode node) {
-        // At this point we only want to store information for later.
-        // Performing the actual injection here would allow other injectors to run after us on the same target,
-        // which would cause issues due to this injector's extensive changes.
-        this.queuedInjections.add(Pair.of(target, node));
-    }
-
-    void performInjections() {
-        // Here is where we do the *actual* injections, as this is called after all ordinary injectors have run.
-        for (Pair<Target, InjectionNode> injection : queuedInjections) {
-            Target target = injection.getLeft();
-            InjectionNode node = injection.getRight();
-            this.checkTargetModifiers(target, false);
-            this.checkNode(target, node);
-            this.wrapOperation(target, node);
-        }
+        this.checkTargetModifiers(target, false);
+        this.checkNode(target, node);
+        this.wrapOperation(target, node);
     }
 
     private void checkNode(Target target, InjectionNode node) {

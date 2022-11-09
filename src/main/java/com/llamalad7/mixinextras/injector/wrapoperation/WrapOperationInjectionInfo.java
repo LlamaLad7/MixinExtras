@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo.HandlerPrefix;
 import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 import org.spongepowered.asm.util.Annotations;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @InjectionInfo.AnnotationType(WrapOperation.class)
@@ -26,8 +27,16 @@ public class WrapOperationInjectionInfo extends InjectionInfo {
     }
 
     @Override
+    public void inject() {
+        WrapOperationApplicatorExtension.QUEUED_INJECTIONS.computeIfAbsent(this.mixin.getTarget(), k -> new ArrayList<>()).add(this);
+    }
+
+    @Override
     public void postInject() {
-        ((WrapOperationInjector) injector).performInjections();
+    }
+
+    public void lateApply() {
+        super.inject();
         super.postInject();
     }
 
