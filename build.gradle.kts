@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.llamalad7"
-version = "0.1.1-rc.2"
+version = "0.1.1-rc.3"
 
 repositories {
     mavenCentral()
