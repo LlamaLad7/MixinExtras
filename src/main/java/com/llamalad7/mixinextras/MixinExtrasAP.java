@@ -19,7 +19,7 @@ public class MixinExtrasAP extends AbstractProcessor {
         super.init(processingEnv);
         try {
             MessageRouter.setMessager(processingEnv.getMessager());
-            MixinExtrasBootstrap.init();
+            MixinExtrasBootstrap.initialize(false);
         } catch (NoClassDefFoundError e) {
             // The Mixin AP probably isn't available, e.g. if loom has excluded it from IDEA.
         }

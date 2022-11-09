@@ -18,6 +18,10 @@ public class MixinExtrasBootstrap {
     }
 
     public static void init() {
+        initialize(true);
+    }
+
+    static void initialize(boolean runtime) {
         if (!initialized) {
             initialized = true;
 
@@ -26,7 +30,10 @@ public class MixinExtrasBootstrap {
             InjectionInfo.register(ModifyReturnValueInjectionInfo.class);
             InjectionInfo.register(WrapOperationInjectionInfo.class);
             InjectionInfo.register(WrapWithConditionInjectionInfo.class);
-            registerExtension(new WrapOperationApplicatorExtension());
+
+            if (runtime) {
+                registerExtension(new WrapOperationApplicatorExtension());
+            }
         }
     }
 
