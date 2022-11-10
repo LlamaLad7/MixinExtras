@@ -9,6 +9,12 @@ import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+@SuppressWarnings("unused")
 public class MixinExtrasBootstrap {
     private static boolean initialized = false;
     private static final String VERSION = "0.1.1-rc.3";
@@ -37,8 +43,25 @@ public class MixinExtrasBootstrap {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static void registerExtension(IExtension extension) {
         IMixinTransformer transformer = (IMixinTransformer) MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
-        ((Extensions) transformer.getExtensions()).add(extension);
+        Extensions extensions = (Extensions) transformer.getExtensions();
+        extensions.add(extension);
+        try {
+            // In case we're initialising after the extensions have already been selected, we have to hack ourselves in.
+            // If we haven't passed selection yet, it doesn't matter, because the list is re-created then.
+            Field activeExtensionsField = Extensions.class.getDeclaredField("activeExtensions");
+            activeExtensionsField.setAccessible(true);
+            List<IExtension> activeExtensions = new ArrayList<>((List<IExtension>) activeExtensionsField.get(extensions));
+            activeExtensions.add(extension);
+            activeExtensionsField.set(extensions, Collections.unmodifiableList(activeExtensions));
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            // Fail-fast so people report this and I can fix it
+            throw new RuntimeException(
+                    String.format("Failed to inject extension %s. Please inform LlamaLad7!", extension),
+                    e
+            );
+        }
     }
 }
