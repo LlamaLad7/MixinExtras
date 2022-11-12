@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.utils;
 
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes;
 import org.spongepowered.asm.mixin.injection.struct.Target;
@@ -299,5 +300,14 @@ public class InjectorUtils {
         // Should never happen with valid bytecode, but we return null,
         // because no RET instruction was reached
         return null;
+    }
+
+    public static boolean isDynamicInstanceofRedirect(InjectionNodes.InjectionNode node) {
+        AbstractInsnNode originalTarget = node.getOriginalTarget();
+        AbstractInsnNode currentTarget = node.getCurrentTarget();
+
+        return originalTarget.getOpcode() == Opcodes.INSTANCEOF
+                && currentTarget instanceof MethodInsnNode
+                && Type.getReturnType(((MethodInsnNode) currentTarget).desc).equals(Type.getType(Class.class));
     }
 }

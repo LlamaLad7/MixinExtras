@@ -1,8 +1,8 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
+import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -18,10 +18,8 @@ import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Predicate;
 
 class WrapOperationInjector extends Injector {
     private static final Handle LMF_HANDLE = new Handle(
@@ -31,8 +29,7 @@ class WrapOperationInjector extends Injector {
             Bytecode.generateDescriptor(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class, MethodType.class, MethodHandle.class, MethodType.class),
             false
     );
-
-    private final List<Pair<Target, InjectionNode>> queuedInjections = new ArrayList<>();
+    private static final String NPE = Type.getInternalName(NullPointerException.class);
 
     public WrapOperationInjector(InjectionInfo info) {
         super(info, "@WrapOperation");
@@ -40,26 +37,15 @@ class WrapOperationInjector extends Injector {
 
     @Override
     protected void inject(Target target, InjectionNode node) {
-        // At this point we only want to store information for later.
-        // Performing the actual injection here would allow other injectors to run after us on the same target,
-        // which would cause issues due to this injector's extensive changes.
-        this.queuedInjections.add(Pair.of(target, node));
-    }
-
-    void performInjections() {
-        // Here is where we do the *actual* injections, as this is called after all ordinary injectors have run.
-        for (Pair<Target, InjectionNode> injection : queuedInjections) {
-            Target target = injection.getLeft();
-            InjectionNode node = injection.getRight();
-            this.checkTargetModifiers(target, false);
-            this.checkNode(target, node);
-            this.wrapOperation(target, node);
-        }
+        this.checkTargetModifiers(target, false);
+        this.checkNode(target, node);
+        this.wrapOperation(target, node);
     }
 
     private void checkNode(Target target, InjectionNode node) {
+        AbstractInsnNode originalTarget = node.getOriginalTarget();
         AbstractInsnNode currentTarget = node.getCurrentTarget();
-        if (!(currentTarget instanceof MethodInsnNode || currentTarget instanceof FieldInsnNode)) {
+        if (!(currentTarget instanceof MethodInsnNode || currentTarget instanceof FieldInsnNode || originalTarget.getOpcode() == Opcodes.INSTANCEOF)) {
             throw CompatibilityHelper.makeInvalidInjectionException(this.info,
                     String.format(
                             "%s annotation is targeting an invalid insn in %s in %s",
@@ -71,7 +57,7 @@ class WrapOperationInjector extends Injector {
     private void wrapOperation(Target target, InjectionNode node) {
         AbstractInsnNode currentTarget = node.getCurrentTarget();
         Type[] argTypes = getEffectiveArgTypes(currentTarget);
-        Type returnType = getReturnType(currentTarget);
+        Type returnType = getReturnType(node);
         InsnList insns = new InsnList();
         AbstractInsnNode champion = this.invokeHandler(target, node, argTypes, returnType, insns);
         target.wrapNode(currentTarget, champion, insns, new InsnList());
@@ -106,14 +92,23 @@ class WrapOperationInjector extends Injector {
         }
         this.pushArgs(argTypes, insns, argMap, originalArgs.length, argMap.length);
         // The trailing params are any arguments which come after the original args, and should therefore be bound to the lambda.
-        this.makeSupplier(originalArgs, returnType, node, insns, hasExtraThis, ArrayUtils.subarray(argTypes, originalArgs.length, argTypes.length));
+        this.makeSupplier(target, originalArgs, returnType, node, insns, hasExtraThis, ArrayUtils.subarray(argTypes, originalArgs.length, argTypes.length));
         if (handler.captureTargetArgs > 0) {
             this.pushArgs(target.arguments, insns, target.getArgIndices(), 0, handler.captureTargetArgs);
         }
-        return super.invokeHandler(insns);
+        AbstractInsnNode champion = super.invokeHandler(insns);
+
+        if (InjectorUtils.isDynamicInstanceofRedirect(node)) {
+            // At this point, we have the boolean result and the checked object on the stack.
+            // The object was DUPed by RedirectInjector before the handler was called, so removing the DUP is too risky.
+            // Instead, we simply pop the excess object.
+            insns.add(new InsnNode(Opcodes.SWAP));
+            insns.add(new InsnNode(Opcodes.POP));
+        }
+        return champion;
     }
 
-    private void makeSupplier(Type[] argTypes, Type returnType, InjectionNode node, InsnList insns, boolean hasExtraThis, Type[] trailingParams) {
+    private void makeSupplier(Target target, Type[] argTypes, Type returnType, InjectionNode node, InsnList insns, boolean hasExtraThis, Type[] trailingParams) {
         Type[] descriptorArgs = trailingParams;
         if (hasExtraThis) {
             // The receiver also needs to be a parameter in the INDY descriptor.
@@ -129,7 +124,7 @@ class WrapOperationInjector extends Injector {
                 // The SAM method will take an array of args and return an `Object` (the return value of the wrapped call)
                 Type.getMethodType(Type.getType(Object.class), Type.getType(Object[].class)),
                 // The implementation method will be generated for us to handle array unpacking
-                generateSyntheticBridge(node, argTypes, hasExtraThis, trailingParams),
+                generateSyntheticBridge(target, node, argTypes, hasExtraThis, trailingParams),
                 // Specialization of the SAM signature
                 Type.getMethodType(
                         returnType.getDescriptor().length() == 1 ? Type.getObjectType(returnType == Type.VOID_TYPE ? "java/lang/Void" : Bytecode.getBoxingType(returnType)) : returnType,
@@ -138,15 +133,15 @@ class WrapOperationInjector extends Injector {
         ));
     }
 
-    private Handle generateSyntheticBridge(InjectionNode target, Type[] argTypes, boolean virtual, Type[] boundParams) {
+    private Handle generateSyntheticBridge(Target target, InjectionNode node, Type[] argTypes, boolean virtual, Type[] boundParams) {
         // The bridge method's args will consist of any bound parameters followed by an array
 
-        Type returnType = getReturnType(target.getCurrentTarget());
+        Type returnType = getReturnType(node);
 
         MethodNode method = new MethodNode(
                 ASM.API_VERSION,
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | (virtual ? 0 : Opcodes.ACC_STATIC),
-                "mixinextras$bridge$" + UUID.randomUUID() + '$' + getName(target.getCurrentTarget()),
+                "mixinextras$bridge$" + UUID.randomUUID() + '$' + getName(node.getCurrentTarget()),
                 Bytecode.generateDescriptor(
                         returnType.getDescriptor().length() == 1 ?
                                 Type.getObjectType(
@@ -199,7 +194,7 @@ class WrapOperationInjector extends Injector {
                 add(new VarInsnNode(boundParamType.getOpcode(Opcodes.ILOAD), boundParamIndex));
                 boundParamIndex += boundParamType.getSize();
             }
-            add(target.getCurrentTarget().clone(Collections.emptyMap()));
+            add(copyNode(node, paramArrayIndex, target));
             if (returnType == Type.VOID_TYPE) {
                 add(new InsnNode(Opcodes.ACONST_NULL));
                 add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Void"));
@@ -226,21 +221,83 @@ class WrapOperationInjector extends Injector {
         );
     }
 
-    private Type getReturnType(AbstractInsnNode node) {
-        if (node instanceof MethodInsnNode) {
-            MethodInsnNode methodInsnNode = (MethodInsnNode) node;
-            return Type.getReturnType(methodInsnNode.desc);
+    private InsnList copyNode(InjectionNode node, int paramArrayIndex, Target target) {
+        InsnList insns = new InsnList();
+        insns.add(node.getCurrentTarget().clone(Collections.emptyMap()));
+
+        if (InjectorUtils.isDynamicInstanceofRedirect(node)) {
+            // We have a Class object and need to get it back to a boolean using the first element of the lambda args.
+            // The code added by RedirectInjector expects a reference to the checked object already on the stack, so we
+            // load the first and only lambda arg, and then swap it with the Class<?> result from the redirector.
+            insns.add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
+            insns.add(new InsnNode(Opcodes.ICONST_0));
+            insns.add(new InsnNode(Opcodes.AALOAD));
+            insns.add(new InsnNode(Opcodes.SWAP));
+            // Sanity checks for the instructions being moved based on what I expect RedirectInjector to have added.
+            checkAndMoveNodes(
+                    target.insns,
+                    insns,
+                    node.getCurrentTarget().getNext(),
+                    it -> it.getOpcode() == Opcodes.DUP,
+                    it -> it.getOpcode() == Opcodes.IFNONNULL,
+                    it -> it.getOpcode() == Opcodes.NEW && ((TypeInsnNode) it).desc.equals(NPE),
+                    it -> it.getOpcode() == Opcodes.DUP,
+                    it -> it instanceof LdcInsnNode && ((LdcInsnNode) it).cst instanceof String,
+                    it -> it.getOpcode() == Opcodes.INVOKESPECIAL && ((MethodInsnNode) it).owner.equals(NPE),
+                    it -> it.getOpcode() == Opcodes.ATHROW,
+                    it -> it instanceof LabelNode,
+                    it -> it.getOpcode() == Opcodes.SWAP,
+                    it -> it.getOpcode() == Opcodes.DUP,
+                    it -> it.getOpcode() == Opcodes.IFNULL,
+                    it -> it.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) it).name.equals("getClass"),
+                    it -> it.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) it).name.equals("isAssignableFrom"),
+                    it -> it.getOpcode() == Opcodes.GOTO,
+                    it -> it instanceof LabelNode,
+                    it -> it.getOpcode() == Opcodes.POP,
+                    it -> it.getOpcode() == Opcodes.POP,
+                    it -> it.getOpcode() == Opcodes.ICONST_0,
+                    it -> it instanceof LabelNode
+            );
+        }
+        return insns;
+    }
+
+    @SafeVarargs
+    private final void checkAndMoveNodes(InsnList from, InsnList to, AbstractInsnNode current, Predicate<AbstractInsnNode>... predicates) {
+        for (Predicate<AbstractInsnNode> predicate : predicates) {
+            if (!predicate.test(current)) {
+                throw new AssertionError("Failed assertion when wrapping instructions. Please inform LlamaLad7!");
+            }
+            AbstractInsnNode old = current;
+            do {
+                current = current.getNext();
+            } while (current instanceof FrameNode);
+            from.remove(old);
+            to.add(old);
+        }
+    }
+
+    private Type getReturnType(InjectionNode node) {
+        AbstractInsnNode originalTarget = node.getOriginalTarget();
+        AbstractInsnNode currentTarget = node.getCurrentTarget();
+
+        if (originalTarget.getOpcode() == Opcodes.INSTANCEOF) {
+            return Type.BOOLEAN_TYPE;
         }
 
-        if (node instanceof FieldInsnNode) {
-            FieldInsnNode fieldInsnNode = (FieldInsnNode) node;
+        if (currentTarget instanceof MethodInsnNode) {
+            MethodInsnNode methodInsnNode = (MethodInsnNode) currentTarget;
+            return Type.getReturnType(methodInsnNode.desc);
+        }
+        if (currentTarget instanceof FieldInsnNode) {
+            FieldInsnNode fieldInsnNode = (FieldInsnNode) currentTarget;
             if (fieldInsnNode.getOpcode() == Opcodes.GETFIELD || fieldInsnNode.getOpcode() == Opcodes.GETSTATIC) {
                 return Type.getType(fieldInsnNode.desc);
             }
             return Type.VOID_TYPE;
         }
 
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     private Type[] getEffectiveArgTypes(AbstractInsnNode node) {
@@ -263,6 +320,9 @@ class WrapOperationInjector extends Injector {
                     return new Type[]{Type.getType(fieldInsnNode.desc)};
             }
         }
+        if (node.getOpcode() == Opcodes.INSTANCEOF) {
+            return new Type[]{Type.getType(Object.class)};
+        }
 
         throw new UnsupportedOperationException();
     }
@@ -273,6 +333,10 @@ class WrapOperationInjector extends Injector {
         }
         if (node instanceof FieldInsnNode) {
             return ((FieldInsnNode) node).name;
+        }
+        if (node.getOpcode() == Opcodes.INSTANCEOF) {
+            String desc = ((TypeInsnNode) node).desc;
+            return "instanceof" + desc.substring(desc.lastIndexOf('/') + 1);
         }
 
         throw new UnsupportedOperationException();

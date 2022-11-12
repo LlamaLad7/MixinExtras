@@ -12,8 +12,8 @@ repository to your build script, you can depend on it like so
 
 ```gradle
 dependencies {
-    implementation("com.github.LlamaLad7:MixinExtras:0.0.12")
-    annotationProcessor("com.github.LlamaLad7:MixinExtras:0.0.12")
+    implementation("com.github.LlamaLad7:MixinExtras:0.1.0")
+    annotationProcessor("com.github.LlamaLad7:MixinExtras:0.1.0")
 }
 ```
 
@@ -42,9 +42,12 @@ MixinExtrasBootstrap.init();
 somewhere suitably early in your program. On Fabric, this would be a `PreLaunch` entrypoint. If you cannot find a
 suitable place for your platform, you might like to use
 an [IMixinConfigPlugin](https://github.com/SpongePowered/Mixin/blob/master/src/main/java/org/spongepowered/asm/mixin/extensibility/IMixinConfigPlugin.java)
-. Initializing MixinExtras in your plugin's `onLoad` method should work fine on any platform.
+. Initializing MixinExtras in your plugin's `onLoad` method should work fine on any platform (***except Fabric!*** [1]).
 
 ### You're good to go!
 
 Enjoy using the library, and don't hesitate to open an [issue](https://github.com/LlamaLad7/MixinExtras/issues) if you
 have any feedback, questions or suggestions.
+
+## Footnotes
+[1] FabricLoader currently has an issue meaning a crash occurs if the very first class loaded on `KnotClassLoader` is also referenced from a mixin plugin. `MixinExtrasBootstrap` is frequently the first class loaded there since lots of people initialize it from a `preLaunch` entrypoint. As such, please do that and do not initialize it from a mixin plugin. I am working to resolve this issue.
