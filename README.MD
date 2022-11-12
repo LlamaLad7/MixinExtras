@@ -21,25 +21,7 @@ It is essential that you register MixinExtras as an annotation processor if you 
 work. If you are registering Mixin as an annotation processor too, ***you must register the MixinExtras annotation
 processor before the Mixin one.***
 
-If you're using ForgeGradle, please keep in mind that MixinExtras is not a mod and thus will not be load by Forge in develop environment by default. You can resolve this by changing the `implementation` configuration to `minecraftLibrary` configuration if you're on Forge 37.0.13 or higher, or manually add MixinExtras to your runtime classpath like so
-
-```gradle
-configurations {
-	library
-	implementation.extendsFrom(library)
-}
-
-minecraft.runs.all {
-    lazyToken('minecraft_classpath') {
-        configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
-    }
-}
-
-dependencies {
-    library("com.github.LlamaLad7:MixinExtras:0.1.0")
-    annotationProcessor("com.github.LlamaLad7:MixinExtras:0.1.0")
-}
-```
+If you're on Forge 37.0.13 or higher and using ForgeGradle, please keep in mind that MixinExtras is ***not a mod*** and thus will not be load by Forge in develop environment by default. You can resolve this by changing the `implementation` configuration to `minecraftLibrary` configuration.
 
 ### Bundling MixinExtras
 
