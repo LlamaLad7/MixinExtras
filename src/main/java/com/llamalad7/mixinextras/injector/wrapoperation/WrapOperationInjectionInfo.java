@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
+import com.llamalad7.mixinextras.sugar.impl.SugarInjector;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -8,11 +9,14 @@ import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.points.BeforeConstant;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo.HandlerPrefix;
+import org.spongepowered.asm.mixin.injection.struct.InjectionNodes;
+import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 import org.spongepowered.asm.util.Annotations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @InjectionInfo.AnnotationType(WrapOperation.class)
 @HandlerPrefix("wrapOperation")
@@ -38,6 +42,9 @@ public class WrapOperationInjectionInfo extends InjectionInfo {
     public void lateApply() {
         super.inject();
         super.postInject();
+        for (Target target : this.targetNodes.keySet()) {
+            SugarInjector.applyFromInjector(this.classNode, this.method, target.method);
+        }
     }
 
     @Override

@@ -16,7 +16,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
 
-class SugarInjector {
+public class SugarInjector {
     private static final String SUGAR_PACKAGE = Type.getDescriptor(Local.class).substring(0, Type.getDescriptor(Local.class).lastIndexOf('/') + 1);
     private static final Set<String> TARGET_CLASSES_WITH_SUGAR = new HashSet<>();
     private static final Map<String, IMixinInfo> TRANSFORMED_MIXINS = new HashMap<>();
@@ -130,7 +130,7 @@ class SugarInjector {
         infoHolder.visit("value", params);
         boolean isWrapOperation = Annotations.getVisible(method, WrapOperation.class) != null;
         if (isWrapOperation) {
-            infoHolder.visit("isWrapOperation", true);
+            infoHolder.visit("applyLate", true);
         }
         return infoHolder;
     }
@@ -139,16 +139,36 @@ class SugarInjector {
         if (!TARGET_CLASSES_WITH_SUGAR.remove(targetClass.name)) {
             return;
         }
-        Map<String, MethodNode> sugaredMethods = findAndReSugarMethods(targetClass);
+        List<MethodNode> methods = discoverSugaredMethods(targetClass);
+        Map<String, MethodNode> sugaredMethods = reSugarMethods(targetClass, methods);
         for (MethodNode method : targetClass.methods) {
             applySugarToMethod(method, sugaredMethods, targetClass);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static Map<String, MethodNode> findAndReSugarMethods(ClassNode targetClass) {
-        Map<String, MethodNode> result = new HashMap<>();
+    public static void applyFromInjector(ClassNode targetClass, MethodNode handler, MethodNode targetMethod) {
+        if (Annotations.getInvisible(handler, SugarInfoHolder.class) == null) {
+            return;
+        }
+        Map<String, MethodNode> sugaredMethod = reSugarMethods(targetClass, Collections.singletonList(handler));
+        applySugarToMethod(targetMethod, sugaredMethod, targetClass);
+    }
+
+    private static List<MethodNode> discoverSugaredMethods(ClassNode targetClass) {
+        List<MethodNode> result = new ArrayList<>();
         for (MethodNode method : targetClass.methods) {
+            AnnotationNode infoHolder = Annotations.getInvisible(method, SugarInfoHolder.class);
+            if (infoHolder != null && !Annotations.getValue(infoHolder, "applyLate", (Boolean) false)) {
+                result.add(method);
+            }
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, MethodNode> reSugarMethods(ClassNode targetClass, List<MethodNode> methods) {
+        Map<String, MethodNode> result = new HashMap<>();
+        for (MethodNode method : methods) {
             AnnotationNode infoHolder = getAndRemoveAnnotation(method, SugarInfoHolder.class);
             if (infoHolder == null) {
                 continue;
