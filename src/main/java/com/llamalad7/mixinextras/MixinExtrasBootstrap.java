@@ -3,6 +3,7 @@ package com.llamalad7.mixinextras;
 import com.llamalad7.mixinextras.injector.*;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationApplicatorExtension;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
+import com.llamalad7.mixinextras.sugar.impl.SugarApplicatorExtension;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
@@ -38,6 +39,7 @@ public class MixinExtrasBootstrap {
             InjectionInfo.register(WrapWithConditionInjectionInfo.class);
 
             if (runtime) {
+                registerExtension(new SugarApplicatorExtension());
                 registerExtension(new WrapOperationApplicatorExtension());
             }
         }
