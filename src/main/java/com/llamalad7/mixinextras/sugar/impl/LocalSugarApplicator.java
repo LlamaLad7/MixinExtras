@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Opcodes;
@@ -49,7 +50,10 @@ class LocalSugarApplicator extends SugarApplicator {
         Context context = node.getDecoration(getTargetNodeKey(paramType, discriminator.isArgsOnly()));
         int index = discriminator.findLocal(context);
         if (index < 0) {
-            throw new IllegalStateException("Failed to match a local!");
+            throw new IllegalStateException(String.format(
+                    "Failed to match a local for %s %s in mixin %s in target %s at instruction %s!",
+                    ASMUtils.annotationToString(sugar), ASMUtils.typeToString(paramType), mixin, target, node
+            ));
         }
         if (discriminator.printLVT()) {
             printLocals(target, node.getCurrentTarget(), context, paramType, discriminator);

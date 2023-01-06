@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.sugar.impl;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.MixinInternals;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
@@ -14,6 +15,7 @@ import org.spongepowered.asm.mixin.transformer.meta.MixinMerged;
 import org.spongepowered.asm.util.Annotations;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SugarInjector {
     private static final String SUGAR_PACKAGE = Type.getDescriptor(Local.class).substring(0, Type.getDescriptor(Local.class).lastIndexOf('/') + 1);
@@ -82,7 +84,7 @@ public class SugarInjector {
             List<AnnotationNode> annotations = method.invisibleParameterAnnotations[i];
             if (annotations == null || annotations.stream().noneMatch(it -> it != null && it.desc.startsWith(SUGAR_PACKAGE))) {
                 if (foundSugar) {
-                    throw new IllegalStateException(String.format("Found non-trailing sugared parameters on %s", method.name));
+                    throw new IllegalStateException(String.format("Found non-trailing sugared parameters on %s", method.name + method.desc));
                 }
                 params.add(type);
                 invisibleAnnotations.add(annotations);
@@ -215,9 +217,19 @@ public class SugarInjector {
             IMixinInfo mixin = TRANSFORMED_MIXINS.get(Annotations.<String>getValue(mixinMerged, "mixin"));
             InjectionNode node = target.addInjectionNode(targetInsn);
             List<Pair<Type, AnnotationNode>> sugars = findSugars(targetMethod);
-            SugarApplicator.preApply(mixin, sugars, target, node);
-            for (Pair<Type, AnnotationNode> sugarInfo : sugars) {
-                SugarApplicator.apply(mixin, sugarInfo.getLeft(), sugarInfo.getRight(), target, node);
+            try {
+                SugarApplicator.preApply(mixin, sugars, target, node);
+                for (Pair<Type, AnnotationNode> sugarInfo : sugars) {
+                    SugarApplicator.apply(mixin, sugarInfo.getLeft(), sugarInfo.getRight(), target, node);
+                }
+            } catch (Exception e) {
+                throw new SugarApplicationException(
+                        String.format(
+                                "Failed to apply sugar to method %s from mixin %s in target method %s::%s at instruction %s",
+                                targetMethod.name + targetMethod.desc, mixin, targetClass.name, method.name + method.desc, node
+                        ),
+                        e
+                );
             }
             targetInsn.desc = targetMethod.desc;
         }
@@ -248,7 +260,10 @@ public class SugarInjector {
         for (AnnotationNode annotation : annotations) {
             if (annotation.desc.startsWith(SUGAR_PACKAGE)) {
                 if (result != null) {
-                    throw new IllegalStateException("Found multiple sugars!");
+                    throw new IllegalStateException(
+                            "Found multiple sugars on the same parameter! Got "
+                                    + annotations.stream().map(ASMUtils::annotationToString).collect(Collectors.joining(" "))
+                    );
                 }
                 result = annotation;
             }
