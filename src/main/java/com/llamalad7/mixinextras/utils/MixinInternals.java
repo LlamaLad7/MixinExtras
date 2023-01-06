@@ -2,16 +2,18 @@ package com.llamalad7.mixinextras.utils;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.tree.ClassNode;
+import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.transformer.ClassInfo;
+import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
+import org.spongepowered.asm.mixin.transformer.ext.Extensions;
+import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 import org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedSet;
+import java.util.*;
 
 /**
  * Mumfrey, look away.
@@ -21,6 +23,8 @@ public class MixinInternals {
     private static final Method MIXIN_INFO_GET_STATE_METHOD;
     private static final Field STATE_CLASS_NODE_FIELD;
     private static final Field MEMBER_CURRENT_DESC_FIELD;
+    private static final Field EXTENSIONS_FIELD;
+    private static final Field ACTIVE_EXTENSIONS_FIELD;
 
     static {
         try {
@@ -36,6 +40,10 @@ public class MixinInternals {
             Class<?> Member = Class.forName("org.spongepowered.asm.mixin.transformer.ClassInfo$Member");
             MEMBER_CURRENT_DESC_FIELD = Member.getDeclaredField("currentDesc");
             MEMBER_CURRENT_DESC_FIELD.setAccessible(true);
+            EXTENSIONS_FIELD = Extensions.class.getDeclaredField("extensions");
+            EXTENSIONS_FIELD.setAccessible(true);
+            ACTIVE_EXTENSIONS_FIELD = Extensions.class.getDeclaredField("activeExtensions");
+            ACTIVE_EXTENSIONS_FIELD.setAccessible(true);
         } catch (ClassNotFoundException | NoSuchFieldException | NoSuchMethodException e) {
             throw new RuntimeException("Failed to access some mixin internals, please report to LlamaLad7!", e);
         }
@@ -62,6 +70,42 @@ public class MixinInternals {
             MEMBER_CURRENT_DESC_FIELD.set(method, newDesc);
         } catch (IllegalAccessException e) {
             throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void registerExtension(IExtension extension) {
+        try {
+            IMixinTransformer transformer = (IMixinTransformer) MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
+            Extensions extensions = (Extensions) transformer.getExtensions();
+            List<IExtension> extensionsList = (List<IExtension>) EXTENSIONS_FIELD.get(extensions);
+            addExtension(extensionsList, extension);
+            List<IExtension> activeExtensions = new ArrayList<>((List<IExtension>) ACTIVE_EXTENSIONS_FIELD.get(extensions));
+            addExtension(activeExtensions, extension);
+            ACTIVE_EXTENSIONS_FIELD.set(extensions, Collections.unmodifiableList(activeExtensions));
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
+        }
+    }
+
+    /**
+     * This keeps the extensions in "groups", because when there are multiple relocated versions active that's the
+     * behaviour we want.
+     */
+    private static void addExtension(List<IExtension> extensions, IExtension newExtension) {
+        String extensionClassName = newExtension.getClass().getName();
+        extensionClassName = extensionClassName.substring(extensionClassName.lastIndexOf('.'));
+        int index = -1;
+        for (int i = 0; i < extensions.size(); i++) {
+            IExtension extension = extensions.get(i);
+            if (extension.getClass().getName().endsWith(extensionClassName)) {
+                index = i;
+            }
+        }
+        if (index == -1) {
+            extensions.add(newExtension);
+        } else {
+            extensions.add(index + 1, newExtension);
         }
     }
 }
