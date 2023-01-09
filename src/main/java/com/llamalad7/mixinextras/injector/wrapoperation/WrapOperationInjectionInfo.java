@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
-import com.llamalad7.mixinextras.sugar.impl.SugarInjector;
+import com.llamalad7.mixinextras.injector.LateApplyingInjectorInfo;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -9,18 +9,16 @@ import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.points.BeforeConstant;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo.HandlerPrefix;
-import org.spongepowered.asm.mixin.injection.struct.InjectionNodes;
-import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 import org.spongepowered.asm.util.Annotations;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @InjectionInfo.AnnotationType(WrapOperation.class)
 @HandlerPrefix("wrapOperation")
-public class WrapOperationInjectionInfo extends InjectionInfo {
+public class WrapOperationInjectionInfo extends InjectionInfo implements LateApplyingInjectorInfo {
+    private LateApplyingInjectorInfo injectionInfoToQueue = this;
+
     public WrapOperationInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
         super(mixin, method, annotation, determineAtKey(mixin, method, annotation));
     }
@@ -32,19 +30,22 @@ public class WrapOperationInjectionInfo extends InjectionInfo {
 
     @Override
     public void inject() {
-        WrapOperationApplicatorExtension.QUEUED_INJECTIONS.computeIfAbsent(this.mixin.getTarget(), k -> new ArrayList<>()).add(this);
+        WrapOperationApplicatorExtension.offerInjection(this.mixin.getTarget(), injectionInfoToQueue);
     }
 
     @Override
     public void postInject() {
     }
 
+    @Override
     public void lateApply() {
         super.inject();
         super.postInject();
-        for (Target target : this.targetNodes.keySet()) {
-            SugarInjector.applyFromInjector(this.classNode, this.method, target.method);
-        }
+    }
+
+    @Override
+    public void wrap(LateApplyingInjectorInfo outer) {
+        this.injectionInfoToQueue = outer;
     }
 
     @Override

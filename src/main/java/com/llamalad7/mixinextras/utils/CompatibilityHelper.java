@@ -2,7 +2,6 @@ package com.llamalad7.mixinextras.utils;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
@@ -10,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionExceptio
 import org.spongepowered.asm.mixin.refmap.IMixinContext;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
@@ -21,6 +21,7 @@ public class CompatibilityHelper {
     private static final Constructor<InvalidInjectionException> INVALID_INJECTION_EXCEPTION_CONSTRUCTOR;
     private static final Method INJECTION_INFO_GET_MIXIN_METHOD;
     private static final Constructor<Context> LVT_CONTEXT_CONSTRUCTOR;
+    private static final Method INJECTION_INFO_PRE_INJECT_METHOD;
 
     static {
         INVALID_INJECTION_EXCEPTION_CONSTRUCTOR =
@@ -50,6 +51,11 @@ public class CompatibilityHelper {
                         })
                         .findAny()
                         .orElse(null);
+
+        INJECTION_INFO_PRE_INJECT_METHOD = Arrays.stream(InjectionInfo.class.getMethods())
+                .filter(it -> it.getName().equals("preInject"))
+                .findFirst()
+                .orElse(null);
     }
 
     public static RuntimeException makeInvalidInjectionException(InjectionInfo info, String message) {
@@ -68,14 +74,22 @@ public class CompatibilityHelper {
         }
     }
 
-    public static Context makeLvtContext(IMixinInfo mixin, Type returnType, boolean argsOnly, Target target, AbstractInsnNode node) {
+    public static Context makeLvtContext(InjectionInfo info, Type returnType, boolean argsOnly, Target target, AbstractInsnNode node) {
         try {
             if (LVT_CONTEXT_CONSTRUCTOR.getParameterCount() == 4) {
                 return LVT_CONTEXT_CONSTRUCTOR.newInstance(returnType, argsOnly, target, node);
             } else {
-                return LVT_CONTEXT_CONSTRUCTOR.newInstance(DummyInjectionInfo.create(mixin), returnType, argsOnly, target, node);
+                return LVT_CONTEXT_CONSTRUCTOR.newInstance(info, returnType, argsOnly, target, node);
             }
         } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void preInject(InjectionInfo info) {
+        try {
+            INJECTION_INFO_PRE_INJECT_METHOD.invoke(info);
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }

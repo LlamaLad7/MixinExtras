@@ -3,7 +3,7 @@ package com.llamalad7.mixinextras.sugar.impl;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 
@@ -24,20 +24,20 @@ abstract class SugarApplicator {
         this.annotationDesc = Type.getDescriptor(annotation);
     }
 
-    abstract void preInject(IMixinInfo mixin, List<Pair<Type, AnnotationNode>> sugarInfos, Target target, InjectionNode node);
+    abstract void preInject(InjectionInfo info, List<Pair<Type, AnnotationNode>> sugarInfos, Target target, InjectionNode node);
 
-    abstract void inject(IMixinInfo mixin, Type paramType, AnnotationNode sugar, Target target, InjectionNode node);
+    abstract void inject(InjectionInfo info, Type paramType, AnnotationNode sugar, Target target, InjectionNode node);
 
-    static void preApply(IMixinInfo mixin, List<Pair<Type, AnnotationNode>> sugarInfos, Target target, InjectionNode node) {
+    static void preApply(InjectionInfo info, List<Pair<Type, AnnotationNode>> sugarInfos, Target target, InjectionNode node) {
         prepareMap();
         for (SugarApplicator applicator : MAP.values()) {
-            applicator.preInject(mixin, sugarInfos, target, node);
+            applicator.preInject(info, sugarInfos, target, node);
         }
     }
 
-    static void apply(IMixinInfo mixin, Type paramType, AnnotationNode sugar, Target target, InjectionNode node) {
+    static void apply(InjectionInfo info, Type paramType, AnnotationNode sugar, Target target, InjectionNode node) {
         prepareMap();
-        MAP.get(sugar.desc).inject(mixin, paramType, sugar, target, node);
+        MAP.get(sugar.desc).inject(info, paramType, sugar, target, node);
     }
 
     private static void prepareMap() {

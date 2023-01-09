@@ -4,7 +4,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
-import org.spongepowered.asm.mixin.transformer.ClassInfo;
+import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
+import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
@@ -22,9 +23,9 @@ public class MixinInternals {
     private static final Field TARGET_CLASS_CONTEXT_MIXINS_FIELD;
     private static final Method MIXIN_INFO_GET_STATE_METHOD;
     private static final Field STATE_CLASS_NODE_FIELD;
-    private static final Field MEMBER_CURRENT_DESC_FIELD;
     private static final Field EXTENSIONS_FIELD;
     private static final Field ACTIVE_EXTENSIONS_FIELD;
+    private static final Field INJECTION_INFO_TARGET_NODES_FIELD;
 
     static {
         try {
@@ -37,9 +38,8 @@ public class MixinInternals {
             Class<?> State = Class.forName("org.spongepowered.asm.mixin.transformer.MixinInfo$State");
             STATE_CLASS_NODE_FIELD = State.getDeclaredField("classNode");
             STATE_CLASS_NODE_FIELD.setAccessible(true);
-            Class<?> Member = Class.forName("org.spongepowered.asm.mixin.transformer.ClassInfo$Member");
-            MEMBER_CURRENT_DESC_FIELD = Member.getDeclaredField("currentDesc");
-            MEMBER_CURRENT_DESC_FIELD.setAccessible(true);
+            INJECTION_INFO_TARGET_NODES_FIELD = InjectionInfo.class.getDeclaredField("targetNodes");
+            INJECTION_INFO_TARGET_NODES_FIELD.setAccessible(true);
             EXTENSIONS_FIELD = Extensions.class.getDeclaredField("extensions");
             EXTENSIONS_FIELD.setAccessible(true);
             ACTIVE_EXTENSIONS_FIELD = Extensions.class.getDeclaredField("activeExtensions");
@@ -65,9 +65,10 @@ public class MixinInternals {
         }
     }
 
-    public static void setCurrentDesc(ClassInfo.Method method, String newDesc) {
+    @SuppressWarnings("unchecked")
+    public static Collection<Target> getTargets(InjectionInfo info) {
         try {
-            MEMBER_CURRENT_DESC_FIELD.set(method, newDesc);
+            return ((Map<Target, ?>) INJECTION_INFO_TARGET_NODES_FIELD.get(info)).keySet();
         } catch (IllegalAccessException e) {
             throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
         }

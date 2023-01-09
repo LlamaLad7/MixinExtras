@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.injector.WrapWithConditionInjectionInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationApplicatorExtension;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
 import com.llamalad7.mixinextras.sugar.impl.SugarApplicatorExtension;
+import com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo;
 import com.llamalad7.mixinextras.utils.MixinInternals;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 
@@ -32,6 +33,8 @@ public class MixinExtrasBootstrap {
             InjectionInfo.register(ModifyReturnValueInjectionInfo.class);
             InjectionInfo.register(WrapOperationInjectionInfo.class);
             InjectionInfo.register(WrapWithConditionInjectionInfo.class);
+
+            InjectionInfo.register(SugarWrapperInjectionInfo.class);
 
             if (runtime) {
                 MixinInternals.registerExtension(new SugarApplicatorExtension());

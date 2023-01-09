@@ -3,15 +3,13 @@ package com.llamalad7.mixinextras.sugar.impl;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.utils.ASMUtils;
-import com.llamalad7.mixinextras.utils.MixinInternals;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
-import org.spongepowered.asm.mixin.transformer.ClassInfo;
-import org.spongepowered.asm.mixin.transformer.meta.MixinMerged;
 import org.spongepowered.asm.util.Annotations;
 
 import java.util.*;
@@ -19,33 +17,19 @@ import java.util.stream.Collectors;
 
 public class SugarInjector {
     private static final String SUGAR_PACKAGE = Type.getDescriptor(Local.class).substring(0, Type.getDescriptor(Local.class).lastIndexOf('/') + 1);
-    private static final Set<String> TARGET_CLASSES_WITH_SUGAR = new HashSet<>();
-    private static final Map<String, IMixinInfo> TRANSFORMED_MIXINS = new HashMap<>();
-    private static final Set<String> SUGAR_FREE_MIXINS = new HashSet<>();
+    private static final Set<String> PREPARED_MIXINS = new HashSet<>();
 
-    static void preApply(String targetClassName, ClassNode mixinNode, ClassInfo mixinClassInfo, IMixinInfo mixinInfo) {
-        if (SUGAR_FREE_MIXINS.contains(mixinInfo.getClassName())) {
-            // No sugar here, don't scan the whole class again.
+    static void prepareMixin(IMixinInfo mixinInfo, ClassNode mixinNode) {
+        if (PREPARED_MIXINS.contains(mixinInfo.getClassName())) {
+            // Don't scan the whole class again.
             return;
         }
-        if (TRANSFORMED_MIXINS.containsKey(mixinInfo.getClassName())) {
-            // This mixin contains sugar, and we've already transformed it.
-            TARGET_CLASSES_WITH_SUGAR.add(targetClassName);
-            return;
-        }
-        boolean hasAnySugar = false;
         for (MethodNode method : mixinNode.methods) {
             if (hasSugar(method)) {
-                hasAnySugar = true;
-                stripSugar(method, mixinClassInfo);
+                wrapInjectorAnnotation(mixinInfo, method);
             }
         }
-        if (hasAnySugar) {
-            TARGET_CLASSES_WITH_SUGAR.add(targetClassName);
-            TRANSFORMED_MIXINS.put(mixinInfo.getClassName(), mixinInfo);
-        } else {
-            SUGAR_FREE_MIXINS.add(mixinInfo.getClassName());
-        }
+        PREPARED_MIXINS.add(mixinInfo.getClassName());
     }
 
     private static boolean hasSugar(MethodNode method) {
@@ -66,14 +50,19 @@ public class SugarInjector {
         return false;
     }
 
-    private static void stripSugar(MethodNode method, ClassInfo mixinInfo) {
-        String newDesc = stripSugar(method);
-        MixinInternals.setCurrentDesc(mixinInfo.findMethod(method), newDesc);
-        method.desc = newDesc;
+    private static void wrapInjectorAnnotation(IMixinInfo mixin, MethodNode method) {
+        AnnotationNode injectorAnnotation = InjectionInfo.getInjectorAnnotation(mixin, method);
+        if (injectorAnnotation == null) {
+            return;
+        }
+        AnnotationNode wrapped = new AnnotationNode(Type.getDescriptor(SugarWrapper.class));
+        wrapped.visit("original", injectorAnnotation);
+        method.visibleAnnotations.remove(injectorAnnotation);
+        method.visibleAnnotations.add(wrapped);
     }
 
     @SuppressWarnings("unchecked")
-    private static String stripSugar(MethodNode method) {
+    static void stripSugar(MethodNode method) {
         List<Type> params = new ArrayList<>();
         List<Type> sugarParams = new ArrayList<>();
         List<List<AnnotationNode>> invisibleAnnotations = new ArrayList<>();
@@ -100,7 +89,7 @@ public class SugarInjector {
         }
         method.invisibleAnnotations.add(buildMarkerAnnotation(method, sugarParams, sugarParamAnnotations));
         method.invisibleParameterAnnotations = invisibleAnnotations.toArray(new List[0]);
-        return Type.getMethodDescriptor(Type.getReturnType(method.desc), params.toArray(new Type[0]));
+        method.desc = Type.getMethodDescriptor(Type.getReturnType(method.desc), params.toArray(new Type[0]));
     }
 
     private static AnnotationNode buildMarkerAnnotation(MethodNode method, List<Type> sugarParams, List<List<AnnotationNode>> sugarParamAnnotations) {
@@ -122,61 +111,50 @@ public class SugarInjector {
         return infoHolder;
     }
 
-    static void postApply(ClassNode targetClass) {
-        if (!TARGET_CLASSES_WITH_SUGAR.remove(targetClass.name)) {
-            return;
-        }
-        List<MethodNode> methods = discoverSugaredMethods(targetClass);
-        Map<String, MethodNode> sugaredMethods = reSugarMethods(targetClass, methods);
-        for (MethodNode method : targetClass.methods) {
-            applySugarToMethod(method, sugaredMethods, targetClass);
-        }
-    }
-
-    public static void applyFromInjector(ClassNode targetClass, MethodNode handler, MethodNode targetMethod) {
-        if (Annotations.getInvisible(handler, SugarInfoHolder.class) == null) {
-            return;
-        }
-        Map<String, MethodNode> sugaredMethod = reSugarMethods(targetClass, Collections.singletonList(handler));
-        applySugarToMethod(targetMethod, sugaredMethod, targetClass);
-    }
-
-    private static List<MethodNode> discoverSugaredMethods(ClassNode targetClass) {
-        List<MethodNode> result = new ArrayList<>();
-        for (MethodNode method : targetClass.methods) {
-            AnnotationNode infoHolder = Annotations.getInvisible(method, SugarInfoHolder.class);
-            if (infoHolder != null && !Annotations.getValue(infoHolder, "applyLate", (Boolean) false)) {
-                result.add(method);
+    static void applySugar(InjectionInfo injectionInfo, IMixinInfo mixin, Collection<Target> targets, MethodNode handler) {
+        String oldDesc = handler.desc;
+        reSugarMethod(handler);
+        List<Pair<Type, AnnotationNode>> sugars = findSugars(handler);
+        for (Target target : targets) {
+            for (MethodInsnNode targetInsn : findCalls(target, handler, oldDesc)) {
+                InjectionNode node = target.addInjectionNode(targetInsn);
+                try {
+                    SugarApplicator.preApply(injectionInfo, sugars, target, node);
+                    for (Pair<Type, AnnotationNode> sugarInfo : sugars) {
+                        SugarApplicator.apply(injectionInfo, sugarInfo.getLeft(), sugarInfo.getRight(), target, node);
+                    }
+                } catch (Exception e) {
+                    throw new SugarApplicationException(
+                            String.format(
+                                    "Failed to apply sugar to method %s from mixin %s in target method %s at instruction %s",
+                                    handler.name + handler.desc, mixin, target, node
+                            ),
+                            e
+                    );
+                }
+                targetInsn.desc = handler.desc;
             }
         }
-        return result;
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, MethodNode> reSugarMethods(ClassNode targetClass, List<MethodNode> methods) {
-        Map<String, MethodNode> result = new HashMap<>();
-        for (MethodNode method : methods) {
-            AnnotationNode infoHolder = getAndRemoveSugarInfo(method);
-            if (infoHolder == null) {
-                continue;
-            }
-            result.put(method.name + method.desc, method);
-            List<Type> paramTypes = new ArrayList<>(Arrays.asList(Type.getArgumentTypes(method.desc)));
-            List<List<AnnotationNode>> paramAnnotations = (List<List<AnnotationNode>>) (Object) new ArrayList<>(
-                    Arrays.asList(
-                            method.invisibleParameterAnnotations == null ? new List[paramTypes.size()] : method.invisibleParameterAnnotations
-                    )
-            );
-            for (AnnotationNode info : Annotations.<List<AnnotationNode>>getValue(infoHolder)) {
-                paramTypes.add(Annotations.getValue(info, "type"));
-                paramAnnotations.add(Annotations.getValue(info, "annotations"));
-            }
-            String newDesc = Type.getMethodDescriptor(Type.getReturnType(method.desc), paramTypes.toArray(new Type[0]));
-            MixinInternals.setCurrentDesc(ClassInfo.forName(targetClass.name).findMethod(method), newDesc);
-            method.desc = newDesc;
-            method.invisibleParameterAnnotations = paramAnnotations.toArray(new List[0]);
+    private static void reSugarMethod(MethodNode handler) {
+        AnnotationNode infoHolder = getAndRemoveSugarInfo(handler);
+        if (infoHolder == null) {
+            return;
         }
-        return result;
+        List<Type> paramTypes = new ArrayList<>(Arrays.asList(Type.getArgumentTypes(handler.desc)));
+        List<List<AnnotationNode>> paramAnnotations = (List<List<AnnotationNode>>) (Object) new ArrayList<>(
+                Arrays.asList(
+                        handler.invisibleParameterAnnotations == null ? new List[paramTypes.size()] : handler.invisibleParameterAnnotations
+                )
+        );
+        for (AnnotationNode info : Annotations.<List<AnnotationNode>>getValue(infoHolder)) {
+            paramTypes.add(Annotations.getValue(info, "type"));
+            paramAnnotations.add(Annotations.getValue(info, "annotations"));
+        }
+        handler.desc = Type.getMethodDescriptor(Type.getReturnType(handler.desc), paramTypes.toArray(new Type[0]));
+        handler.invisibleParameterAnnotations = paramAnnotations.toArray(new List[0]);
     }
 
     private static AnnotationNode getAndRemoveSugarInfo(MethodNode method) {
@@ -194,45 +172,17 @@ public class SugarInjector {
         return null;
     }
 
-    private static void applySugarToMethod(MethodNode method, Map<String, MethodNode> sugaredMethods, ClassNode targetClass) {
-        List<Pair<MethodInsnNode, MethodNode>> targets = new ArrayList<>();
-        for (ListIterator<AbstractInsnNode> it = method.instructions.iterator(); it.hasNext(); ) {
-            AbstractInsnNode insn = it.next();
-            if (insn instanceof MethodInsnNode) {
-                MethodInsnNode methodInsn = (MethodInsnNode) insn;
-                MethodNode targetMethod = sugaredMethods.get(methodInsn.name + methodInsn.desc);
-                if (targetMethod != null && methodInsn.owner.equals(targetClass.name)) {
-                    targets.add(Pair.of(methodInsn, targetMethod));
+    private static List<MethodInsnNode> findCalls(Target target, MethodNode method, String desc) {
+        List<MethodInsnNode> result = new ArrayList<>();
+        for (AbstractInsnNode insn : target) {
+            if (insn instanceof MethodInsnNode){
+                MethodInsnNode call = (MethodInsnNode) insn;
+                if (call.owner.equals(target.classNode.name) && call.name.equals(method.name) && call.desc.equals(desc)) {
+                    result.add(call);
                 }
             }
         }
-        if (targets.isEmpty()) {
-            return;
-        }
-        Target target = new Target(targetClass, method);
-        for (Pair<MethodInsnNode, MethodNode> targetPair : targets) {
-            MethodInsnNode targetInsn = targetPair.getLeft();
-            MethodNode targetMethod = targetPair.getRight();
-            AnnotationNode mixinMerged = Annotations.getVisible(targetMethod, MixinMerged.class);
-            IMixinInfo mixin = TRANSFORMED_MIXINS.get(Annotations.<String>getValue(mixinMerged, "mixin"));
-            InjectionNode node = target.addInjectionNode(targetInsn);
-            List<Pair<Type, AnnotationNode>> sugars = findSugars(targetMethod);
-            try {
-                SugarApplicator.preApply(mixin, sugars, target, node);
-                for (Pair<Type, AnnotationNode> sugarInfo : sugars) {
-                    SugarApplicator.apply(mixin, sugarInfo.getLeft(), sugarInfo.getRight(), target, node);
-                }
-            } catch (Exception e) {
-                throw new SugarApplicationException(
-                        String.format(
-                                "Failed to apply sugar to method %s from mixin %s in target method %s::%s at instruction %s",
-                                targetMethod.name + targetMethod.desc, mixin, targetClass.name, method.name + method.desc, node
-                        ),
-                        e
-                );
-            }
-            targetInsn.desc = targetMethod.desc;
-        }
+        return result;
     }
 
     private static List<Pair<Type, AnnotationNode>> findSugars(MethodNode method) {

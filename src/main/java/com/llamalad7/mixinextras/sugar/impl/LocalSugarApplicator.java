@@ -10,9 +10,9 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.VarInsnNode;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
+import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Annotations;
@@ -28,7 +28,7 @@ class LocalSugarApplicator extends SugarApplicator {
     }
 
     @Override
-    void preInject(IMixinInfo mixin, List<Pair<Type, AnnotationNode>> sugarInfos, Target target, InjectionNode node) {
+    void preInject(InjectionInfo info, List<Pair<Type, AnnotationNode>> sugarInfos, Target target, InjectionNode node) {
         for (Pair<Type, AnnotationNode> sugar : sugarInfos) {
             Type paramType = sugar.getLeft();
             AnnotationNode annotation = sugar.getRight();
@@ -38,21 +38,21 @@ class LocalSugarApplicator extends SugarApplicator {
                 if (node.hasDecoration(decorationKey)) {
                     continue;
                 }
-                Context context = CompatibilityHelper.makeLvtContext(mixin, paramType, isArgsOnly, target, node.getCurrentTarget());
+                Context context = CompatibilityHelper.makeLvtContext(info, paramType, isArgsOnly, target, node.getCurrentTarget());
                 node.decorate(decorationKey, context);
             }
         }
     }
 
     @Override
-    void inject(IMixinInfo mixin, Type paramType, AnnotationNode sugar, Target target, InjectionNode node) {
+    void inject(InjectionInfo info, Type paramType, AnnotationNode sugar, Target target, InjectionNode node) {
         LocalVariableDiscriminator discriminator = LocalVariableDiscriminator.parse(sugar);
         Context context = node.getDecoration(getTargetNodeKey(paramType, discriminator.isArgsOnly()));
         int index = discriminator.findLocal(context);
         if (index < 0) {
             throw new IllegalStateException(String.format(
                     "Failed to match a local for %s %s in mixin %s in target %s at instruction %s!",
-                    ASMUtils.annotationToString(sugar), ASMUtils.typeToString(paramType), mixin, target, node
+                    ASMUtils.annotationToString(sugar), ASMUtils.typeToString(paramType), CompatibilityHelper.getMixin(info), target, node
             ));
         }
         if (discriminator.printLVT()) {
