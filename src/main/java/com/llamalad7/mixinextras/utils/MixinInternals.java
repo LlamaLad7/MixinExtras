@@ -5,6 +5,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
+import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
@@ -66,9 +67,9 @@ public class MixinInternals {
     }
 
     @SuppressWarnings("unchecked")
-    public static Collection<Target> getTargets(InjectionInfo info) {
+    public static Map<Target, List<InjectionNode>> getTargets(InjectionInfo info) {
         try {
-            return ((Map<Target, ?>) INJECTION_INFO_TARGET_NODES_FIELD.get(info)).keySet();
+            return (Map<Target, List<InjectionNode>>) INJECTION_INFO_TARGET_NODES_FIELD.get(info);
         } catch (IllegalAccessException e) {
             throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
         }

@@ -1,6 +1,5 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -10,14 +9,33 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
-import org.spongepowered.asm.util.Annotations;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SugarInjector {
+class SugarInjector {
     private static final String SUGAR_PACKAGE = Type.getDescriptor(Local.class).substring(0, Type.getDescriptor(Local.class).lastIndexOf('/') + 1);
     private static final Set<String> PREPARED_MIXINS = new HashSet<>();
+
+    private final InjectionInfo injectionInfo;
+    private final IMixinInfo mixin;
+    private Map<Target, List<InjectionNode>> targets;
+    private String desugaredHandlerDesc;
+    private final MethodNode handler;
+    private final List<Type> sugarParams = new ArrayList<>();
+    private final List<List<AnnotationNode>> sugarParamAnnotations = new ArrayList<>();
+    private final List<SugarApplicator> applicators = new ArrayList<>();
+    private final List<SugarApplicationException> exceptions = new ArrayList<>();
+
+    SugarInjector(InjectionInfo injectionInfo, IMixinInfo mixin, MethodNode handler) {
+        this.injectionInfo = injectionInfo;
+        this.mixin = mixin;
+        this.handler = handler;
+    }
+
+    void setTargets(Map<Target, List<InjectionNode>> targets) {
+        this.targets = targets;
+    }
 
     static void prepareMixin(IMixinInfo mixinInfo, ClassNode mixinNode) {
         if (PREPARED_MIXINS.contains(mixinInfo.getClassName())) {
@@ -62,18 +80,16 @@ public class SugarInjector {
     }
 
     @SuppressWarnings("unchecked")
-    static void stripSugar(MethodNode method) {
+    void stripSugar() {
         List<Type> params = new ArrayList<>();
-        List<Type> sugarParams = new ArrayList<>();
         List<List<AnnotationNode>> invisibleAnnotations = new ArrayList<>();
-        List<List<AnnotationNode>> sugarParamAnnotations = new ArrayList<>();
         boolean foundSugar = false;
         int i = 0;
-        for (Type type : Type.getArgumentTypes(method.desc)) {
-            List<AnnotationNode> annotations = method.invisibleParameterAnnotations[i];
+        for (Type type : Type.getArgumentTypes(handler.desc)) {
+            List<AnnotationNode> annotations = handler.invisibleParameterAnnotations[i];
             if (annotations == null || annotations.stream().noneMatch(it -> it != null && it.desc.startsWith(SUGAR_PACKAGE))) {
                 if (foundSugar) {
-                    throw new IllegalStateException(String.format("Found non-trailing sugared parameters on %s", method.name + method.desc));
+                    throw new IllegalStateException(String.format("Found non-trailing sugared parameters on %s", handler.name + handler.desc));
                 }
                 params.add(type);
                 invisibleAnnotations.add(annotations);
@@ -84,44 +100,50 @@ public class SugarInjector {
             }
             i++;
         }
-        if (method.invisibleAnnotations == null) {
-            method.invisibleAnnotations = new ArrayList<>();
-        }
-        method.invisibleAnnotations.add(buildMarkerAnnotation(method, sugarParams, sugarParamAnnotations));
-        method.invisibleParameterAnnotations = invisibleAnnotations.toArray(new List[0]);
-        method.desc = Type.getMethodDescriptor(Type.getReturnType(method.desc), params.toArray(new Type[0]));
+        handler.invisibleParameterAnnotations = invisibleAnnotations.toArray(new List[0]);
+        handler.desc = Type.getMethodDescriptor(Type.getReturnType(handler.desc), params.toArray(new Type[0]));
+        desugaredHandlerDesc = handler.desc;
     }
 
-    private static AnnotationNode buildMarkerAnnotation(MethodNode method, List<Type> sugarParams, List<List<AnnotationNode>> sugarParamAnnotations) {
-        AnnotationNode infoHolder = new AnnotationNode(Type.getDescriptor(SugarInfoHolder.class));
-        List<AnnotationNode> params = new ArrayList<>();
-        int i = 0;
-        for (Type paramType : sugarParams) {
-            AnnotationNode info = new AnnotationNode(Type.getDescriptor(SugarInfoHolder.Info.class));
-            info.visit("type", paramType);
-            info.visit("annotations", sugarParamAnnotations.get(i));
-            params.add(info);
-            i++;
+    void prepareSugar() {
+        for (Pair<Type, AnnotationNode> sugar : findSugars()) {
+            applicators.add(SugarApplicator.create(injectionInfo, sugar.getLeft(), sugar.getRight()));
         }
-        infoHolder.visit("value", params);
-        boolean isWrapOperation = Annotations.getVisible(method, WrapOperation.class) != null;
-        if (isWrapOperation) {
-            infoHolder.visit("applyLate", true);
+        for (SugarApplicator applicator : applicators) {
+            for (Map.Entry<Target, List<InjectionNode>> entry : targets.entrySet()) {
+                Target target = entry.getKey();
+                for (ListIterator<InjectionNode> it = entry.getValue().listIterator(); it.hasNext(); ) {
+                    InjectionNode node = it.next();
+                    try {
+                        applicator.validate(target, node);
+                    } catch (SugarApplicationException e) {
+                        exceptions.add(
+                            new SugarApplicationException(
+                                    String.format(
+                                            "Failed to validate sugar %s on method %s from mixin %s in target method %s at instruction %s",
+                                            ASMUtils.annotationToString(applicator.sugar), handler.name + handler.desc, mixin, target, node
+                                    ),
+                                    e
+                            )
+                        );
+                        it.remove();
+                    }
+                }
+            }
         }
-        return infoHolder;
     }
 
-    static void applySugar(InjectionInfo injectionInfo, IMixinInfo mixin, Collection<Target> targets, MethodNode handler) {
-        String oldDesc = handler.desc;
-        reSugarMethod(handler);
-        List<Pair<Type, AnnotationNode>> sugars = findSugars(handler);
-        for (Target target : targets) {
-            for (MethodInsnNode targetInsn : findCalls(target, handler, oldDesc)) {
+    void applySugar() {
+        reSugar();
+        for (Target target : targets.keySet()) {
+            for (MethodInsnNode targetInsn : findHandlerCalls(target)) {
                 InjectionNode node = target.addInjectionNode(targetInsn);
                 try {
-                    SugarApplicator.preApply(injectionInfo, sugars, target, node);
-                    for (Pair<Type, AnnotationNode> sugarInfo : sugars) {
-                        SugarApplicator.apply(injectionInfo, sugarInfo.getLeft(), sugarInfo.getRight(), target, node);
+                    for (SugarApplicator applicator : applicators) {
+                        applicator.preInject(target, node);
+                    }
+                    for (SugarApplicator applicator : applicators) {
+                        applicator.inject(target, node);
                     }
                 } catch (Exception e) {
                     throw new SugarApplicationException(
@@ -137,47 +159,30 @@ public class SugarInjector {
         }
     }
 
+    List<SugarApplicationException> getExceptions() {
+        return exceptions;
+    }
+
     @SuppressWarnings("unchecked")
-    private static void reSugarMethod(MethodNode handler) {
-        AnnotationNode infoHolder = getAndRemoveSugarInfo(handler);
-        if (infoHolder == null) {
-            return;
-        }
+    private void reSugar() {
         List<Type> paramTypes = new ArrayList<>(Arrays.asList(Type.getArgumentTypes(handler.desc)));
         List<List<AnnotationNode>> paramAnnotations = (List<List<AnnotationNode>>) (Object) new ArrayList<>(
                 Arrays.asList(
                         handler.invisibleParameterAnnotations == null ? new List[paramTypes.size()] : handler.invisibleParameterAnnotations
                 )
         );
-        for (AnnotationNode info : Annotations.<List<AnnotationNode>>getValue(infoHolder)) {
-            paramTypes.add(Annotations.getValue(info, "type"));
-            paramAnnotations.add(Annotations.getValue(info, "annotations"));
-        }
+        paramTypes.addAll(sugarParams);
+        paramAnnotations.addAll(sugarParamAnnotations);
         handler.desc = Type.getMethodDescriptor(Type.getReturnType(handler.desc), paramTypes.toArray(new Type[0]));
         handler.invisibleParameterAnnotations = paramAnnotations.toArray(new List[0]);
     }
 
-    private static AnnotationNode getAndRemoveSugarInfo(MethodNode method) {
-        if (method.invisibleAnnotations == null) {
-            return null;
-        }
-        String desc = Type.getDescriptor(SugarInfoHolder.class);
-        for (ListIterator<AnnotationNode> it = method.invisibleAnnotations.listIterator(); it.hasNext(); ) {
-            AnnotationNode next = it.next();
-            if (next.desc.equals(desc)) {
-                it.remove();
-                return next;
-            }
-        }
-        return null;
-    }
-
-    private static List<MethodInsnNode> findCalls(Target target, MethodNode method, String desc) {
+    private List<MethodInsnNode> findHandlerCalls(Target target) {
         List<MethodInsnNode> result = new ArrayList<>();
         for (AbstractInsnNode insn : target) {
             if (insn instanceof MethodInsnNode){
                 MethodInsnNode call = (MethodInsnNode) insn;
-                if (call.owner.equals(target.classNode.name) && call.name.equals(method.name) && call.desc.equals(desc)) {
+                if (call.owner.equals(target.classNode.name) && call.name.equals(handler.name) && call.desc.equals(desugaredHandlerDesc)) {
                     result.add(call);
                 }
             }
@@ -185,24 +190,23 @@ public class SugarInjector {
         return result;
     }
 
-    private static List<Pair<Type, AnnotationNode>> findSugars(MethodNode method) {
-        if (method.invisibleParameterAnnotations == null) {
+    private List<Pair<Type, AnnotationNode>> findSugars() {
+        if (handler.invisibleParameterAnnotations == null) {
             return Collections.emptyList();
         }
         List<Pair<Type, AnnotationNode>> result = new ArrayList<>();
-        Type[] paramTypes = Type.getArgumentTypes(method.desc);
         int i = 0;
-        for (List<AnnotationNode> annotationNodes : method.invisibleParameterAnnotations) {
+        for (List<AnnotationNode> annotationNodes : sugarParamAnnotations) {
             AnnotationNode sugar = findSugar(annotationNodes);
             if (sugar != null) {
-                result.add(Pair.of(paramTypes[i], sugar));
+                result.add(Pair.of(sugarParams.get(i), sugar));
             }
             i++;
         }
         return result;
     }
 
-    private static AnnotationNode findSugar(List<AnnotationNode> annotations) {
+    private AnnotationNode findSugar(List<AnnotationNode> annotations) {
         if (annotations == null) {
             return null;
         }
