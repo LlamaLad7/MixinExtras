@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.SugarBridge;
 import com.llamalad7.mixinextras.sugar.passback.impl.PassBackClassGenerator;
@@ -17,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.ClassInfo;
+import org.spongepowered.asm.util.Annotations;
 import org.spongepowered.asm.util.Bytecode;
 import org.spongepowered.asm.util.asm.ASM;
 
@@ -60,8 +62,8 @@ class SugarInjector {
                 if (sugarInfo == null) {
                     sugarInfo = new SugarInfo();
                 }
-                wrapInjectorAnnotation(mixinInfo, method);
                 preparePassBack(sugarInfo, method, mixinInfo);
+                wrapInjectorAnnotation(mixinInfo, method);
             }
         }
         PREPARED_MIXINS.put(mixinInfo.getClassName(), sugarInfo);
@@ -134,6 +136,9 @@ class SugarInjector {
         }
         if (visitors.isEmpty()) {
             return;
+        }
+        if (Annotations.getVisible(handler, WrapOperation.class) != null) {
+            throw new UnsupportedOperationException("Mutable locals are not supported on @WrapOperation! This will be available in the future (or now, check if there's an update available).");
         }
         PassBackInfo passBackInfo = new PassBackInfo(Bytecode.isVirtual(handler));
         for (PassBackVisitor visitor : visitors) {
