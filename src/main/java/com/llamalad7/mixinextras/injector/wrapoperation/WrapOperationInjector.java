@@ -3,6 +3,7 @@ package com.llamalad7.mixinextras.injector.wrapoperation;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
+import com.llamalad7.mixinextras.utils.UniquenessHelper;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -31,8 +32,6 @@ class WrapOperationInjector extends Injector {
             false
     );
     private static final String NPE = Type.getInternalName(NullPointerException.class);
-
-    private int nextBridgeIndex = 0;
 
     public WrapOperationInjector(InjectionInfo info) {
         super(info, "@WrapOperation");
@@ -140,11 +139,12 @@ class WrapOperationInjector extends Injector {
         // The bridge method's args will consist of any bound parameters followed by an array
 
         Type returnType = getReturnType(node);
+        int methodId = UniquenessHelper.getNextId(this.classNode.name);
 
         MethodNode method = new MethodNode(
                 ASM.API_VERSION,
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | (virtual ? 0 : Opcodes.ACC_STATIC),
-                "mixinextras$bridge$" + this.methodNode.name + '$' + this.nextBridgeIndex++ + '$' + getName(node.getCurrentTarget()),
+                "mixinextras$bridge$" + methodId + '$' + getName(node.getCurrentTarget()),
                 Bytecode.generateDescriptor(
                         returnType.getDescriptor().length() == 1 ?
                                 Type.getObjectType(
