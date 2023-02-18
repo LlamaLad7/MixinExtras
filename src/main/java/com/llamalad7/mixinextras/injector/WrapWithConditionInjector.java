@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.injector;
 
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
+import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
@@ -24,7 +25,7 @@ public class WrapWithConditionInjector extends Injector {
     }
 
     private void checkTargetIsLogicallyVoid(Target target, InjectionNode node) {
-        if (node.hasDecoration(WrapWithConditionInjectionInfo.POPPED_OPERATION_DECORATOR)) {
+        if (node.hasDecoration(Decorations.POPPED_OPERATION)) {
             // We have already checked that the operation's return value is immediately popped, therefore it is effectively void.
             return;
         }

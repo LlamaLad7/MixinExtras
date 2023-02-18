@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector;
 
+import com.llamalad7.mixinextras.utils.Decorations;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -17,8 +18,6 @@ import java.util.List;
 @InjectionInfo.AnnotationType(WrapWithCondition.class)
 @HandlerPrefix("wrapWithCondition")
 public class WrapWithConditionInjectionInfo extends InjectionInfo {
-    static final String POPPED_OPERATION_DECORATOR = "mixinextras_operationIsImmediatelyPopped";
-
     public WrapWithConditionInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
         super(mixin, method, annotation);
     }
@@ -37,7 +36,7 @@ public class WrapWithConditionInjectionInfo extends InjectionInfo {
                 if (currentTarget instanceof MethodInsnNode) {
                     Type returnType = Type.getReturnType(((MethodInsnNode) currentTarget).desc);
                     if (this.isTypePoppedByInstruction(returnType, currentTarget.getNext())) {
-                        node.decorate(POPPED_OPERATION_DECORATOR, true);
+                        node.decorate(Decorations.POPPED_OPERATION, true);
                     }
                 }
             }

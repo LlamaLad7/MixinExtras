@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.sugar.passback.impl;
 
+import com.llamalad7.mixinextras.utils.Decorations;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -90,8 +91,8 @@ public class PassBackInfo {
             add(new MethodInsnNode(Opcodes.INVOKESPECIAL, owner, "<init>", "()V", false));
             add(new VarInsnNode(Opcodes.ASTORE, passBackIndex));
         }});
-        AbstractInsnNode passBackEnd = node.hasDecoration("mixinExtras_passBackEnd")
-                ? node.getDecoration("mixinExtras_passBackEnd")
+        AbstractInsnNode passBackEnd = node.hasDecoration(Decorations.PASS_BACK_END)
+                ? node.getDecoration(Decorations.PASS_BACK_END)
                 : node.getCurrentTarget();
         target.insns.insert(passBackEnd, new InsnList() {{
             IntConsumer getValue = lvtIndex -> {
@@ -107,7 +108,7 @@ public class PassBackInfo {
                 passBackRoutine.accept(this, getValue);
             }
             add(end);
-            node.decorate("mixinExtras_passBackEnd", end);
+            node.decorate(Decorations.PASS_BACK_END, end);
         }});
     }
 
