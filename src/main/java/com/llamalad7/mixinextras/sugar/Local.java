@@ -17,6 +17,4 @@ public @interface Local {
     String[] name() default {};
 
     boolean argsOnly() default false;
-
-    boolean mutable() default false;
 }
