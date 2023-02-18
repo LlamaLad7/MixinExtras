@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
+import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Handle;
@@ -237,7 +238,7 @@ class WrapOperationInjector extends Injector {
             checkAndMoveNodes(
                     target.insns,
                     insns,
-                    node.getCurrentTarget().getNext(),
+                    node,
                     it -> it.getOpcode() == Opcodes.DUP,
                     it -> it.getOpcode() == Opcodes.IFNONNULL,
                     it -> it.getOpcode() == Opcodes.NEW && ((TypeInsnNode) it).desc.equals(NPE),
@@ -263,7 +264,9 @@ class WrapOperationInjector extends Injector {
     }
 
     @SafeVarargs
-    private final void checkAndMoveNodes(InsnList from, InsnList to, AbstractInsnNode current, Predicate<AbstractInsnNode>... predicates) {
+    private final void checkAndMoveNodes(InsnList from, InsnList to, InjectionNode node, Predicate<AbstractInsnNode>... predicates) {
+        AbstractInsnNode current = node.hasDecoration(Decorations.PASS_BACK_END) ? node.getDecoration(Decorations.PASS_BACK_END) : node.getCurrentTarget();
+        current = current.getNext();
         for (Predicate<AbstractInsnNode> predicate : predicates) {
             if (!predicate.test(current)) {
                 throw new AssertionError("Failed assertion when wrapping instructions. Please inform LlamaLad7!");
