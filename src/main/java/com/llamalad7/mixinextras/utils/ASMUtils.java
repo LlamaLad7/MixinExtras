@@ -10,7 +10,7 @@ public class ASMUtils {
     public static String annotationToString(AnnotationNode annotation) {
         StringBuilder builder = new StringBuilder("@").append(typeToString(Type.getType(annotation.desc)));
         List<Object> values = annotation.values;
-        if (values.isEmpty()) {
+        if (values == null || values.isEmpty()) {
             return builder.toString();
         }
         builder.append('(');
