@@ -32,6 +32,8 @@ class WrapOperationInjector extends Injector {
     );
     private static final String NPE = Type.getInternalName(NullPointerException.class);
 
+    private int nextBridgeIndex = 0;
+
     public WrapOperationInjector(InjectionInfo info) {
         super(info, "@WrapOperation");
     }
@@ -142,7 +144,7 @@ class WrapOperationInjector extends Injector {
         MethodNode method = new MethodNode(
                 ASM.API_VERSION,
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | (virtual ? 0 : Opcodes.ACC_STATIC),
-                "mixinextras$bridge$" + UUID.randomUUID() + '$' + getName(node.getCurrentTarget()),
+                "mixinextras$bridge$" + this.methodNode.name + '$' + this.nextBridgeIndex++ + '$' + getName(node.getCurrentTarget()),
                 Bytecode.generateDescriptor(
                         returnType.getDescriptor().length() == 1 ?
                                 Type.getObjectType(
