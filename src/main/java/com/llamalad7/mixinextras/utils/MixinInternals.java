@@ -4,22 +4,30 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import org.spongepowered.asm.mixin.injection.code.Injector;
+import org.spongepowered.asm.mixin.injection.invoke.arg.ArgsClassGenerator;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
+import org.spongepowered.asm.mixin.transformer.ClassInfo;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
+import org.spongepowered.asm.mixin.transformer.ext.IClassGenerator;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 import org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext;
+import org.spongepowered.asm.service.ISyntheticClassInfo;
+import org.spongepowered.asm.util.IConsumer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Mumfrey, look away.
  */
+@SuppressWarnings("unchecked")
 public class MixinInternals {
     private static final Field TARGET_CLASS_CONTEXT_MIXINS_FIELD;
     private static final Method MIXIN_INFO_GET_STATE_METHOD;
@@ -27,6 +35,11 @@ public class MixinInternals {
     private static final Field EXTENSIONS_FIELD;
     private static final Field ACTIVE_EXTENSIONS_FIELD;
     private static final Field INJECTION_INFO_TARGET_NODES_FIELD;
+    private static final Field ARGS_CLASS_GENERATOR_REGISTRY_FIELD;
+    private static final Field INJECTION_NODE_DECORATIONS_FIELD;
+    private static final Field INJECTION_INFO_INJECTOR_FIELD;
+    private static final Field CLASS_INFO_MIXIN_FIELD;
+    private static final Method CLASS_INFO_FROM_CLASS_NODE_METHOD;
 
     static {
         try {
@@ -45,28 +58,34 @@ public class MixinInternals {
             EXTENSIONS_FIELD.setAccessible(true);
             ACTIVE_EXTENSIONS_FIELD = Extensions.class.getDeclaredField("activeExtensions");
             ACTIVE_EXTENSIONS_FIELD.setAccessible(true);
+            ARGS_CLASS_GENERATOR_REGISTRY_FIELD = ArgsClassGenerator.class.getDeclaredField("registry");
+            ARGS_CLASS_GENERATOR_REGISTRY_FIELD.setAccessible(true);
+            INJECTION_NODE_DECORATIONS_FIELD = InjectionNode.class.getDeclaredField("decorations");
+            INJECTION_NODE_DECORATIONS_FIELD.setAccessible(true);
+            INJECTION_INFO_INJECTOR_FIELD = InjectionInfo.class.getDeclaredField("injector");
+            INJECTION_INFO_INJECTOR_FIELD.setAccessible(true);
+            CLASS_INFO_MIXIN_FIELD = ClassInfo.class.getDeclaredField("mixin");
+            CLASS_INFO_MIXIN_FIELD.setAccessible(true);
+            CLASS_INFO_FROM_CLASS_NODE_METHOD = ClassInfo.class.getDeclaredMethod("fromClassNode", ClassNode.class);
+            CLASS_INFO_FROM_CLASS_NODE_METHOD.setAccessible(true);
         } catch (ClassNotFoundException | NoSuchFieldException | NoSuchMethodException e) {
             throw new RuntimeException("Failed to access some mixin internals, please report to LlamaLad7!", e);
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static List<Pair<IMixinInfo, ClassNode>> getMixinsFor(ITargetClassContext context) {
         try {
             List<Pair<IMixinInfo, ClassNode>> result = new ArrayList<>();
             SortedSet<IMixinInfo> mixins = (SortedSet<IMixinInfo>) TARGET_CLASS_CONTEXT_MIXINS_FIELD.get(context);
             for (IMixinInfo mixin : mixins) {
-                Object state = MIXIN_INFO_GET_STATE_METHOD.invoke(mixin);
-                ClassNode classNode = (ClassNode) STATE_CLASS_NODE_FIELD.get(state);
-                result.add(Pair.of(mixin, classNode));
+                result.add(Pair.of(mixin, getClassNode(mixin)));
             }
             return result;
-        } catch (IllegalAccessException | InvocationTargetException e) {
+        } catch (IllegalAccessException e) {
             throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static Map<Target, List<InjectionNode>> getTargets(InjectionInfo info) {
         try {
             return (Map<Target, List<InjectionNode>>) INJECTION_INFO_TARGET_NODES_FIELD.get(info);
@@ -75,7 +94,6 @@ public class MixinInternals {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static void registerExtension(IExtension extension) {
         try {
             IMixinTransformer transformer = (IMixinTransformer) MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
@@ -108,6 +126,66 @@ public class MixinInternals {
             extensions.add(newExtension);
         } else {
             extensions.add(index + 1, newExtension);
+        }
+    }
+
+    public static void registerClassGenerator(Function<IConsumer<ISyntheticClassInfo>, IClassGenerator> classGenerator) {
+        try {
+            IMixinTransformer transformer = (IMixinTransformer) MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
+            Extensions extensions = (Extensions) transformer.getExtensions();
+            ArgsClassGenerator argsClassGenerator = extensions.getGenerator(ArgsClassGenerator.class);
+            IConsumer<ISyntheticClassInfo> registry = (IConsumer<ISyntheticClassInfo>) ARGS_CLASS_GENERATOR_REGISTRY_FIELD.get(argsClassGenerator);
+            extensions.add(classGenerator.apply(registry));
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
+        }
+    }
+
+    public static Map<String, Object> getDecorations(InjectionNode node) {
+        try {
+            return (Map<String, Object>) INJECTION_NODE_DECORATIONS_FIELD.get(node);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
+        }
+    }
+
+    public static Injector getInjector(InjectionInfo info) {
+        try {
+            return (Injector) INJECTION_INFO_INJECTOR_FIELD.get(info);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
+        }
+    }
+
+    public static List<Pair<IMixinInfo, ClassNode>> getSuperMixins(IMixinInfo mixin) {
+        try {
+            List<Pair<IMixinInfo, ClassNode>> result = new ArrayList<>();
+            ClassInfo current = ClassInfo.forName(mixin.getClassName()).getSuperClass();
+            while (current != null && current.isMixin()) {
+                IMixinInfo currentInfo = (IMixinInfo) CLASS_INFO_MIXIN_FIELD.get(current);
+                result.add(Pair.of(currentInfo, getClassNode(currentInfo)));
+                current = current.getSuperClass();
+            }
+            return result;
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
+        }
+    }
+
+    private static ClassNode getClassNode(IMixinInfo mixin) {
+        try {
+            Object state = MIXIN_INFO_GET_STATE_METHOD.invoke(mixin);
+            return (ClassNode) STATE_CLASS_NODE_FIELD.get(state);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
+        }
+    }
+
+    public static void registerClassInfo(ClassNode classNode) {
+        try {
+            CLASS_INFO_FROM_CLASS_NODE_METHOD.invoke(null, classNode);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
         }
     }
 }

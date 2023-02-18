@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationApplicatorE
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
 import com.llamalad7.mixinextras.sugar.impl.SugarApplicatorExtension;
 import com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo;
+import com.llamalad7.mixinextras.sugar.passback.impl.PassBackClassGenerator;
 import com.llamalad7.mixinextras.utils.MixinInternals;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 
@@ -39,6 +40,8 @@ public class MixinExtrasBootstrap {
             if (runtime) {
                 MixinInternals.registerExtension(new SugarApplicatorExtension());
                 MixinInternals.registerExtension(new WrapOperationApplicatorExtension());
+
+                MixinInternals.registerClassGenerator(PassBackClassGenerator::new);
             }
         }
     }

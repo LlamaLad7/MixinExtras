@@ -1,11 +1,9 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
+import com.llamalad7.mixinextras.sugar.passback.impl.PassBackInfo;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.AnnotationNode;
-import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.spongepowered.asm.mixin.injection.modify.InvalidImplicitDiscriminatorException;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
@@ -20,10 +18,12 @@ import org.spongepowered.asm.util.SignaturePrinter;
 
 class LocalSugarApplicator extends SugarApplicator {
     private final boolean isArgsOnly;
+    private final boolean isMutable;
 
-    public LocalSugarApplicator(InjectionInfo info, Type paramType, AnnotationNode sugar) {
-        super(info, paramType, sugar);
+    LocalSugarApplicator(InjectionInfo info, SugarParameter parameter) {
+        super(info, parameter);
         this.isArgsOnly = Annotations.getValue(sugar, "argsOnly", (Boolean) false);
+        this.isMutable = Annotations.getValue(sugar, "mutable", (Boolean) false);
     }
 
     @Override
@@ -45,21 +45,25 @@ class LocalSugarApplicator extends SugarApplicator {
     }
 
     @Override
-    void preInject(Target target, InjectionNode node) {
+    void prepare(Target target, InjectionNode node) {
         getOrCreateLocalContext(target, node);
     }
 
     @Override
-    void inject(Target target, InjectionNode node) {
+    void inject(Target target, InjectionNode node, PassBackInfo passBackInfo) {
         LocalVariableDiscriminator discriminator = LocalVariableDiscriminator.parse(sugar);
         Context context = node.getDecoration(getLocalContextKey());
         int index = discriminator.findLocal(context);
         if (index < 0) {
             throw new SugarApplicationException("Failed to match a local, this should have been caught during validation.");
         }
-        InsnList insns = new InsnList();
-        insns.add(new VarInsnNode(paramType.getOpcode(Opcodes.ILOAD), index));
-        target.insertBefore(node, insns);
+        target.insns.insertBefore(node.getCurrentTarget(), new VarInsnNode(paramType.getOpcode(Opcodes.ILOAD), index));
+        if (isMutable) {
+            passBackInfo.addPassBackStage((insns, loadValue) -> {
+                loadValue.accept(paramLvtIndex);
+                insns.add(new VarInsnNode(paramType.getOpcode(Opcodes.ISTORE), index));
+            });
+        }
     }
 
     private Context getOrCreateLocalContext(Target target, InjectionNode node) {

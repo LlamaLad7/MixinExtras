@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.passback.impl.PassBackInfo;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
@@ -20,26 +21,28 @@ abstract class SugarApplicator {
     }
 
     protected final InjectionInfo info;
-    protected final Type paramType;
     protected final AnnotationNode sugar;
+    protected final Type paramType;
+    protected final int paramLvtIndex;
 
-    SugarApplicator(InjectionInfo info, Type paramType, AnnotationNode sugar) {
+    SugarApplicator(InjectionInfo info, SugarParameter parameter) {
         this.info = info;
-        this.paramType = paramType;
-        this.sugar = sugar;
+        this.sugar = parameter.sugar;
+        this.paramType = parameter.type;
+        this.paramLvtIndex = parameter.lvtIndex;
     }
 
     abstract void validate(Target target, InjectionNode node);
 
-    abstract void preInject(Target target, InjectionNode node);
+    abstract void prepare(Target target, InjectionNode node);
 
-    abstract void inject(Target target, InjectionNode node);
+    abstract void inject(Target target, InjectionNode node, PassBackInfo passBackInfo);
 
-    static SugarApplicator create(InjectionInfo info, Type paramType, AnnotationNode sugar) {
+    static SugarApplicator create(InjectionInfo info, SugarParameter parameter) {
         try {
-            Class<? extends SugarApplicator> clazz = MAP.get(sugar.desc);
-            Constructor<? extends SugarApplicator> ctor = clazz.getDeclaredConstructor(InjectionInfo.class, Type.class, AnnotationNode.class);
-            return ctor.newInstance(info, paramType, sugar);
+            Class<? extends SugarApplicator> clazz = MAP.get(parameter.sugar.desc);
+            Constructor<? extends SugarApplicator> ctor = clazz.getDeclaredConstructor(InjectionInfo.class, SugarParameter.class);
+            return ctor.newInstance(info, parameter);
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
