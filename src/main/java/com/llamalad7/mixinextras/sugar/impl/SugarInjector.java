@@ -27,7 +27,8 @@ import java.util.stream.Collectors;
 
 class SugarInjector {
     private static final String SUGAR_PACKAGE = Type.getDescriptor(Local.class).substring(0, Type.getDescriptor(Local.class).lastIndexOf('/') + 1);
-    private static final Map<String, SugarInfo> PREPARED_MIXINS = new HashMap<>();
+    private static final Set<ClassNode> PREPARED_MIXINS = Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Map<String, SugarInfo> SUGAR_INFO_MAP = new HashMap<>();
 
     private final InjectionInfo injectionInfo;
     private final IMixinInfo mixin;
@@ -42,7 +43,7 @@ class SugarInjector {
         this.injectionInfo = injectionInfo;
         this.mixin = mixin;
         this.handler = handler;
-        this.passBackInfo = PREPARED_MIXINS.get(mixin.getClassName()).getPassBack(handler);
+        this.passBackInfo = SUGAR_INFO_MAP.get(mixin.getClassName()).getPassBack(handler);
     }
 
     void setTargets(Map<Target, List<InjectionNode>> targets) {
@@ -50,7 +51,7 @@ class SugarInjector {
     }
 
     static void prepareMixin(IMixinInfo mixinInfo, ClassNode mixinNode) {
-        if (PREPARED_MIXINS.containsKey(mixinInfo.getClassName())) {
+        if (PREPARED_MIXINS.contains(mixinNode)) {
             // Don't scan the whole class again.
             return;
         }
@@ -66,7 +67,8 @@ class SugarInjector {
                 wrapInjectorAnnotation(mixinInfo, method);
             }
         }
-        PREPARED_MIXINS.put(mixinInfo.getClassName(), sugarInfo);
+        PREPARED_MIXINS.add(mixinNode);
+        SUGAR_INFO_MAP.put(mixinInfo.getClassName(), sugarInfo);
     }
 
     private static void applySuperMixinSugar(IMixinInfo mixinInfo, ClassNode mixinNode) {
@@ -77,7 +79,7 @@ class SugarInjector {
         Pair<IMixinInfo, ClassNode> parent = superMixins.get(0);
         prepareMixin(parent.getLeft(), parent.getRight());
         for (Pair<IMixinInfo, ClassNode> superMixin : superMixins) {
-            SugarInfo sugarInfo = PREPARED_MIXINS.get(superMixin.getLeft().getClassName());
+            SugarInfo sugarInfo = SUGAR_INFO_MAP.get(superMixin.getLeft().getClassName());
             if (sugarInfo == null) {
                 continue;
             }
