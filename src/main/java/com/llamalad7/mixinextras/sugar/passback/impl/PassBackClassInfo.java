@@ -32,6 +32,7 @@ public class PassBackClassInfo extends SyntheticClassInfo {
     }
 
     void generateFields(ClassVisitor visitor) {
+        visitor.visitField(Opcodes.ACC_PUBLIC, "isValid", "Z", null, null);
         for (int i = 0; i < valueTypes.length; i++) {
             visitor.visitField(Opcodes.ACC_PUBLIC, "value" + i, valueTypes[i].getDescriptor(), null, null);
         }
@@ -45,9 +46,12 @@ public class PassBackClassInfo extends SyntheticClassInfo {
                 null,
                 null);
         method.instructions = new InsnList() {{
-            add(new VarInsnNode(Opcodes.ALOAD, 0));
             LabelNode end = new LabelNode();
+            add(new VarInsnNode(Opcodes.ALOAD, 0));
             add(new JumpInsnNode(Opcodes.IFNULL, end));
+            add(new VarInsnNode(Opcodes.ALOAD, 0));
+            add(new InsnNode(Opcodes.ICONST_1));
+            add(new FieldInsnNode(Opcodes.PUTFIELD, name, "isValid", "Z"));
             int index = 1;
             for (int i = 0; i < valueTypes.length; i++) {
                 Type type = valueTypes[i];

@@ -260,7 +260,7 @@ class SugarInjector {
                         applicator.inject(target, node, passBackInfo);
                     }
                     if (passBackInfo != null) {
-                        passBackInfo.applyToTarget(target, handlerCall);
+                        passBackInfo.applyToTarget(target, node);
                     }
                 } catch (Exception e) {
                     throw new SugarApplicationException(

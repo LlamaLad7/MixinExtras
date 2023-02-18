@@ -33,7 +33,8 @@ public class WrapOperationApplicatorExtension implements IExtension {
         List<LateApplyingInjectorInfo> queuedInjections = QUEUED_INJECTIONS.get(context);
         if (queuedInjections != null) {
             for (LateApplyingInjectorInfo injection : queuedInjections) {
-                injection.lateApply();
+                injection.lateInject();
+                injection.latePostInject();
             }
         }
     }

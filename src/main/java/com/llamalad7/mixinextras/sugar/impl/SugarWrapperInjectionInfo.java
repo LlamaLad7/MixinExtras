@@ -40,8 +40,9 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
         lateApply = delegate instanceof LateApplyingInjectorInfo;
         if (lateApply) {
             ((LateApplyingInjectorInfo) delegate).wrap(this);
+        } else {
+            checkDelegate();
         }
-        checkDelegate();
     }
 
     @Override
@@ -73,7 +74,14 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
 
     @Override
     public void inject() {
-        // TODO lateApply
+        if (lateApply) {
+            delegate.inject();
+        } else {
+            doInject();
+        }
+    }
+
+    private void doInject() {
         Map<Target, List<InjectionNode>> targets = MixinInternals.getTargets(delegate);
         Injector injector = MixinInternals.getInjector(delegate);
         Map<Target, List<Pair<InjectionNode, MethodInsnNode>>> handlerCallMap = new HashMap<>();
@@ -101,8 +109,14 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
 
     @Override
     public void postInject() {
+        if (!lateApply) {
+            doPostInject(delegate::postInject);
+        }
+    }
+
+    private void doPostInject(Runnable postInject) {
         try {
-            delegate.postInject();
+            postInject.run();
         } catch (InvalidInjectionException | InjectionError e) {
             for (SugarApplicationException sugarException : sugarInjector.getExceptions()) {
                 e.addSuppressed(sugarException);
@@ -117,16 +131,13 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
     }
 
     @Override
-    public void lateApply() {
-        try {
-            ((LateApplyingInjectorInfo) delegate).lateApply();
-        } catch (InvalidInjectionException | InjectionError e) {
-            for (SugarApplicationException sugarException : sugarInjector.getExceptions()) {
-                e.addSuppressed(sugarException);
-            }
-            throw e;
-        }
-//        sugarInjector.applySugar();
+    public void lateInject() {
+        doInject();
+    }
+
+    @Override
+    public void latePostInject() {
+        doPostInject(((LateApplyingInjectorInfo) delegate)::latePostInject);
     }
 
     @Override

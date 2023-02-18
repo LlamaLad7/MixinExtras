@@ -4,6 +4,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
+import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Bytecode;
 
@@ -79,31 +80,34 @@ public class PassBackInfo {
         }
     }
 
-    public void applyToTarget(Target target, AbstractInsnNode node) {
+    public void applyToTarget(Target target, InjectionNode node) {
         int passBackIndex = target.allocateLocal();
-        target.addLocalVariable(passBackIndex, "passBack", 'L' + owner + ';');
+        target.addLocalVariable(passBackIndex, "passBack" + passBackIndex, 'L' + owner + ';');
         target.insertBefore(node, new InsnList() {{
             add(new TypeInsnNode(Opcodes.NEW, owner));
             add(new InsnNode(Opcodes.DUP));
             add(new InsnNode(Opcodes.DUP));
-            add(new MethodInsnNode(
-                    Opcodes.INVOKESPECIAL,
-                    owner,
-                    "<init>",
-                    "()V",
-                    false
-            ));
+            add(new MethodInsnNode(Opcodes.INVOKESPECIAL, owner, "<init>", "()V", false));
             add(new VarInsnNode(Opcodes.ASTORE, passBackIndex));
         }});
-        target.insns.insert(node, new InsnList() {{
+        AbstractInsnNode passBackEnd = node.hasDecoration("mixinExtras_passBackEnd")
+                ? node.getDecoration("mixinExtras_passBackEnd")
+                : node.getCurrentTarget();
+        target.insns.insert(passBackEnd, new InsnList() {{
             IntConsumer getValue = lvtIndex -> {
                 int valueIndex = valueIndexMap.get(lvtIndex);
                 add(new VarInsnNode(Opcodes.ALOAD, passBackIndex));
                 add(new FieldInsnNode(Opcodes.GETFIELD, owner, "value" + valueIndex, values.get(valueIndex).getDescriptor()));
             };
+            LabelNode end = new LabelNode();
+            add(new VarInsnNode(Opcodes.ALOAD, passBackIndex));
+            add(new FieldInsnNode(Opcodes.GETFIELD, owner, "isValid", "Z"));
+            add(new JumpInsnNode(Opcodes.IFEQ, end));
             for (BiConsumer<InsnList, IntConsumer> passBackRoutine : passBackRoutines) {
                 passBackRoutine.accept(this, getValue);
             }
+            add(end);
+            node.decorate("mixinExtras_passBackEnd", end);
         }});
     }
 

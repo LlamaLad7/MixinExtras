@@ -38,8 +38,12 @@ public class WrapOperationInjectionInfo extends InjectionInfo implements LateApp
     }
 
     @Override
-    public void lateApply() {
+    public void lateInject() {
         super.inject();
+    }
+
+    @Override
+    public void latePostInject() {
         super.postInject();
     }
 
