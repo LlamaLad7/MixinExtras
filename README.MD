@@ -27,9 +27,11 @@ If you intend to use this library in your mod, you will probably need to bundle 
 
 If you are on Fabric, I recommend using the `include` configuration in your `dependencies` block.
 
-If you are on another platform, I recommend the [Shadow Gradle Plugin](https://imperceptiblethoughts.com/shadow/). I
-also highly recommend you [relocate](https://imperceptiblethoughts.com/shadow/configuration/relocation/) MixinExtras to
-avoid conflicts with different versions of the library.
+If you are on another platform, I recommend the [Shadow Gradle Plugin](https://imperceptiblethoughts.com/shadow/). You
+also need to [relocate](https://imperceptiblethoughts.com/shadow/configuration/relocation/) MixinExtras to
+avoid conflicts with different versions of the library, and you need to tell the plugin
+to [mergeServiceFiles](https://imperceptiblethoughts.com/shadow/configuration/merging/#merging-service-descriptor-files)
+if you are on Java 9+.
 
 ## Initialization
 
@@ -42,7 +44,8 @@ MixinExtrasBootstrap.init();
 somewhere suitably early in your program. On Fabric, this would be a `PreLaunch` entrypoint. If you cannot find a
 suitable place for your platform, you might like to use
 an [IMixinConfigPlugin](https://github.com/SpongePowered/Mixin/blob/master/src/main/java/org/spongepowered/asm/mixin/extensibility/IMixinConfigPlugin.java)
-. Initializing MixinExtras in your plugin's `onLoad` method should work fine on any platform (***except Fabric loader <= 0.14.10!*** [1]).
+. Initializing MixinExtras in your plugin's `onLoad` method should work fine on any platform (***except Fabric loader <=
+0.14.10!*** [1]).
 
 ### You're good to go!
 
@@ -50,4 +53,8 @@ Enjoy using the library, and don't hesitate to open an [issue](https://github.co
 have any feedback, questions or suggestions.
 
 ## Footnotes
-[1] FabricLoader had an issue meaning a crash occurred if the very first class loaded on `KnotClassLoader` was also referenced from a mixin plugin. `MixinExtrasBootstrap` is frequently the first class loaded there since lots of people initialize it from a `preLaunch` entrypoint. As such, please do that and do not initialize it from a mixin plugin. This has been resolved in Fabric Loader 0.14.11, but that's not very widely used yet.
+
+[1] FabricLoader had an issue meaning a crash occurred if the very first class loaded on `KnotClassLoader` was also
+referenced from a mixin plugin. `MixinExtrasBootstrap` is frequently the first class loaded there since lots of people
+initialize it from a `preLaunch` entrypoint. As such, please do that and do not initialize it from a mixin plugin. This
+has been resolved in Fabric Loader 0.14.11, but that's not very widely used yet.
