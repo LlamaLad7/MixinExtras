@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
 import com.llamalad7.mixinextras.injector.LateApplyingInjectorInfo;
+import com.llamalad7.mixinextras.injector.MixinExtrasInjectionInfo;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @InjectionInfo.AnnotationType(WrapOperation.class)
 @HandlerPrefix("wrapOperation")
-public class WrapOperationInjectionInfo extends InjectionInfo implements LateApplyingInjectorInfo {
+public class WrapOperationInjectionInfo extends MixinExtrasInjectionInfo implements LateApplyingInjectorInfo {
     private LateApplyingInjectorInfo injectionInfoToQueue = this;
 
     public WrapOperationInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {

@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 
 @InjectionInfo.AnnotationType(ModifyReceiver.class)
 @HandlerPrefix("modifyReceiver")
-public class ModifyReceiverInjectionInfo extends InjectionInfo {
+public class ModifyReceiverInjectionInfo extends MixinExtrasInjectionInfo {
     public ModifyReceiverInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
         super(mixin, method, annotation);
     }

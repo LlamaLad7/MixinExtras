@@ -17,7 +17,7 @@ import java.util.List;
 
 @InjectionInfo.AnnotationType(WrapWithCondition.class)
 @HandlerPrefix("wrapWithCondition")
-public class WrapWithConditionInjectionInfo extends InjectionInfo {
+public class WrapWithConditionInjectionInfo extends MixinExtrasInjectionInfo {
     public WrapWithConditionInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
         super(mixin, method, annotation);
     }

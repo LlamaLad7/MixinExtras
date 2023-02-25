@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 
 @InjectionInfo.AnnotationType(ModifyReturnValue.class)
 @HandlerPrefix("modifyReturnValue")
-public class ModifyReturnValueInjectionInfo extends InjectionInfo {
+public class ModifyReturnValueInjectionInfo extends MixinExtrasInjectionInfo {
     public ModifyReturnValueInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
         super(mixin, method, annotation);
     }
