@@ -22,6 +22,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 class WrapOperationInjector extends Injector {
     private static final Handle LMF_HANDLE = new Handle(
@@ -154,12 +155,25 @@ class WrapOperationInjector extends Injector {
                 null, null
         );
         method.instructions = new InsnList() {{
-            if (virtual) {
-                add(new VarInsnNode(Opcodes.ALOAD, 0));
-            }
             int paramArrayIndex = virtual ? 1 : 0;
+            // Bound params have to come first.
             for (Type boundParamType : boundParams) {
                 paramArrayIndex += boundParamType.getSize();
+            }
+            // Provide a user-friendly error if the wrong args are passed.
+            add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
+            add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
+            add(new LdcInsnNode(Arrays.stream(argTypes).map(Type::getClassName).collect(Collectors.joining(", ", "[", "]"))));
+            add(new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    Type.getInternalName(WrapOperationRuntime.class),
+                    "checkArgumentCount",
+                    Bytecode.generateDescriptor(void.class, Object[].class, int.class, String.class),
+                    false
+            ));
+
+            if (virtual) {
+                add(new VarInsnNode(Opcodes.ALOAD, 0));
             }
             add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
             for (int i = 0; i < argTypes.length; i++) {
