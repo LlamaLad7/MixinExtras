@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UniquenessHelper {
-    private static final Map<String, Counter> TARGET_TO_COUNTER = new HashMap<>();
+    private static final Map<String, Counter> TARGET_TO_COUNTER = Blackboard.getOrPut("UniquenessHelper_TargetToCounter", HashMap::new);
 
     public static int getNextId(String classRef) {
         return TARGET_TO_COUNTER.computeIfAbsent(classRef, k -> new Counter()).value++;
