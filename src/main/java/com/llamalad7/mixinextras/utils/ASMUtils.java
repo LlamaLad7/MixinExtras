@@ -74,4 +74,26 @@ public class ASMUtils {
                 opcode, owner.name, method.name, method.desc, isInterface
         );
     }
+
+    public static int getDummyOpcodeForType(Type type) {
+        switch (type.getSort()) {
+            case Type.BOOLEAN:
+            case Type.CHAR:
+            case Type.BYTE:
+            case Type.SHORT:
+            case Type.INT:
+                return Opcodes.ICONST_0;
+            case Type.FLOAT:
+                return Opcodes.FCONST_0;
+            case Type.LONG:
+                return Opcodes.LCONST_0;
+            case Type.DOUBLE:
+                return Opcodes.DCONST_0;
+            case Type.ARRAY:
+            case Type.OBJECT:
+                return Opcodes.ACONST_NULL;
+            default:
+                throw new UnsupportedOperationException();
+        }
+    }
 }

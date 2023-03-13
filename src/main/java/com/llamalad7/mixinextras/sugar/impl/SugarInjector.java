@@ -63,7 +63,7 @@ class SugarInjector {
         List<HandlerTransformer> transformers = new ArrayList<>();
         for (SugarParameter sugar : findSugars(handler, generics)) {
             HandlerTransformer transformer = HandlerTransformer.create(mixin, sugar);
-            if (transformer.isRequired(handler)) {
+            if (transformer != null && transformer.isRequired(handler)) {
                 transformers.add(transformer);
             }
         }

@@ -20,7 +20,7 @@ import java.util.Set;
  * Ensures all locals are captured by reference for injectors that can participate in a {@link WrapOperation} chain.
  * If a wrapper sets the local, the inner handler must receive the most up-to-date value.
  */
-public class LocalHandlerTransformer extends HandlerTransformer {
+class LocalHandlerTransformer extends HandlerTransformer {
     private static final Set<String> TARGET_INJECTORS = new HashSet<>(Arrays.asList(
             Type.getDescriptor(ModifyConstant.class),
             Type.getDescriptor(Redirect.class),
