@@ -1,0 +1,4 @@
+{
+  "minVersion": "0.8",
+  "plugin": "com.llamalad7.mixinextras.platform.fabric.MixinExtrasConfigPlugin"
+}

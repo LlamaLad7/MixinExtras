@@ -1,2 +1,2 @@
-rootProject.name = "MixinExtras"
-
+rootProject.name = "mixinextras"
+include("fabric")
