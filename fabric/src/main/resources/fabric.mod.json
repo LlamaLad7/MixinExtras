@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "com_github_llamalad7_mixinextras",
+  "version": "${version}",
+  "name": "MixinExtras",
+  "description": "Companion library to Mixin with lots of features to improve the compatibility and concision of your mixins!",
+  "authors": [
+    "LlamaLad7"
+  ],
+  "contact": {
+    "homepage": "https://github.com/LlamaLad7/MixinExtras",
+    "sources": "https://github.com/LlamaLad7/MixinExtras"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "mixins": [
+    "mixinextras.init.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.11"
+  }
+}
