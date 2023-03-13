@@ -1,9 +1,6 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
-import com.llamalad7.mixinextras.utils.CompatibilityHelper;
-import com.llamalad7.mixinextras.utils.Decorations;
-import com.llamalad7.mixinextras.utils.InjectorUtils;
-import com.llamalad7.mixinextras.utils.UniquenessHelper;
+import com.llamalad7.mixinextras.utils.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -130,7 +127,7 @@ class WrapOperationInjector extends Injector {
                 generateSyntheticBridge(target, node, argTypes, hasExtraThis, trailingParams),
                 // Specialization of the SAM signature
                 Type.getMethodType(
-                        returnType.getDescriptor().length() == 1 ? Type.getObjectType(returnType == Type.VOID_TYPE ? "java/lang/Void" : Bytecode.getBoxingType(returnType)) : returnType,
+                        ASMUtils.isPrimitive(returnType) ? Type.getObjectType(returnType == Type.VOID_TYPE ? "java/lang/Void" : Bytecode.getBoxingType(returnType)) : returnType,
                         Type.getType(Object[].class)
                 )
         ));
@@ -147,7 +144,7 @@ class WrapOperationInjector extends Injector {
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | (virtual ? 0 : Opcodes.ACC_STATIC),
                 "mixinextras$bridge$" + methodId + '$' + getName(node.getCurrentTarget()),
                 Bytecode.generateDescriptor(
-                        returnType.getDescriptor().length() == 1 ?
+                        ASMUtils.isPrimitive(returnType) ?
                                 Type.getObjectType(
                                         returnType == Type.VOID_TYPE ? "java/lang/Void" : Bytecode.getBoxingType(returnType)
                                 ) : returnType,
@@ -182,7 +179,7 @@ class WrapOperationInjector extends Injector {
                 // I'm assuming a wrapped method won't have more than 127 args...
                 add(new IntInsnNode(Opcodes.BIPUSH, i));
                 add(new InsnNode(Opcodes.AALOAD));
-                if (argType.getDescriptor().length() == 1) {
+                if (ASMUtils.isPrimitive(argType)) {
                     // Primitive, cast and unbox
                     add(new TypeInsnNode(Opcodes.CHECKCAST, Bytecode.getBoxingType(argType)));
                     add(new MethodInsnNode(
@@ -215,7 +212,7 @@ class WrapOperationInjector extends Injector {
             if (returnType == Type.VOID_TYPE) {
                 add(new InsnNode(Opcodes.ACONST_NULL));
                 add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Void"));
-            } else if (returnType.getDescriptor().length() == 1) {
+            } else if (ASMUtils.isPrimitive(returnType)) {
                 // Primitive, needs boxing
                 add(new MethodInsnNode(
                         Opcodes.INVOKESTATIC,
@@ -281,8 +278,7 @@ class WrapOperationInjector extends Injector {
 
     @SafeVarargs
     private final void checkAndMoveNodes(InsnList from, InsnList to, InjectionNode node, Predicate<AbstractInsnNode>... predicates) {
-        AbstractInsnNode current = node.hasDecoration(Decorations.PASS_BACK_END) ? node.getDecoration(Decorations.PASS_BACK_END) : node.getCurrentTarget();
-        current = current.getNext();
+        AbstractInsnNode current = InjectorUtils.getNextInstruction(node);
         for (Predicate<AbstractInsnNode> predicate : predicates) {
             if (!predicate.test(current)) {
                 throw new AssertionError("Failed assertion when wrapping instructions. Please inform LlamaLad7!");

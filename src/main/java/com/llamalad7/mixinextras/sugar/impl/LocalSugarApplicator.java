@@ -1,9 +1,13 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
-import com.llamalad7.mixinextras.sugar.passback.impl.PassBackInfo;
+import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefClassGenerator;
+import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefUtils;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
+import com.llamalad7.mixinextras.utils.Decorations;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.spongepowered.asm.mixin.injection.modify.InvalidImplicitDiscriminatorException;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
@@ -16,14 +20,17 @@ import org.spongepowered.asm.util.Bytecode;
 import org.spongepowered.asm.util.PrettyPrinter;
 import org.spongepowered.asm.util.SignaturePrinter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 class LocalSugarApplicator extends SugarApplicator {
     private final boolean isArgsOnly;
-    private final boolean isMutable;
+    private final Type targetLocalType = LocalRefUtils.getTargetType(this.paramType, this.paramGeneric);
+    private final boolean isMutable = targetLocalType != paramType;
 
     LocalSugarApplicator(InjectionInfo info, SugarParameter parameter) {
         super(info, parameter);
         this.isArgsOnly = Annotations.getValue(sugar, "argsOnly", (Boolean) false);
-        this.isMutable = Annotations.getValue(sugar, "mutable", (Boolean) false);
     }
 
     @Override
@@ -50,20 +57,58 @@ class LocalSugarApplicator extends SugarApplicator {
     }
 
     @Override
-    void inject(Target target, InjectionNode node, PassBackInfo passBackInfo) {
+    void inject(Target target, InjectionNode node) {
         LocalVariableDiscriminator discriminator = LocalVariableDiscriminator.parse(sugar);
         Context context = node.getDecoration(getLocalContextKey());
         int index = discriminator.findLocal(context);
         if (index < 0) {
             throw new SugarApplicationException("Failed to match a local, this should have been caught during validation.");
         }
-        target.insns.insertBefore(node.getCurrentTarget(), new VarInsnNode(paramType.getOpcode(Opcodes.ILOAD), index));
         if (isMutable) {
-            passBackInfo.addPassBackStage((insns, loadValue) -> {
-                loadValue.accept(paramLvtIndex);
-                insns.add(new VarInsnNode(paramType.getOpcode(Opcodes.ISTORE), index));
-            });
+            initAndLoadLocalRef(target, node, index);
+        } else {
+            target.insns.insertBefore(node.getCurrentTarget(), new VarInsnNode(targetLocalType.getOpcode(Opcodes.ILOAD), index));
         }
+    }
+
+    private void initAndLoadLocalRef(Target target, InjectionNode node, int index) {
+        String refName = LocalRefClassGenerator.getInstance().getForType(mixin, targetLocalType);
+        int refIndex = getOrCreateRef(target, node, index, refName);
+        target.insns.insertBefore(node.getCurrentTarget(), new VarInsnNode(Opcodes.ALOAD, refIndex));
+    }
+
+    private int getOrCreateRef(Target target, InjectionNode node, int index, String refImpl) {
+        Map<Integer, Integer> refIndices = node.getDecoration(Decorations.LOCAL_REF_MAP);
+        if (refIndices == null) {
+            refIndices = new HashMap<>();
+            node.decorate(Decorations.LOCAL_REF_MAP, refIndices);
+        }
+        if (refIndices.containsKey(index)) {
+            // Another handler has already created an applicable reference, so we should share it.
+            return refIndices.get(index);
+        }
+        // We have to create the reference ourselves as we are the first to need it.
+        int refIndex = target.allocateLocal();
+        target.addLocalVariable(refIndex, "ref" + refIndex, 'L' + refImpl + ';');
+        // Make and store the reference object with the local's current value.
+        InsnList before = new InsnList();
+        LocalRefUtils.generateWrapping(
+                mixin, before, targetLocalType,
+                () -> before.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ILOAD), index))
+        );
+        before.add(new VarInsnNode(Opcodes.ASTORE, refIndex));
+        target.insertBefore(node, before);
+        // Write the reference's value back to its target local after the handler call.
+        InsnList after = new InsnList();
+        LocalRefUtils.generateUnwrapping(
+                after, targetLocalType,
+                () -> after.add(new VarInsnNode(Opcodes.ALOAD, refIndex))
+        );
+        after.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ISTORE), index));
+        target.insns.insert(node.getCurrentTarget(), after);
+        // Tell future injectors where to find the reference.
+        refIndices.put(index, refIndex);
+        return refIndex;
     }
 
     private Context getOrCreateLocalContext(Target target, InjectionNode node) {
@@ -71,13 +116,13 @@ class LocalSugarApplicator extends SugarApplicator {
         if (node.hasDecoration(decorationKey)) {
             return node.getDecoration(decorationKey);
         }
-        Context context = CompatibilityHelper.makeLvtContext(info, paramType, isArgsOnly, target, node.getCurrentTarget());
+        Context context = CompatibilityHelper.makeLvtContext(info, targetLocalType, isArgsOnly, target, node.getCurrentTarget());
         node.decorate(decorationKey, context);
         return context;
     }
 
     private String getLocalContextKey() {
-        return String.format("mixinextras_localSugarContext(%s,%s)", paramType, isArgsOnly ? "argsOnly" : "fullFrame");
+        return String.format("mixinextras_localSugarContext(%s,%s)", targetLocalType, isArgsOnly ? "argsOnly" : "fullFrame");
     }
 
     private void printLocals(Target target, AbstractInsnNode node, Context context, LocalVariableDiscriminator discriminator) {
@@ -87,7 +132,7 @@ class LocalSugarApplicator extends SugarApplicator {
                 .kvWidth(20)
                 .kv("Target Class", target.classNode.name.replace('/', '.'))
                 .kv("Target Method", target.method.name)
-                .kv("Capture Type", SignaturePrinter.getTypeName(paramType, false))
+                .kv("Capture Type", SignaturePrinter.getTypeName(targetLocalType, false))
                 .kv("Instruction", "[%d] %s %s", target.insns.indexOf(node), node.getClass().getSimpleName(),
                         Bytecode.getOpcodeName(node.getOpcode())).hr()
                 .kv("Match mode", isImplicit(discriminator, baseArgIndex) ? "IMPLICIT (match single)" : "EXPLICIT (match by criteria)")

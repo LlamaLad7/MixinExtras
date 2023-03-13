@@ -1,7 +1,11 @@
 package com.llamalad7.mixinextras.utils;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,5 +58,20 @@ public class ASMUtils {
             return '{' + list.stream().map(ASMUtils::valueToString).collect(Collectors.joining(", ")) + '}';
         }
         return value.toString();
+    }
+
+    public static boolean isPrimitive(Type type) {
+        return type.getDescriptor().length() == 1;
+    }
+
+    public static MethodInsnNode getInvokeInstruction(ClassNode owner, MethodNode method) {
+        boolean isInterface = (owner.access & Opcodes.ACC_INTERFACE) != 0;
+        int opcode = (method.access & Opcodes.ACC_STATIC) != 0 ? Opcodes.INVOKESTATIC
+                : (method.access & Opcodes.ACC_PRIVATE) != 0 ? Opcodes.INVOKESPECIAL
+                : isInterface ? Opcodes.INVOKEINTERFACE
+                : Opcodes.INVOKEVIRTUAL;
+        return new MethodInsnNode(
+                opcode, owner.name, method.name, method.desc, isInterface
+        );
     }
 }
