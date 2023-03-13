@@ -47,6 +47,9 @@ public abstract class HandlerTransformer {
     public static HandlerTransformer create(IMixinInfo mixin, SugarParameter parameter) {
         try {
             Class<? extends HandlerTransformer> clazz = MAP.get(parameter.sugar.desc);
+            if (clazz == null) {
+                return null;
+            }
             Constructor<? extends HandlerTransformer> ctor = clazz.getDeclaredConstructor(IMixinInfo.class, SugarParameter.class);
             return ctor.newInstance(mixin, parameter);
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {

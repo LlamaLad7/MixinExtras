@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -19,6 +20,7 @@ abstract class SugarApplicator {
 
     static {
         MAP.put(Type.getDescriptor(Local.class), LocalSugarApplicator.class);
+        MAP.put(Type.getDescriptor(Share.class), ShareSugarApplicator.class);
     }
 
     protected final IMixinInfo mixin;
