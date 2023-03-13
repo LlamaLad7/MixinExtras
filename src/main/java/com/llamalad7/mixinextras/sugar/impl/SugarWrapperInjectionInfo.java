@@ -1,13 +1,18 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
 import com.llamalad7.mixinextras.injector.LateApplyingInjectorInfo;
+import com.llamalad7.mixinextras.sugar.SugarBridge;
+import com.llamalad7.mixinextras.sugar.impl.handlers.HandlerInfo;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
+import com.llamalad7.mixinextras.utils.GenericParamParser;
 import com.llamalad7.mixinextras.utils.MixinInternals;
 import org.apache.commons.lang3.tuple.Pair;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo.AnnotationType;
@@ -18,24 +23,31 @@ import org.spongepowered.asm.mixin.injection.throwables.InjectionError;
 import org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException;
 import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 import org.spongepowered.asm.util.Annotations;
+import org.spongepowered.asm.util.asm.MethodNodeEx;
 
 import java.util.*;
 
 @AnnotationType(SugarWrapper.class)
 @HandlerPrefix("sugarWrapper")
 public class SugarWrapperInjectionInfo extends InjectionInfo implements LateApplyingInjectorInfo {
-    private final InjectionInfo delegate;
     private final AnnotationNode originalAnnotation;
+    private final ArrayList<Type> generics;
+    private final MethodNode handler;
+    private final InjectionInfo delegate;
     private final SugarInjector sugarInjector;
     private final boolean lateApply;
 
     public SugarWrapperInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
         super(mixin, method, annotation);
-        sugarInjector = new SugarInjector(this, mixin.getMixin(), method);
         method.visibleAnnotations.remove(annotation);
         method.visibleAnnotations.add(originalAnnotation = Annotations.getValue(annotation, "original"));
+        generics = new ArrayList<>(
+                GenericParamParser.getParameterGenerics(method.desc, Annotations.getValue(annotation, "signature"))
+        );
+        handler = prepareHandler(method);
+        sugarInjector = new SugarInjector(this, mixin.getMixin(), handler, generics);
         sugarInjector.stripSugar();
-        delegate = InjectionInfo.parse(mixin, method);
+        delegate = InjectionInfo.parse(mixin, handler);
         sugarInjector.setTargets(MixinInternals.getTargets(delegate));
         lateApply = delegate instanceof LateApplyingInjectorInfo;
         if (lateApply) {
@@ -62,7 +74,7 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
     @Override
     public void prepare() {
         delegate.prepare();
-        method.visibleAnnotations.remove(originalAnnotation);
+        handler.visibleAnnotations.remove(InjectionInfo.getInjectorAnnotation(CompatibilityHelper.getMixin(this).getMixin(), handler));
         sugarInjector.prepareSugar();
     }
 
@@ -145,6 +157,25 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
         throw new UnsupportedOperationException("Cannot wrap a sugar wrapper!");
     }
 
+    private MethodNode prepareHandler(MethodNode original) {
+        IMixinInfo mixin = CompatibilityHelper.getMixin(this).getMixin();
+        HandlerInfo handlerInfo = SugarInjector.getHandlerInfo(mixin, original, generics);
+        if (handlerInfo == null) {
+            return original;
+        }
+        MethodNodeEx newMethod = new MethodNodeEx(
+                original.access, MethodNodeEx.getName(original), original.desc, original.signature,
+                original.exceptions.toArray(new String[0]), mixin);
+        original.accept(newMethod);
+        original.visibleAnnotations.remove(originalAnnotation);
+        newMethod.name = original.name;
+        newMethod.visitAnnotation(Type.getDescriptor(SugarBridge.class), false);
+        handlerInfo.transformHandler(classNode, newMethod);
+        handlerInfo.transformGenerics(generics);
+        classNode.methods.add(newMethod);
+        return newMethod;
+    }
+
     private void checkDelegate() {
         try {
             if (delegate.getClass().getMethod("inject").getDeclaringClass() != InjectionInfo.class) {
@@ -163,7 +194,7 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
         for (AbstractInsnNode insn : target) {
             if (insn instanceof MethodInsnNode) {
                 MethodInsnNode call = (MethodInsnNode) insn;
-                if (call.owner.equals(classNode.name) && call.name.equals(method.name) && call.desc.equals(method.desc)) {
+                if (call.owner.equals(classNode.name) && call.name.equals(handler.name) && call.desc.equals(handler.desc)) {
                     result.add(call);
                 }
             }

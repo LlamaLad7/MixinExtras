@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.ArgsClassGenerator;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
-import org.spongepowered.asm.mixin.transformer.ClassInfo;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
 import org.spongepowered.asm.mixin.transformer.ext.IClassGenerator;
@@ -38,8 +37,6 @@ public class MixinInternals {
     private static final Field ARGS_CLASS_GENERATOR_REGISTRY_FIELD;
     private static final Field INJECTION_NODE_DECORATIONS_FIELD;
     private static final Field INJECTION_INFO_INJECTOR_FIELD;
-    private static final Field CLASS_INFO_MIXIN_FIELD;
-    private static final Method CLASS_INFO_FROM_CLASS_NODE_METHOD;
 
     static {
         try {
@@ -64,10 +61,6 @@ public class MixinInternals {
             INJECTION_NODE_DECORATIONS_FIELD.setAccessible(true);
             INJECTION_INFO_INJECTOR_FIELD = InjectionInfo.class.getDeclaredField("injector");
             INJECTION_INFO_INJECTOR_FIELD.setAccessible(true);
-            CLASS_INFO_MIXIN_FIELD = ClassInfo.class.getDeclaredField("mixin");
-            CLASS_INFO_MIXIN_FIELD.setAccessible(true);
-            CLASS_INFO_FROM_CLASS_NODE_METHOD = ClassInfo.class.getDeclaredMethod("fromClassNode", ClassNode.class);
-            CLASS_INFO_FROM_CLASS_NODE_METHOD.setAccessible(true);
         } catch (ClassNotFoundException | NoSuchFieldException | NoSuchMethodException e) {
             throw new RuntimeException("Failed to access some mixin internals, please report to LlamaLad7!", e);
         }
@@ -157,21 +150,6 @@ public class MixinInternals {
         }
     }
 
-    public static List<Pair<IMixinInfo, ClassNode>> getSuperMixins(IMixinInfo mixin) {
-        try {
-            List<Pair<IMixinInfo, ClassNode>> result = new ArrayList<>();
-            ClassInfo current = ClassInfo.forName(mixin.getClassName()).getSuperClass();
-            while (current != null && current.isMixin()) {
-                IMixinInfo currentInfo = (IMixinInfo) CLASS_INFO_MIXIN_FIELD.get(current);
-                result.add(Pair.of(currentInfo, getClassNode(currentInfo)));
-                current = current.getSuperClass();
-            }
-            return result;
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
-        }
-    }
-
     private static ClassNode getClassNode(IMixinInfo mixin) {
         try {
             Object state = MIXIN_INFO_GET_STATE_METHOD.invoke(mixin);
@@ -181,11 +159,4 @@ public class MixinInternals {
         }
     }
 
-    public static void registerClassInfo(ClassNode classNode) {
-        try {
-            CLASS_INFO_FROM_CLASS_NODE_METHOD.invoke(null, classNode);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
-        }
-    }
 }

@@ -1,9 +1,10 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.llamalad7.mixinextras.sugar.passback.impl.PassBackInfo;
+import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
+import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
@@ -20,23 +21,29 @@ abstract class SugarApplicator {
         MAP.put(Type.getDescriptor(Local.class), LocalSugarApplicator.class);
     }
 
+    protected final IMixinInfo mixin;
     protected final InjectionInfo info;
     protected final AnnotationNode sugar;
     protected final Type paramType;
+    protected final Type paramGeneric;
     protected final int paramLvtIndex;
+    protected final int paramIndex;
 
     SugarApplicator(InjectionInfo info, SugarParameter parameter) {
+        this.mixin = CompatibilityHelper.getMixin(info).getMixin();
         this.info = info;
         this.sugar = parameter.sugar;
         this.paramType = parameter.type;
+        this.paramGeneric = parameter.genericType;
         this.paramLvtIndex = parameter.lvtIndex;
+        this.paramIndex = parameter.paramIndex;
     }
 
     abstract void validate(Target target, InjectionNode node);
 
     abstract void prepare(Target target, InjectionNode node);
 
-    abstract void inject(Target target, InjectionNode node, PassBackInfo passBackInfo);
+    abstract void inject(Target target, InjectionNode node);
 
     static SugarApplicator create(InjectionInfo info, SugarParameter parameter) {
         try {
