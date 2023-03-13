@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector;
 
+import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
@@ -79,7 +80,7 @@ public class WrapWithConditionInjector extends Injector {
         after.add(new JumpInsnNode(Opcodes.GOTO, afterDummy));
         after.add(afterOperation);
         if (returnType != Type.VOID_TYPE) {
-            after.add(new InsnNode(this.getDummyOpcodeForType(returnType)));
+            after.add(new InsnNode(ASMUtils.getDummyOpcodeForType(returnType)));
         }
         after.add(afterDummy);
     }
@@ -119,27 +120,5 @@ public class WrapWithConditionInjector extends Injector {
         }
 
         throw new UnsupportedOperationException();
-    }
-
-    private int getDummyOpcodeForType(Type type) {
-        switch (type.getSort()) {
-            case Type.BOOLEAN:
-            case Type.CHAR:
-            case Type.BYTE:
-            case Type.SHORT:
-            case Type.INT:
-                return Opcodes.ICONST_0;
-            case Type.FLOAT:
-                return Opcodes.FCONST_0;
-            case Type.LONG:
-                return Opcodes.LCONST_0;
-            case Type.DOUBLE:
-                return Opcodes.DCONST_0;
-            case Type.ARRAY:
-            case Type.OBJECT:
-                return Opcodes.ACONST_NULL;
-            default:
-                throw new UnsupportedOperationException();
-        }
     }
 }
