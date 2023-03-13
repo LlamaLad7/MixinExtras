@@ -46,12 +46,18 @@ allprojects {
 subprojects {
     apply(plugin = "java")
 
-    tasks.named<Jar>("jar") {
-        from(rootProject.sourceSets.main.get().output)
-    }
+    if (project.name != "forge") {
+        dependencies {
+            compileOnly(rootProject)
+        }
 
-    tasks.named<Jar>("sourcesJar") {
-        from(rootProject.sourceSets.main.get().allSource)
+        tasks.named<Jar>("jar") {
+            from(rootProject.sourceSets.main.get().output)
+        }
+
+        tasks.named<Jar>("sourcesJar") {
+            from(rootProject.sourceSets.main.get().allSource)
+        }
     }
 }
 
