@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 @SuppressWarnings("unused")
 public class MixinExtrasBootstrap {
     private static boolean initialized = false;
-    private static final String VERSION = "0.2.0-beta.4";
+    private static final String VERSION = "0.2.0-beta.5";
 
     public static String getVersion() {
         return VERSION;
