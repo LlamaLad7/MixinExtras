@@ -10,7 +10,6 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 public class LocalRefUtils {
     public static Class<?> getInterfaceFor(Type type) {
@@ -52,8 +51,8 @@ public class LocalRefUtils {
         }
     }
 
-    public static void generateWrapping(IMixinInfo mixin, InsnList insns, Type innerType, Runnable load) {
-        String refImpl = LocalRefClassGenerator.getInstance().getForType(mixin, innerType);
+    public static void generateWrapping(InsnList insns, Type innerType, Runnable load) {
+        String refImpl = LocalRefClassGenerator.getForType(innerType);
 
         insns.add(new TypeInsnNode(Opcodes.NEW, refImpl));
         insns.add(new InsnNode(Opcodes.DUP));

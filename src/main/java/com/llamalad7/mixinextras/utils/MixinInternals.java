@@ -5,23 +5,18 @@ import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.injection.code.Injector;
-import org.spongepowered.asm.mixin.injection.invoke.arg.ArgsClassGenerator;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
-import org.spongepowered.asm.mixin.transformer.ext.IClassGenerator;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 import org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext;
-import org.spongepowered.asm.service.ISyntheticClassInfo;
-import org.spongepowered.asm.util.IConsumer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Mumfrey, look away.
@@ -34,7 +29,6 @@ public class MixinInternals {
     private static final Field EXTENSIONS_FIELD;
     private static final Field ACTIVE_EXTENSIONS_FIELD;
     private static final Field INJECTION_INFO_TARGET_NODES_FIELD;
-    private static final Field ARGS_CLASS_GENERATOR_REGISTRY_FIELD;
     private static final Field INJECTION_NODE_DECORATIONS_FIELD;
     private static final Field INJECTION_INFO_INJECTOR_FIELD;
 
@@ -55,8 +49,6 @@ public class MixinInternals {
             EXTENSIONS_FIELD.setAccessible(true);
             ACTIVE_EXTENSIONS_FIELD = Extensions.class.getDeclaredField("activeExtensions");
             ACTIVE_EXTENSIONS_FIELD.setAccessible(true);
-            ARGS_CLASS_GENERATOR_REGISTRY_FIELD = ArgsClassGenerator.class.getDeclaredField("registry");
-            ARGS_CLASS_GENERATOR_REGISTRY_FIELD.setAccessible(true);
             INJECTION_NODE_DECORATIONS_FIELD = InjectionNode.class.getDeclaredField("decorations");
             INJECTION_NODE_DECORATIONS_FIELD.setAccessible(true);
             INJECTION_INFO_INJECTOR_FIELD = InjectionInfo.class.getDeclaredField("injector");
@@ -119,18 +111,6 @@ public class MixinInternals {
             extensions.add(newExtension);
         } else {
             extensions.add(index + 1, newExtension);
-        }
-    }
-
-    public static void registerClassGenerator(Function<IConsumer<ISyntheticClassInfo>, IClassGenerator> classGenerator) {
-        try {
-            IMixinTransformer transformer = (IMixinTransformer) MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
-            Extensions extensions = (Extensions) transformer.getExtensions();
-            ArgsClassGenerator argsClassGenerator = extensions.getGenerator(ArgsClassGenerator.class);
-            IConsumer<ISyntheticClassInfo> registry = (IConsumer<ISyntheticClassInfo>) ARGS_CLASS_GENERATOR_REGISTRY_FIELD.get(argsClassGenerator);
-            extensions.add(classGenerator.apply(registry));
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
         }
     }
 

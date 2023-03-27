@@ -51,7 +51,7 @@ class ShareSugarApplicator extends SugarApplicator {
     void inject(Target target, InjectionNodes.InjectionNode node) {
         if (needsSetup) {
             InsnList init = new InsnList();
-            LocalRefUtils.generateWrapping(mixin, init, innerType, () -> init.add(new InsnNode(ASMUtils.getDummyOpcodeForType(innerType))));
+            LocalRefUtils.generateWrapping(init, innerType, () -> init.add(new InsnNode(ASMUtils.getDummyOpcodeForType(innerType))));
             init.add(new VarInsnNode(Opcodes.ASTORE, localRefIndex));
             target.insertBefore(target.insns.getFirst(), init);
         }

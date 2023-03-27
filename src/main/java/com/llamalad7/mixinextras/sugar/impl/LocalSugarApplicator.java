@@ -72,7 +72,7 @@ class LocalSugarApplicator extends SugarApplicator {
     }
 
     private void initAndLoadLocalRef(Target target, InjectionNode node, int index) {
-        String refName = LocalRefClassGenerator.getInstance().getForType(mixin, targetLocalType);
+        String refName = LocalRefClassGenerator.getForType(targetLocalType);
         int refIndex = getOrCreateRef(target, node, index, refName);
         target.insns.insertBefore(node.getCurrentTarget(), new VarInsnNode(Opcodes.ALOAD, refIndex));
     }
@@ -93,7 +93,7 @@ class LocalSugarApplicator extends SugarApplicator {
         // Make and store the reference object with the local's current value.
         InsnList before = new InsnList();
         LocalRefUtils.generateWrapping(
-                mixin, before, targetLocalType,
+                before, targetLocalType,
                 () -> before.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ILOAD), index))
         );
         before.add(new VarInsnNode(Opcodes.ASTORE, refIndex));
