@@ -122,7 +122,7 @@ class LocalSugarApplicator extends SugarApplicator {
     }
 
     private String getLocalContextKey() {
-        return String.format("mixinextras_localSugarContext(%s,%s)", targetLocalType, isArgsOnly ? "argsOnly" : "fullFrame");
+        return String.format(Decorations.PERSISTENT + "localSugarContext(%s,%s)", targetLocalType, isArgsOnly ? "argsOnly" : "fullFrame");
     }
 
     private void printLocals(Target target, AbstractInsnNode node, Context context, LocalVariableDiscriminator discriminator) {

@@ -217,8 +217,8 @@ class SugarInjector {
 
                 InjectionNode node = target.addInjectionNode(handlerCall);
                 Map<String, Object> decorations = MixinInternals.getDecorations(sourceNode);
-                if (decorations != null) {
-                    for (Map.Entry<String, Object> decoration : decorations.entrySet()) {
+                for (Map.Entry<String, Object> decoration : decorations.entrySet()) {
+                    if (decoration.getKey().startsWith(Decorations.PERSISTENT)) {
                         node.decorate(decoration.getKey(), decoration.getValue());
                     }
                 }

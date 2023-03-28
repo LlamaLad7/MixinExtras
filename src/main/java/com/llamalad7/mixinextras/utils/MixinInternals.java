@@ -120,7 +120,8 @@ public class MixinInternals {
 
     public static Map<String, Object> getDecorations(InjectionNode node) {
         try {
-            return (Map<String, Object>) INJECTION_NODE_DECORATIONS_FIELD.get(node);
+            Map<String, Object> result = (Map<String, Object>) INJECTION_NODE_DECORATIONS_FIELD.get(node);
+            return result == null ? Collections.emptyMap() : result;
         } catch (IllegalAccessException e) {
             throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
         }
