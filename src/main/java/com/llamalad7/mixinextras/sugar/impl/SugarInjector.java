@@ -223,7 +223,6 @@ class SugarInjector {
                     }
                 }
                 try {
-                    node.decorate(Decorations.INSN_END, node.getCurrentTarget().getNext());
                     for (SugarApplicator applicator : applicators) {
                         applicator.inject(target, node);
                     }

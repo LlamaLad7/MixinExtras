@@ -278,7 +278,7 @@ class WrapOperationInjector extends Injector {
 
     @SafeVarargs
     private final void checkAndMoveNodes(InsnList from, InsnList to, InjectionNode node, Predicate<AbstractInsnNode>... predicates) {
-        AbstractInsnNode current = InjectorUtils.getNextInstruction(node);
+        AbstractInsnNode current = node.getCurrentTarget().getNext();
         for (Predicate<AbstractInsnNode> predicate : predicates) {
             if (!predicate.test(current)) {
                 throw new AssertionError("Failed assertion when wrapping instructions. Please inform LlamaLad7!");

@@ -2,7 +2,6 @@ package com.llamalad7.mixinextras.utils;
 
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 
 public class Decorations {
     /**
@@ -15,12 +14,6 @@ public class Decorations {
      * using {@link WrapWithCondition} on it.
      */
     public static final String POPPED_OPERATION = "mixinextras_operationIsImmediatelyPopped";
-    /**
-     * Stores the last instruction which is "part of" a given {@link InjectionNode}.
-     * For example sugar applicators may add instructions after the call that should be treated as part of it by later
-     * injectors.
-     */
-    public static final String INSN_END = "mixinextras_instructionEnd";
     /**
      * Stores a map of LVT index of target local -> LVT index of applicable {@link LocalRef}.
      * References should be shared by injectors that wrap/replace the same target instruction.

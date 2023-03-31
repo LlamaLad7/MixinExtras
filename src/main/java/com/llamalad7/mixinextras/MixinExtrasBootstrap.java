@@ -7,9 +7,11 @@ import com.llamalad7.mixinextras.injector.WrapWithConditionInjectionInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationApplicatorExtension;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
 import com.llamalad7.mixinextras.sugar.impl.SugarApplicatorExtension;
+import com.llamalad7.mixinextras.sugar.impl.SugarPostProcessingExtension;
 import com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo;
 import com.llamalad7.mixinextras.utils.MixinInternals;
 import com.llamalad7.mixinextras.utils.PackageUtils;
+import com.llamalad7.mixinextras.utils.UniquenessHelper;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 
 @SuppressWarnings("unused")
@@ -40,6 +42,8 @@ public class MixinExtrasBootstrap {
             if (runtime) {
                 MixinInternals.registerExtension(new SugarApplicatorExtension());
                 MixinInternals.registerExtension(new WrapOperationApplicatorExtension());
+                MixinInternals.registerExtension(new SugarPostProcessingExtension());
+                MixinInternals.registerExtension(new UniquenessHelper.Extension());
 
                 PackageUtils.init();
             }

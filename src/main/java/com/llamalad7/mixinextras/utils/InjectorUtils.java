@@ -19,8 +19,4 @@ public class InjectorUtils {
                 && currentTarget instanceof MethodInsnNode
                 && Type.getReturnType(((MethodInsnNode) currentTarget).desc).equals(Type.getType(Class.class));
     }
-
-    public static AbstractInsnNode getNextInstruction(InjectionNode node) {
-        return node.hasDecoration(Decorations.INSN_END) ? node.getDecoration(Decorations.INSN_END) : node.getCurrentTarget().getNext();
-    }
 }

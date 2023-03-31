@@ -52,8 +52,11 @@ class ShareSugarApplicator extends SugarApplicator {
             target.insns.insert(start);
             target.insns.add(end);
             InsnList init = new InsnList();
-            LocalRefUtils.generateWrapping(init, innerType, () -> init.add(new InsnNode(ASMUtils.getDummyOpcodeForType(innerType))));
+            LocalRefUtils.generateNew(init, innerType);
             init.add(new VarInsnNode(Opcodes.ASTORE, localRefIndex));
+            init.add(new VarInsnNode(Opcodes.ALOAD, localRefIndex));
+            init.add(new InsnNode(ASMUtils.getDummyOpcodeForType(innerType)));
+            LocalRefUtils.generateInitialization(init, innerType);
             target.insns.insert(start, init);
         } else {
             localRefIndex = refIndices.get(id);

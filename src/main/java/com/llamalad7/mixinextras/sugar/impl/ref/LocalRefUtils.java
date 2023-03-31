@@ -51,16 +51,27 @@ public class LocalRefUtils {
         }
     }
 
-    public static void generateWrapping(InsnList insns, Type innerType, Runnable load) {
+    public static void generateNew(InsnList insns, Type innerType) {
         String refImpl = LocalRefClassGenerator.getForType(innerType);
 
         insns.add(new TypeInsnNode(Opcodes.NEW, refImpl));
         insns.add(new InsnNode(Opcodes.DUP));
-        load.run();
         insns.add(new MethodInsnNode(
                 Opcodes.INVOKESPECIAL,
                 refImpl,
                 "<init>",
+                "()V",
+                false
+        ));
+    }
+
+    public static void generateInitialization(InsnList insns, Type innerType) {
+        String refImpl = LocalRefClassGenerator.getForType(innerType);
+
+        insns.add(new MethodInsnNode(
+                Opcodes.INVOKEVIRTUAL,
+                refImpl,
+                "init",
                 Type.getMethodDescriptor(Type.VOID_TYPE, getErasedType(innerType)),
                 false
         ));
