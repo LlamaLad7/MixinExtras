@@ -83,10 +83,14 @@ public class MixinInternals {
         }
     }
 
+    public static Extensions getExtensions() {
+        IMixinTransformer transformer = (IMixinTransformer) MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
+        return (Extensions) transformer.getExtensions();
+    }
+
     public static void registerExtension(IExtension extension) {
         try {
-            IMixinTransformer transformer = (IMixinTransformer) MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
-            Extensions extensions = (Extensions) transformer.getExtensions();
+            Extensions extensions = getExtensions();
             List<IExtension> extensionsList = (List<IExtension>) EXTENSIONS_FIELD.get(extensions);
             addExtension(extensionsList, extension);
             List<IExtension> activeExtensions = new ArrayList<>((List<IExtension>) ACTIVE_EXTENSIONS_FIELD.get(extensions));

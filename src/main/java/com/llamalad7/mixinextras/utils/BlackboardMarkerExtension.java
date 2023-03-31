@@ -2,7 +2,6 @@ package com.llamalad7.mixinextras.utils;
 
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
-import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 import org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext;
@@ -41,8 +40,7 @@ class BlackboardMarkerExtension implements IExtension, Supplier<Map<String, Obje
 
     @SuppressWarnings("unchecked")
     static Map<String, Object> getImpl() {
-        IMixinTransformer transformer = (IMixinTransformer) MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
-        Extensions extensions = (Extensions) transformer.getExtensions();
+        Extensions extensions = MixinInternals.getExtensions();
         for (IExtension extension : extensions.getExtensions()) {
             if (extension.getClass().getName().endsWith(".BlackboardMarkerExtension")) {
                 return ((Supplier<Map<String, Object>>) extension).get();

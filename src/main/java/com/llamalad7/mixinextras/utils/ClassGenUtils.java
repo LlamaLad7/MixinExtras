@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.utils;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
+import org.spongepowered.asm.mixin.MixinEnvironment;
 import sun.misc.Unsafe;
 
 import java.lang.invoke.MethodHandles;
@@ -55,6 +56,7 @@ public class ClassGenUtils {
         DEFINER.define(name, bytes, scope);
         DEFINITIONS.put(name, bytes);
         MixinInternals.registerClassInfo(node);
+        MixinInternals.getExtensions().export(MixinEnvironment.getCurrentEnvironment(), node.name, false, node);
     }
 
     /**
