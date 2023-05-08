@@ -7,7 +7,7 @@ allprojects {
     apply(plugin = "maven-publish")
 
     group = "com.llamalad7"
-    version = "0.2.0-beta.6"
+    version = "0.2.0-beta.7"
 
     repositories {
         mavenCentral()
