@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefUtils;
 import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -18,8 +19,6 @@ import java.util.Map;
 class ShareSugarApplicator extends SugarApplicator {
     private final String id;
     private Type innerType;
-    private int localRefIndex;
-    private boolean needsSetup;
 
     ShareSugarApplicator(InjectionInfo info, SugarParameter parameter) {
         super(info, parameter);
@@ -36,25 +35,32 @@ class ShareSugarApplicator extends SugarApplicator {
 
     @Override
     void prepare(Target target, InjectionNodes.InjectionNode node) {
-        Map<String, Integer> refIndices = TargetDecorations.getOrPut(target, "ShareSugar_LocalRefIndices", HashMap::new);
-        needsSetup = !refIndices.containsKey(id);
-        if (needsSetup) {
-            localRefIndex = target.allocateLocal();
-            refIndices.put(id, localRefIndex);
-            target.addLocalVariable(localRefIndex, "sharedRef" + localRefIndex, paramType.getDescriptor());
-        } else {
-            localRefIndex = refIndices.get(id);
-        }
     }
 
     @Override
     void inject(Target target, InjectionNodes.InjectionNode node) {
-        if (needsSetup) {
+        Map<String, Integer> refIndices = TargetDecorations.getOrPut(target, "ShareSugar_LocalRefIndices", HashMap::new);
+        int localRefIndex;
+        if (!refIndices.containsKey(id)) {
+            localRefIndex = target.allocateLocal();
+            refIndices.put(id, localRefIndex);
+            target.addLocalVariable(localRefIndex, "sharedRef" + localRefIndex, paramType.getDescriptor());
             InsnList init = new InsnList();
             LocalRefUtils.generateWrapping(init, innerType, () -> init.add(new InsnNode(ASMUtils.getDummyOpcodeForType(innerType))));
             init.add(new VarInsnNode(Opcodes.ASTORE, localRefIndex));
-            target.insertBefore(target.insns.getFirst(), init);
+            addToStart(target, init);
+        } else {
+            localRefIndex = refIndices.get(id);
         }
         target.insns.insertBefore(node.getCurrentTarget(), new VarInsnNode(Opcodes.ALOAD, localRefIndex));
+    }
+
+    private void addToStart(Target target, InsnList insns) {
+        for (AbstractInsnNode existing : target) {
+            if (existing.getOpcode() != -1) {
+                target.insns.insertBefore(existing, insns);
+                return;
+            }
+        }
     }
 }
