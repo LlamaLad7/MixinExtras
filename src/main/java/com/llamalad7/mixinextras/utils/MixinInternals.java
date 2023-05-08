@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
+import org.spongepowered.asm.mixin.transformer.ClassInfo;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
@@ -31,6 +32,7 @@ public class MixinInternals {
     private static final Field INJECTION_INFO_TARGET_NODES_FIELD;
     private static final Field INJECTION_NODE_DECORATIONS_FIELD;
     private static final Field INJECTION_INFO_INJECTOR_FIELD;
+    private static final Method CLASS_INFO_FROM_CLASS_NODE_METHOD;
 
     static {
         try {
@@ -53,6 +55,8 @@ public class MixinInternals {
             INJECTION_NODE_DECORATIONS_FIELD.setAccessible(true);
             INJECTION_INFO_INJECTOR_FIELD = InjectionInfo.class.getDeclaredField("injector");
             INJECTION_INFO_INJECTOR_FIELD.setAccessible(true);
+            CLASS_INFO_FROM_CLASS_NODE_METHOD = ClassInfo.class.getDeclaredMethod("fromClassNode", ClassNode.class);
+            CLASS_INFO_FROM_CLASS_NODE_METHOD.setAccessible(true);
         } catch (ClassNotFoundException | NoSuchFieldException | NoSuchMethodException e) {
             throw new RuntimeException("Failed to access some mixin internals, please report to LlamaLad7!", e);
         }
@@ -134,6 +138,14 @@ public class MixinInternals {
         try {
             Object state = MIXIN_INFO_GET_STATE_METHOD.invoke(mixin);
             return (ClassNode) STATE_CLASS_NODE_FIELD.get(state);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
+        }
+    }
+
+    public static void registerClassInfo(ClassNode classNode) {
+        try {
+            CLASS_INFO_FROM_CLASS_NODE_METHOD.invoke(null, classNode);
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
         }

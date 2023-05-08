@@ -47,6 +47,7 @@ public class ClassGenUtils {
         ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         node.accept(writer);
         DEFINER.define(node.name.replace('/', '.'), writer.toByteArray(), scope);
+        MixinInternals.registerClassInfo(node);
     }
 
     @FunctionalInterface
