@@ -4,16 +4,14 @@ import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefUtils;
 import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Annotations;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 class ShareSugarApplicator extends SugarApplicator {
@@ -44,23 +42,23 @@ class ShareSugarApplicator extends SugarApplicator {
         if (!refIndices.containsKey(id)) {
             localRefIndex = target.allocateLocal();
             refIndices.put(id, localRefIndex);
+            LabelNode start = new LabelNode();
+            LabelNode end = new LabelNode();
             target.addLocalVariable(localRefIndex, "sharedRef" + localRefIndex, paramType.getDescriptor());
+            List<LocalVariableNode> lvt = target.method.localVariables;
+            LocalVariableNode newVar = lvt.get(lvt.size() - 1);
+            newVar.start = start;
+            newVar.end = end;
+            target.insns.insert(start);
+            target.insns.add(end);
             InsnList init = new InsnList();
             LocalRefUtils.generateWrapping(init, innerType, () -> init.add(new InsnNode(ASMUtils.getDummyOpcodeForType(innerType))));
             init.add(new VarInsnNode(Opcodes.ASTORE, localRefIndex));
-            addToStart(target, init);
+            target.insns.insert(start, init);
         } else {
             localRefIndex = refIndices.get(id);
         }
         target.insns.insertBefore(node.getCurrentTarget(), new VarInsnNode(Opcodes.ALOAD, localRefIndex));
     }
 
-    private void addToStart(Target target, InsnList insns) {
-        for (AbstractInsnNode existing : target) {
-            if (existing.getOpcode() != -1) {
-                target.insns.insertBefore(existing, insns);
-                return;
-            }
-        }
-    }
 }
