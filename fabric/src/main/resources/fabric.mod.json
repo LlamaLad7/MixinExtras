@@ -18,5 +18,10 @@
   ],
   "depends": {
     "fabricloader": ">=0.14.11"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": [ "library" ]
+    }
   }
 }
