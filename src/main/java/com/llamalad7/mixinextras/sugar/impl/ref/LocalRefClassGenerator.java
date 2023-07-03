@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.sugar.impl.ref;
 
+import com.llamalad7.mixinextras.sugar.impl.ref.generated.GeneratedImplDummy;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.llamalad7.mixinextras.utils.ClassGenUtils;
 import com.llamalad7.mixinextras.utils.PackageUtils;
@@ -9,7 +10,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +18,7 @@ import java.util.Map;
  * These objects will be shared between handlers that possibly use different relocations of MixinExtras.
  */
 public class LocalRefClassGenerator {
-    private static final String IMPL_PACKAGE = StringUtils.substringBeforeLast(LocalRefClassGenerator.class.getName(), ".").replace('.', '/');
+    private static final String IMPL_PACKAGE = StringUtils.substringBeforeLast(LocalRefClassGenerator.class.getName(), ".").replace('.', '/') + "/generated";
     private static final Map<Class<?>, String> interfaceToImpl = new HashMap<>();
 
     public static String getForType(Type type) {
@@ -34,7 +34,7 @@ public class LocalRefClassGenerator {
         ClassNode node = new ClassNode();
         node.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, owner, null, Type.getInternalName(Object.class), null);
         generateClass(node, owner, innerDesc, refInterface.getName());
-        ClassGenUtils.defineClass(node, MethodHandles.lookup());
+        ClassGenUtils.defineClass(node, GeneratedImplDummy.getLookup());
         return owner;
     }
 
