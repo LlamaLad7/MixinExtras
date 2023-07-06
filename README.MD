@@ -5,6 +5,8 @@ a more expressive and compatible way.
 
 More information about each feature offered can be found at the [Wiki](https://github.com/LlamaLad7/MixinExtras/wiki).
 
+### If you are using `0.2.0-beta.5` or later you need to follow [the new README](https://gist.github.com/LlamaLad7/ec597b6d02d39b8a2e35559f9fcce42f) instead.
+
 ## Setup
 
 For the time being, I recommend depending on this library via [JitPack](https://jitpack.io/). After adding its
