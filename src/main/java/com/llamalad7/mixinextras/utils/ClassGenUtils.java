@@ -9,9 +9,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ClassGenUtils {
     private static final Definer DEFINER;
+    private static final Map<String, byte[]> DEFINITIONS = new HashMap<>();
 
     static {
         Definer theDefiner;
@@ -46,8 +50,18 @@ public class ClassGenUtils {
     public static void defineClass(ClassNode node, MethodHandles.Lookup scope) {
         ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         node.accept(writer);
-        DEFINER.define(node.name.replace('/', '.'), writer.toByteArray(), scope);
+        byte[] bytes = writer.toByteArray();
+        String name = node.name.replace('/', '.');
+        DEFINER.define(name, bytes, scope);
+        DEFINITIONS.put(name, bytes);
         MixinInternals.registerClassInfo(node);
+    }
+
+    /**
+     * Exposed for use in specific custom classloader setups. You probably don't need this.
+     */
+    public static Map<String, byte[]> getDefinitions() {
+        return Collections.unmodifiableMap(DEFINITIONS);
     }
 
     @FunctionalInterface
