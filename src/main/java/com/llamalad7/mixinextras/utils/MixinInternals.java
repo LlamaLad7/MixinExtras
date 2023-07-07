@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.utils;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -14,6 +15,8 @@ import org.spongepowered.asm.mixin.transformer.ext.Extensions;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 import org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -33,6 +36,10 @@ public class MixinInternals {
     private static final Field INJECTION_NODE_DECORATIONS_FIELD;
     private static final Field INJECTION_INFO_INJECTOR_FIELD;
     private static final Method CLASS_INFO_FROM_CLASS_NODE_METHOD;
+    private static final Constructor<?> INJECTOR_ENTRY_CONSTRUCTOR;
+    private static final Field INJECTOR_ENTRY_ANNOTATION_TYPE_FIELD;
+    private static final Field INJECTION_INFO_REGISTRY_FIELD;
+    private static final Field INJECTION_INFO_REGISTERED_ANNOTATIONS_FIELD;
 
     static {
         try {
@@ -57,6 +64,15 @@ public class MixinInternals {
             INJECTION_INFO_INJECTOR_FIELD.setAccessible(true);
             CLASS_INFO_FROM_CLASS_NODE_METHOD = ClassInfo.class.getDeclaredMethod("fromClassNode", ClassNode.class);
             CLASS_INFO_FROM_CLASS_NODE_METHOD.setAccessible(true);
+            Class<?> InjectionInfo$InjectorEntry = Class.forName("org.spongepowered.asm.mixin.injection.struct.InjectionInfo$InjectorEntry");
+            INJECTOR_ENTRY_CONSTRUCTOR = InjectionInfo$InjectorEntry.getDeclaredConstructor(Class.class, Class.class);
+            INJECTOR_ENTRY_CONSTRUCTOR.setAccessible(true);
+            INJECTOR_ENTRY_ANNOTATION_TYPE_FIELD = InjectionInfo$InjectorEntry.getDeclaredField("annotationType");
+            INJECTOR_ENTRY_ANNOTATION_TYPE_FIELD.setAccessible(true);
+            INJECTION_INFO_REGISTRY_FIELD = InjectionInfo.class.getDeclaredField("registry");
+            INJECTION_INFO_REGISTRY_FIELD.setAccessible(true);
+            INJECTION_INFO_REGISTERED_ANNOTATIONS_FIELD = InjectionInfo.class.getDeclaredField("registeredAnnotations");
+            INJECTION_INFO_REGISTERED_ANNOTATIONS_FIELD.setAccessible(true);
         } catch (ClassNotFoundException | NoSuchFieldException | NoSuchMethodException e) {
             throw new RuntimeException("Failed to access some mixin internals, please report to LlamaLad7!", e);
         }
@@ -95,6 +111,19 @@ public class MixinInternals {
             addExtension(extensionsList, extension);
             List<IExtension> activeExtensions = new ArrayList<>((List<IExtension>) ACTIVE_EXTENSIONS_FIELD.get(extensions));
             addExtension(activeExtensions, extension);
+            ACTIVE_EXTENSIONS_FIELD.set(extensions, Collections.unmodifiableList(activeExtensions));
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
+        }
+    }
+
+    public static void unregisterExtension(IExtension extension) {
+        try {
+            Extensions extensions = getExtensions();
+            List<IExtension> extensionsList = (List<IExtension>) EXTENSIONS_FIELD.get(extensions);
+            extensionsList.remove(extension);
+            List<IExtension> activeExtensions = new ArrayList<>((List<IExtension>) ACTIVE_EXTENSIONS_FIELD.get(extensions));
+            activeExtensions.remove(extension);
             ACTIVE_EXTENSIONS_FIELD.set(extensions, Collections.unmodifiableList(activeExtensions));
         } catch (IllegalAccessException e) {
             throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
@@ -156,4 +185,20 @@ public class MixinInternals {
         }
     }
 
+    public static void registerInjector(Class<?> annotationType, Class<?> type) {
+        try {
+            Map<String, Object> registry = (Map<String, Object>) INJECTION_INFO_REGISTRY_FIELD.get(null);
+            Object entry = INJECTOR_ENTRY_CONSTRUCTOR.newInstance(annotationType, type);
+
+            registry.put(Type.getDescriptor(annotationType), entry);
+
+            List<Class<? extends Annotation>> annotations = new ArrayList<>();
+            for (Object injector : registry.values()) {
+                annotations.add((Class<? extends Annotation>) INJECTOR_ENTRY_ANNOTATION_TYPE_FIELD.get(injector));
+            }
+            INJECTION_INFO_REGISTERED_ANNOTATIONS_FIELD.set(null, annotations.toArray(new Class[0]));
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("Failed to use mixin internals, please report to LlamaLad7!", e);
+        }
+    }
 }
