@@ -1,38 +1,19 @@
 package com.llamalad7.mixinextras.utils;
 
-import java.util.Map;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import org.spongepowered.asm.service.IGlobalPropertyService;
+import org.spongepowered.asm.service.MixinService;
 
 /**
- * Used to pass data between different relocated versions of MixinExtras.
+ * Helpers for the Mixin property service.
  */
 public class Blackboard {
-    private static final Map<String, Object> IMPL = BlackboardMarkerExtension.getImpl();
+    private static final IGlobalPropertyService SERVICE = MixinService.getGlobalPropertyService();
 
-    public static boolean has(String key) {
-        return IMPL.containsKey(key);
-    }
-
-    @SuppressWarnings("unchecked")
     public static <T> T get(String key) {
-        return (T) IMPL.get(key);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> T getOrPut(String key, Supplier<T> supplier) {
-        return (T) IMPL.computeIfAbsent(key, k -> supplier.get());
+        return SERVICE.getProperty(SERVICE.resolveKey(key));
     }
 
     public static void put(String key, Object value) {
-        IMPL.put(key, value);
-    }
-
-    public static <T> void modify(String key, UnaryOperator<T> operator) {
-        IMPL.put(key, operator.apply(get(key)));
-    }
-
-    public static void remove(String key) {
-        IMPL.remove(key);
+        SERVICE.setProperty(SERVICE.resolveKey(key), value);
     }
 }

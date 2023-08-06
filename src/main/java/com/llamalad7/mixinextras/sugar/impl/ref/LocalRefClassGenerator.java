@@ -4,7 +4,6 @@ import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.impl.ref.generated.GeneratedImplDummy;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.llamalad7.mixinextras.utils.ClassGenUtils;
-import com.llamalad7.mixinextras.utils.PackageUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.InstructionAdapter;

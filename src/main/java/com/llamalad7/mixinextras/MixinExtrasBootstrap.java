@@ -7,7 +7,6 @@ import com.llamalad7.mixinextras.injector.WrapWithConditionInjectionInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
 import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.service.MixinExtrasVersion;
-import com.llamalad7.mixinextras.utils.PackageUtils;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 
 @SuppressWarnings("unused")
@@ -38,7 +37,5 @@ public class MixinExtrasBootstrap {
         }
 
         MixinExtrasService.setup();
-
-        PackageUtils.init();
     }
 }
