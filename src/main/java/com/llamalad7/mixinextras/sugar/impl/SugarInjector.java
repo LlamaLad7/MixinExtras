@@ -1,6 +1,5 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.impl.handlers.HandlerInfo;
 import com.llamalad7.mixinextras.sugar.impl.handlers.HandlerTransformer;
 import com.llamalad7.mixinextras.utils.ASMUtils;

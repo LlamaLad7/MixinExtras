@@ -7,7 +7,6 @@ import sun.misc.Unsafe;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
 import java.util.Collections;
