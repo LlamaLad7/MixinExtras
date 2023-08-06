@@ -134,8 +134,17 @@ public class MixinInternals {
         Map<String, Object> registry = (Map<String, Object>) INJECTION_INFO_REGISTRY.get(null);
         Object entry = INJECTOR_ENTRY.newInstance(clazz, type);
 
-        registry.put(Type.getInternalName(clazz), entry);
+        registry.put(Type.getDescriptor(clazz), entry);
+        bakeInjectionInfoArray(registry);
+    }
 
+    public static void unregisterInjector(String annotationType) {
+        Map<String, Object> registry = (Map<String, Object>) INJECTION_INFO_REGISTRY.get(null);
+        registry.remove('L' + annotationType.replace('.', '/') + ';');
+        bakeInjectionInfoArray(registry);
+    }
+
+    private static void bakeInjectionInfoArray(Map<String, Object> registry) {
         List<Class<? extends Annotation>> annotations = new ArrayList<>();
         for (Object injector : registry.values()) {
             annotations.add(INJECTOR_ENTRY_ANNOTATION_TYPE.get(injector));

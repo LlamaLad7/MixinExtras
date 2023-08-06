@@ -17,10 +17,7 @@ import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MixinExtrasServiceImpl implements MixinExtrasService {
@@ -30,6 +27,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     private final List<Versioned<IExtension>> offeredExtensions = new ArrayList<>();
     private final List<Versioned<Class<? extends InjectionInfo>>> offeredInjectors = new ArrayList<>();
     private final String ownPackage = StringUtils.substringBefore(getClass().getName(), ".service.");
+    private final List<String> allPackages = new ArrayList<>(Collections.singletonList(ownPackage));
     private final List<IExtension> ownExtensions = Arrays.asList(
             new ServiceInitializationExtension(this), new SugarApplicatorExtension(), new WrapOperationApplicatorExtension(),
             new SugarPostProcessingExtension()
@@ -40,7 +38,6 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     );
 
     boolean initialized;
-    private List<String> allPackages;
 
     @Override
     public int getVersion() {
@@ -56,6 +53,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     public void takeControlFrom(Object olderService) {
         LOGGER.debug("{} is taking over from {}", this, olderService);
         ownExtensions.forEach(MixinInternals::registerExtension);
+        ownInjectors.forEach(it -> registerInjector(it, ownPackage));
     }
 
     @Override
@@ -63,31 +61,27 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
         requireNotInitialized();
         LOGGER.debug("{} is conceding to {}", this, newerService);
         MixinExtrasService newService = MixinExtrasService.getFrom(newerService);
-        for (Versioned<String> packageName : offeredPackages) {
-            newService.offerPackage(packageName.version, packageName.value);
+
+        if (wasActive) {
+            deInitialize();
         }
+
+        offeredPackages.forEach(packageName -> newService.offerPackage(packageName.version, packageName.value));
         newService.offerPackage(getVersion(), ownPackage);
-        for (Versioned<IExtension> extension : offeredExtensions) {
-            newService.offerExtension(extension.version, extension.value);
-        }
-        for (IExtension extension : ownExtensions) {
-            if (wasActive) {
-                MixinInternals.unregisterExtension(extension);
-            }
-            newService.offerExtension(getVersion(), extension);
-        }
-        for (Versioned<Class<? extends InjectionInfo>> injector : offeredInjectors) {
-            newService.offerInjector(injector.version, injector.value);
-        }
-        for (Class<? extends InjectionInfo> injector : ownInjectors) {
-            newService.offerInjector(getVersion(), injector);
-        }
+
+        offeredExtensions.forEach(extension -> newService.offerExtension(extension.version, extension.value));
+        ownExtensions.forEach(extension -> newService.offerExtension(getVersion(), extension));
+
+        offeredInjectors.forEach(injector -> newService.offerInjector(injector.version, injector.value));
+        ownInjectors.forEach(injector -> newService.offerInjector(getVersion(), injector));
     }
 
     @Override
     public void offerPackage(int version, String packageName) {
         requireNotInitialized();
         offeredPackages.add(new Versioned<>(version, packageName));
+        allPackages.add(packageName);
+        ownInjectors.forEach(it -> registerInjector(it, packageName));
     }
 
     @Override
@@ -114,21 +108,28 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     public void initialize() {
         requireNotInitialized();
         LOGGER.info("Initializing MixinExtras version {} via {}.", MixinExtrasBootstrap.getVersion(), this);
-        allPackages = new ArrayList<>();
-        allPackages.add(ownPackage);
-        for (Versioned<String> otherPackage : offeredPackages) {
-            allPackages.add(otherPackage.value);
-        }
-        ownInjectors.forEach(this::registerInjector);
         initialized = true;
     }
 
-    private void registerInjector(Class<? extends InjectionInfo> injector) {
+    private void deInitialize() {
+        for (IExtension extension : ownExtensions) {
+            MixinInternals.unregisterExtension(extension);
+        }
+        for (Class<? extends InjectionInfo> injector : ownInjectors) {
+            allPackages.forEach(it -> unregisterInjector(injector, it));
+        }
+    }
+
+    private void registerInjector(Class<? extends InjectionInfo> injector, String packageName) {
         String name = injector.getAnnotation(InjectionInfo.AnnotationType.class).value().getName();
         String suffix = StringUtils.removeStart(name, ownPackage);
-        for (String packageName : allPackages) {
-            MixinInternals.registerInjector(packageName + suffix, injector);
-        }
+        MixinInternals.registerInjector(packageName + suffix, injector);
+    }
+
+    private void unregisterInjector(Class<? extends InjectionInfo> injector, String packageName) {
+        String name = injector.getAnnotation(InjectionInfo.AnnotationType.class).value().getName();
+        String suffix = StringUtils.removeStart(name, ownPackage);
+        MixinInternals.unregisterInjector(packageName + suffix);
     }
 
     public Type changePackage(Class<?> ourType, Type theirReference, Class<?> ourReference) {
