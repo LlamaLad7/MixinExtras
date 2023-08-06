@@ -21,22 +21,19 @@ public class ClassGenUtils {
     static {
         Definer theDefiner;
         try {
-            Unsafe.class.getMethod("defineClass", String.class, byte[].class, int.class, int.class, ClassLoader.class, ProtectionDomain.class);
+            Method defineClass = Unsafe.class.getMethod("defineClass", String.class, byte[].class, int.class, int.class, ClassLoader.class, ProtectionDomain.class);
             Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
             theUnsafe.setAccessible(true);
             Unsafe unsafe = (Unsafe) theUnsafe.get(null);
-            theDefiner = (name, bytes, scope) -> unsafe.defineClass(name, bytes, 0, bytes.length, scope.lookupClass().getClassLoader(), scope.lookupClass().getProtectionDomain());
+            theDefiner = (name, bytes, scope) -> {
+                defineClass.invoke(unsafe, name, bytes, 0, bytes.length, scope.lookupClass().getClassLoader(), scope.lookupClass().getProtectionDomain());
+            };
         } catch (IllegalAccessException | NoSuchFieldException | NoSuchMethodException e1) {
             try {
-                //noinspection JavaReflectionMemberAccess
                 Method defineClass = MethodHandles.Lookup.class.getMethod("defineClass", byte[].class);
                 theDefiner = (name, bytes, scope) -> {
-                    try {
-                        //noinspection PrimitiveArrayArgumentToVarargsMethod
-                        defineClass.invoke(scope, bytes);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException(e);
-                    }
+                    //noinspection PrimitiveArrayArgumentToVarargsMethod
+                    defineClass.invoke(scope, bytes);
                 };
             } catch (NoSuchMethodException e2) {
                 RuntimeException e = new RuntimeException("Could not resolve class definer! Please report to LlamaLad7.");
@@ -53,7 +50,16 @@ public class ClassGenUtils {
         node.accept(writer);
         byte[] bytes = writer.toByteArray();
         String name = node.name.replace('/', '.');
-        DEFINER.define(name, bytes, scope);
+        try {
+            DEFINER.define(name, bytes, scope);
+        } catch (Throwable e) {
+            throw new RuntimeException(
+                    String.format(
+                            "Failed to define class %s from %s! Please report to LlamaLad7!",
+                            node.name, scope
+                    ), e
+            );
+        }
         DEFINITIONS.put(name, bytes);
         MixinInternals.registerClassInfo(node);
         MixinInternals.getExtensions().export(MixinEnvironment.getCurrentEnvironment(), node.name, false, node);
@@ -68,6 +74,6 @@ public class ClassGenUtils {
 
     @FunctionalInterface
     private interface Definer {
-        void define(String name, byte[] bytes, MethodHandles.Lookup scope);
+        void define(String name, byte[] bytes, MethodHandles.Lookup scope) throws Throwable;
     }
 }

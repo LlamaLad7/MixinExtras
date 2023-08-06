@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.sugar.impl.ref;
 
+import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.ref.*;
 import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.PackageUtils;
@@ -30,7 +31,7 @@ public class LocalRefUtils {
     }
 
     public static Type getTargetType(Type type, Type generic) {
-        if (type.getSort() != Type.OBJECT || !type.getClassName().startsWith(PackageUtils.getPackage())) {
+        if (type.getSort() != Type.OBJECT || !MixinExtrasService.getInstance().isClassOwned(type.getClassName())) {
             return type;
         }
         switch (StringUtils.substringAfterLast(type.getInternalName(), "/")) {

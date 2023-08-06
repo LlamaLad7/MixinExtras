@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
+import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.utils.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Handle;
@@ -30,6 +31,8 @@ class WrapOperationInjector extends Injector {
             false
     );
     private static final String NPE = Type.getInternalName(NullPointerException.class);
+
+    private final Type operationType = MixinExtrasService.getInstance().changePackage(Operation.class, Type.getType(CompatibilityHelper.getAnnotation(info).desc), WrapOperation.class);
 
     public WrapOperationInjector(InjectionInfo info) {
         super(info, "@WrapOperation");
@@ -72,7 +75,7 @@ class WrapOperationInjector extends Injector {
             argTypes = ArrayUtils.remove(argTypes, 0);
         }
         Type[] originalArgs = getEffectiveArgTypes(node.getOriginalTarget());
-        this.validateParams(handler, returnType, ArrayUtils.add(originalArgs, Type.getType(Operation.class)));
+        this.validateParams(handler, returnType, ArrayUtils.add(originalArgs, operationType));
 
         // Store *all* the args, including ones added by redirectors and previous operation wrappers.
         // Excess ones will be bound to the lambda.
@@ -118,7 +121,7 @@ class WrapOperationInjector extends Injector {
                 // The SAM method will be called `call`
                 "call",
                 // The generated lambda will implement `Operation` and have any trailing parameters bound to it
-                Bytecode.generateDescriptor(Operation.class, (Object[]) descriptorArgs),
+                Bytecode.generateDescriptor(operationType, (Object[]) descriptorArgs),
                 // We want to generate the impl with LMF
                 LMF_HANDLE,
                 // The SAM method will take an array of args and return an `Object` (the return value of the wrapped call)
@@ -137,12 +140,11 @@ class WrapOperationInjector extends Injector {
         // The bridge method's args will consist of any bound parameters followed by an array
 
         Type returnType = getReturnType(node);
-        int methodId = UniquenessHelper.getNextId(this.classNode.name);
 
         MethodNode method = new MethodNode(
                 ASM.API_VERSION,
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | (virtual ? 0 : Opcodes.ACC_STATIC),
-                "mixinextras$bridge$" + methodId + '$' + getName(node.getCurrentTarget()),
+                UniquenessHelper.getUniqueMethodName(classNode, "mixinextras$bridge$" + getName(node.getCurrentTarget())),
                 Bytecode.generateDescriptor(
                         ASMUtils.isPrimitive(returnType) ?
                                 Type.getObjectType(

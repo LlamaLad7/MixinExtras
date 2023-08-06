@@ -1,8 +1,10 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
+import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
+import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -10,17 +12,27 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 abstract class SugarApplicator {
     private static final Map<String, Class<? extends SugarApplicator>> MAP = new HashMap<>();
 
     static {
-        MAP.put(Type.getDescriptor(Local.class), LocalSugarApplicator.class);
-        MAP.put(Type.getDescriptor(Share.class), ShareSugarApplicator.class);
+        List<Pair<Class<? extends Annotation>, Class<? extends SugarApplicator>>> sugars = Arrays.asList(
+                Pair.of(Local.class, LocalSugarApplicator.class),
+                Pair.of(Share.class, ShareSugarApplicator.class)
+        );
+        for (Pair<Class<? extends Annotation>, Class<? extends SugarApplicator>> pair : sugars) {
+            for (String name : MixinExtrasService.getInstance().getAllClassNames(pair.getLeft().getName())) {
+                MAP.put('L' + name.replace('.', '/') + ';', pair.getRight());
+            }
+        }
     }
 
     protected final IMixinInfo mixin;
@@ -55,5 +67,9 @@ abstract class SugarApplicator {
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    static boolean isSugar(String desc) {
+        return MAP.containsKey(desc);
     }
 }

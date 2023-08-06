@@ -22,7 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 class SugarInjector {
-    private static final String SUGAR_PACKAGE = Type.getDescriptor(Local.class).substring(0, Type.getDescriptor(Local.class).lastIndexOf('/') + 1);
+//    private static final String SUGAR_PACKAGE = Type.getDescriptor(Local.class).substring(0, Type.getDescriptor(Local.class).lastIndexOf('/') + 1);
     private static final Set<ClassNode> PREPARED_MIXINS = Collections.newSetFromMap(new WeakHashMap<>());
 
     private final InjectionInfo injectionInfo;
@@ -96,7 +96,7 @@ class SugarInjector {
             return false;
         }
         for (AnnotationNode annotation : paramAnnotations) {
-            if (annotation.desc.startsWith(SUGAR_PACKAGE)) {
+            if (SugarApplicator.isSugar(annotation.desc)) {
                 return true;
             }
         }
@@ -266,7 +266,7 @@ class SugarInjector {
         }
         AnnotationNode result = null;
         for (AnnotationNode annotation : annotations) {
-            if (annotation.desc.startsWith(SUGAR_PACKAGE)) {
+            if (SugarApplicator.isSugar(annotation.desc)) {
                 if (result != null) {
                     throw new IllegalStateException(
                             "Found multiple sugars on the same parameter! Got "

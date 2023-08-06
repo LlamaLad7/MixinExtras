@@ -1,14 +1,18 @@
 package com.llamalad7.mixinextras.sugar.impl.handlers;
 
+import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.impl.SugarParameter;
-import org.objectweb.asm.Type;
+import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,7 +22,14 @@ public abstract class HandlerTransformer {
     private static final Map<String, Class<? extends HandlerTransformer>> MAP = new HashMap<>();
 
     static {
-        MAP.put(Type.getDescriptor(Local.class), LocalHandlerTransformer.class);
+        List<Pair<Class<? extends Annotation>, Class<? extends HandlerTransformer>>> sugars = Arrays.asList(
+                Pair.of(Local.class, LocalHandlerTransformer.class)
+        );
+        for (Pair<Class<? extends Annotation>, Class<? extends HandlerTransformer>> pair : sugars) {
+            for (String name : MixinExtrasService.getInstance().getAllClassNames(pair.getLeft().getName())) {
+                MAP.put('L' + name.replace('.', '/') + ';', pair.getRight());
+            }
+        }
     }
 
     protected final IMixinInfo mixin;

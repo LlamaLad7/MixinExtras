@@ -64,7 +64,7 @@ public class HandlerInfo {
 
         handler.instructions = insns;
         handler.localVariables = null;
-        handler.name += "$mixinextras$bridge" + UniquenessHelper.getNextId(targetClass.name);
+        handler.name = UniquenessHelper.getUniqueMethodName(targetClass, handler.name + "$mixinextras$bridge");
         handler.desc = Type.getMethodDescriptor(Type.getReturnType(handler.desc), paramTypes);
     }
 

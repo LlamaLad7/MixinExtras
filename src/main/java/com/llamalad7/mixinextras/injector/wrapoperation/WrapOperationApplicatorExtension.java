@@ -2,7 +2,6 @@ package com.llamalad7.mixinextras.injector.wrapoperation;
 
 import com.llamalad7.mixinextras.injector.LateApplyingInjectorInfo;
 import com.llamalad7.mixinextras.utils.Blackboard;
-import com.llamalad7.mixinextras.utils.UniquenessHelper;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
@@ -43,7 +42,6 @@ public class WrapOperationApplicatorExtension implements IExtension {
             }
             QUEUED_INJECTIONS.remove(context);
         }
-        UniquenessHelper.clear(context.getClassNode().name);
     }
 
     @Override

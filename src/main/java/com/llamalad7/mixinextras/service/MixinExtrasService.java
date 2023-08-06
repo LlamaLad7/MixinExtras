@@ -17,6 +17,8 @@ public interface MixinExtrasService {
 
     void concedeTo(Object newerService, boolean wasActive);
 
+    void offerPackage(int version, String packageName);
+
     void offerExtension(int version, IExtension extension);
 
     void offerInjector(int version, Class<? extends InjectionInfo> injector);
@@ -50,5 +52,17 @@ public interface MixinExtrasService {
             });
         }
         throw new UnsupportedOperationException("Cannot get a MixinExtrasService from " + serviceImpl);
+    }
+
+    static MixinExtrasServiceImpl getInstance() {
+        Object impl = Blackboard.get("MixinExtrasServiceInstance");
+        if (impl instanceof MixinExtrasServiceImpl) {
+            MixinExtrasServiceImpl ourImpl = (MixinExtrasServiceImpl) impl;
+            if (ourImpl.initialized) {
+                return ourImpl;
+            }
+            throw new IllegalStateException("Cannot use service because it is not initialized!");
+        }
+        throw new IllegalStateException("Cannot use service because another service is active: " + impl);
     }
 }

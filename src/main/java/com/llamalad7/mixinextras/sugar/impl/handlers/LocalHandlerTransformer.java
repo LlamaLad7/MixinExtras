@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.sugar.impl.handlers;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.impl.SugarParameter;
 import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefUtils;
 import com.llamalad7.mixinextras.utils.ASMUtils;
@@ -23,9 +24,14 @@ import java.util.Set;
 class LocalHandlerTransformer extends HandlerTransformer {
     private static final Set<String> TARGET_INJECTORS = new HashSet<>(Arrays.asList(
             Type.getDescriptor(ModifyConstant.class),
-            Type.getDescriptor(Redirect.class),
-            Type.getDescriptor(WrapOperation.class)
+            Type.getDescriptor(Redirect.class)
     ));
+
+    static {
+        for (String name : MixinExtrasService.getInstance().getAllClassNames(WrapOperation.class.getName())) {
+            TARGET_INJECTORS.add('L' + name.replace('.', '/') + ';');
+        }
+    }
 
     LocalHandlerTransformer(IMixinInfo mixin, SugarParameter parameter) {
         super(mixin, parameter);
