@@ -29,8 +29,8 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     private final String ownPackage = StringUtils.substringBefore(getClass().getName(), ".service.");
     private final List<String> allPackages = new ArrayList<>(Collections.singletonList(ownPackage));
     private final List<IExtension> ownExtensions = Arrays.asList(
-            new ServiceInitializationExtension(this), new SugarApplicatorExtension(), new WrapOperationApplicatorExtension(),
-            new SugarPostProcessingExtension()
+            new SugarApplicatorExtension(), new ServiceInitializationExtension(this),
+            new WrapOperationApplicatorExtension(), new SugarPostProcessingExtension()
     );
     private final List<Class<? extends InjectionInfo>> ownInjectors = Arrays.asList(
             ModifyExpressionValueInjectionInfo.class, ModifyReceiverInjectionInfo.class, ModifyReturnValueInjectionInfo.class,
@@ -52,7 +52,13 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     @Override
     public void takeControlFrom(Object olderService) {
         LOGGER.debug("{} is taking over from {}", this, olderService);
-        ownExtensions.forEach(MixinInternals::registerExtension);
+        ownExtensions.forEach(it -> {
+            // Hack to "support" old betas.
+            // Our new applicator *must* be present in the list before any old ones, which this ensures.
+            // We can then hide the sugar from them, so they remain inactive.
+            // We prioritise the initialization extension so it's definitely before the sugar one.
+            MixinInternals.registerExtension(it, it instanceof ServiceInitializationExtension || it instanceof SugarApplicatorExtension);
+        });
         ownInjectors.forEach(it -> registerInjector(it, ownPackage));
     }
 
@@ -108,6 +114,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     public void initialize() {
         requireNotInitialized();
         LOGGER.info("Initializing MixinExtras version {} via {}.", MixinExtrasBootstrap.getVersion(), this);
+        detectBetaPackages();
         initialized = true;
     }
 
@@ -150,6 +157,24 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     private void requireNotInitialized() {
         if (initialized) {
             throw new IllegalStateException("The MixinExtras service has already been selected and is initialized!");
+        }
+    }
+
+    /**
+     * Detects and recognises active packages from versions between 0.2.0-beta.1 and 0.2.0-beta.9
+     * We take over the handling of the sugar for these versions, but not the injectors.
+     */
+    private void detectBetaPackages() {
+        for (IExtension extension : MixinInternals.getExtensions().getActiveExtensions()) {
+            String name = extension.getClass().getName();
+            String suffix = ".sugar.impl.SugarApplicatorExtension";
+            if (name.endsWith(suffix) && !isClassOwned(name)) {
+                // We have to assume this is from one of the offending versions.
+                String packageName = StringUtils.removeEnd(name, suffix);
+                allPackages.add(packageName);
+                LOGGER.warn("Found problematic active MixinExtras instance at {}", packageName);
+                LOGGER.warn("Versions from 0.2.0-beta.1 to 0.2.0-beta.9 have limited support and it is strongly recommended to update.");
+            }
         }
     }
 }

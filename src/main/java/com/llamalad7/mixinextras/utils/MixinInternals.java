@@ -69,11 +69,15 @@ public class MixinInternals {
     }
 
     public static void registerExtension(IExtension extension) {
+        registerExtension(extension, false);
+    }
+
+    public static void registerExtension(IExtension extension, boolean isPriority) {
         IExtensionRegistry extensions = getExtensions();
         List<IExtension> extensionsList = EXTENSIONS.get(extensions);
-        addExtension(extensionsList, extension);
+        addExtension(extensionsList, extension, isPriority);
         List<IExtension> activeExtensions = new ArrayList<>(ACTIVE_EXTENSIONS.get(extensions));
-        addExtension(activeExtensions, extension);
+        addExtension(activeExtensions, extension, isPriority);
         ACTIVE_EXTENSIONS.set(extensions, Collections.unmodifiableList(activeExtensions));
     }
 
@@ -86,24 +90,11 @@ public class MixinInternals {
         ACTIVE_EXTENSIONS.set(extensions, Collections.unmodifiableList(activeExtensions));
     }
 
-    /**
-     * This keeps the extensions in "groups", because when there are multiple relocated versions active that's the
-     * behaviour we want.
-     */
-    private static void addExtension(List<IExtension> extensions, IExtension newExtension) {
-        String extensionClassName = newExtension.getClass().getName();
-        extensionClassName = extensionClassName.substring(extensionClassName.lastIndexOf('.'));
-        int index = -1;
-        for (int i = 0; i < extensions.size(); i++) {
-            IExtension extension = extensions.get(i);
-            if (extension.getClass().getName().endsWith(extensionClassName)) {
-                index = i;
-            }
-        }
-        if (index == -1) {
-            extensions.add(newExtension);
+    private static void addExtension(List<IExtension> extensions, IExtension newExtension, boolean isPriority) {
+        if (isPriority) {
+            extensions.add(0, newExtension);
         } else {
-            extensions.add(index + 1, newExtension);
+            extensions.add(newExtension);
         }
     }
 

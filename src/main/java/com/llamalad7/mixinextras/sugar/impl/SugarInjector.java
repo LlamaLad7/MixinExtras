@@ -27,16 +27,18 @@ class SugarInjector {
     private final InjectionInfo injectionInfo;
     private final IMixinInfo mixin;
     private final MethodNode handler;
+    private final List<AnnotationNode> sugarAnnotations;
     private final List<Type> parameterGenerics;
     private Map<Target, List<InjectionNode>> targets;
     private final List<SugarParameter> strippedSugars = new ArrayList<>();
     private final List<SugarApplicator> applicators = new ArrayList<>();
     private final List<SugarApplicationException> exceptions = new ArrayList<>();
 
-    SugarInjector(InjectionInfo injectionInfo, IMixinInfo mixin, MethodNode handler, List<Type> parameterGenerics) {
+    SugarInjector(InjectionInfo injectionInfo, IMixinInfo mixin, MethodNode handler, List<AnnotationNode> sugarAnnotations, List<Type> parameterGenerics) {
         this.injectionInfo = injectionInfo;
         this.mixin = mixin;
         this.handler = handler;
+        this.sugarAnnotations = sugarAnnotations;
         this.parameterGenerics = parameterGenerics;
     }
 
@@ -58,9 +60,9 @@ class SugarInjector {
         PREPARED_MIXINS.add(mixinNode);
     }
 
-    static HandlerInfo getHandlerInfo(IMixinInfo mixin, MethodNode handler, List<Type> generics) {
+    static HandlerInfo getHandlerInfo(IMixinInfo mixin, MethodNode handler, List<AnnotationNode> sugarAnnotations, List<Type> generics) {
         List<HandlerTransformer> transformers = new ArrayList<>();
-        for (SugarParameter sugar : findSugars(handler, generics)) {
+        for (SugarParameter sugar : findSugars(handler, sugarAnnotations, generics)) {
             HandlerTransformer transformer = HandlerTransformer.create(mixin, sugar);
             if (transformer != null && transformer.isRequired(handler)) {
                 transformers.add(transformer);
@@ -110,18 +112,38 @@ class SugarInjector {
         AnnotationNode wrapped = new AnnotationNode(Type.getDescriptor(SugarWrapper.class));
         wrapped.visit("original", injectorAnnotation);
         wrapped.visit("signature", method.signature == null ? "" : method.signature);
+        wrapped.visit("sugars", stripSugarAnnotations(method));
         method.visibleAnnotations.remove(injectorAnnotation);
         method.visibleAnnotations.add(wrapped);
     }
 
+    /**
+     * Takes the sugar parameter annotations out and returns them.
+     * They are stored separately, so they don't get seen by versions pre-0.2.0-beta.10
+     * Those versions' SugarApplicatorExtensions are still active, and we can't fix that, so this just makes sure they
+     * don't do anything.
+     */
+    private static List<AnnotationNode> stripSugarAnnotations(MethodNode method) {
+        List<AnnotationNode> result = new ArrayList<>();
+        for (List<AnnotationNode> annotations : method.invisibleParameterAnnotations) {
+            AnnotationNode sugar = findSugar(annotations);
+            if (sugar != null) {
+                result.add(sugar);
+                annotations.remove(sugar);
+            } else {
+                result.add(new AnnotationNode(Type.getDescriptor(Deprecated.class))); // Any placeholder annotation
+            }
+        }
+        return result;
+    }
+
     void stripSugar() {
-        strippedSugars.addAll(findSugars(handler, parameterGenerics));
+        strippedSugars.addAll(findSugars(handler, sugarAnnotations, parameterGenerics));
         List<Type> params = new ArrayList<>();
         boolean foundSugar = false;
         int i = 0;
         for (Type type : Type.getArgumentTypes(handler.desc)) {
-            List<AnnotationNode> annotations = getParamAnnotations(handler, i);
-            if (!isSugar(annotations)) {
+            if (!SugarApplicator.isSugar(sugarAnnotations.get(i).desc)) {
                 if (foundSugar) {
                     throw new IllegalStateException(String.format("Found non-trailing sugared parameters on %s", handler.name + handler.desc));
                 }
@@ -239,18 +261,14 @@ class SugarInjector {
         }
     }
 
-    private static List<SugarParameter> findSugars(MethodNode handler, List<Type> generics) {
-        if (handler.invisibleParameterAnnotations == null) {
-            return Collections.emptyList();
-        }
+    private static List<SugarParameter> findSugars(MethodNode handler, List<AnnotationNode> sugarAnnotations, List<Type> generics) {
         List<SugarParameter> result = new ArrayList<>();
         Type[] paramTypes = Type.getArgumentTypes(handler.desc);
         int i = 0;
         int index = Bytecode.isStatic(handler) ? 0 : 1;
         for (Type paramType : paramTypes) {
-            List<AnnotationNode> annotationNodes = getParamAnnotations(handler, i);
-            AnnotationNode sugar = findSugar(annotationNodes);
-            if (sugar != null) {
+            AnnotationNode sugar = sugarAnnotations.get(i);
+            if (SugarApplicator.isSugar(sugar.desc)) {
                 result.add(new SugarParameter(sugar, paramType, generics.get(i), index, i));
             }
             i++;

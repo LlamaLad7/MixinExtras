@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.sugar.impl.handlers.HandlerInfo;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.GenericParamParser;
 import com.llamalad7.mixinextras.utils.MixinInternals;
+import com.llamalad7.mixinextras.utils.ProxyUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -31,6 +32,7 @@ import java.util.*;
 @HandlerPrefix("sugarWrapper")
 public class SugarWrapperInjectionInfo extends InjectionInfo implements LateApplyingInjectorInfo {
     private final AnnotationNode originalAnnotation;
+    private final List<AnnotationNode> sugarAnnotations;
     private final ArrayList<Type> generics;
     private final MethodNode handler;
     private final InjectionInfo delegate;
@@ -41,18 +43,17 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
         super(mixin, method, annotation);
         method.visibleAnnotations.remove(annotation);
         method.visibleAnnotations.add(originalAnnotation = Annotations.getValue(annotation, "original"));
+        sugarAnnotations = Annotations.getValue(annotation, "sugars");
         generics = new ArrayList<>(
                 GenericParamParser.getParameterGenerics(method.desc, Annotations.getValue(annotation, "signature"))
         );
         handler = prepareHandler(method);
-        sugarInjector = new SugarInjector(this, mixin.getMixin(), handler, generics);
+        sugarInjector = new SugarInjector(this, mixin.getMixin(), handler, sugarAnnotations, generics);
         sugarInjector.stripSugar();
         delegate = InjectionInfo.parse(mixin, handler);
         sugarInjector.setTargets(MixinInternals.getTargets(delegate));
-        lateApply = delegate instanceof LateApplyingInjectorInfo;
-        if (lateApply) {
-            ((LateApplyingInjectorInfo) delegate).wrap(this);
-        } else {
+        lateApply = LateApplyingInjectorInfo.wrap(delegate, this);
+        if (!lateApply) {
             checkDelegate();
         }
     }
@@ -149,7 +150,7 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
 
     @Override
     public void latePostInject() {
-        doPostInject(((LateApplyingInjectorInfo) delegate)::latePostInject);
+        doPostInject(ProxyUtils.getProxy(delegate, LateApplyingInjectorInfo.class)::latePostInject);
     }
 
     @Override
@@ -159,7 +160,7 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
 
     private MethodNode prepareHandler(MethodNode original) {
         IMixinInfo mixin = CompatibilityHelper.getMixin(this).getMixin();
-        HandlerInfo handlerInfo = SugarInjector.getHandlerInfo(mixin, original, generics);
+        HandlerInfo handlerInfo = SugarInjector.getHandlerInfo(mixin, original, sugarAnnotations, generics);
         if (handlerInfo == null) {
             return original;
         }
@@ -180,8 +181,8 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
         try {
             if (delegate.getClass().getMethod("inject").getDeclaringClass() != InjectionInfo.class) {
                 throw new UnsupportedOperationException(
-                        delegate.getClass() + "overrides 'inject' and so is not automatically compatible with Sugar." +
-                                "Please report to LlamaLad7 in case manual compatibility can be added."
+                        delegate.getClass() + " overrides 'inject' and so is not automatically compatible with Sugar." +
+                                " Please report to LlamaLad7 in case manual compatibility can be added."
                 );
             }
         } catch (NoSuchMethodException e) {

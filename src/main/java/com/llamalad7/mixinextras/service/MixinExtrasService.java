@@ -1,12 +1,9 @@
 package com.llamalad7.mixinextras.service;
 
 import com.llamalad7.mixinextras.utils.Blackboard;
+import com.llamalad7.mixinextras.utils.ProxyUtils;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.Arrays;
 
 public interface MixinExtrasService {
     int getVersion();
@@ -44,14 +41,7 @@ public interface MixinExtrasService {
     }
 
     static MixinExtrasService getFrom(Object serviceImpl) {
-        if (Arrays.stream(serviceImpl.getClass().getInterfaces()).anyMatch(it -> it.getName().endsWith(".MixinExtrasService"))) {
-            return (MixinExtrasService) Proxy.newProxyInstance(MixinExtrasService.class.getClassLoader(), new Class[]{MixinExtrasService.class}, (proxy, method, args) -> {
-                Method original = serviceImpl.getClass().getMethod(method.getName(), method.getParameterTypes());
-                original.setAccessible(true);
-                return original.invoke(serviceImpl, args);
-            });
-        }
-        throw new UnsupportedOperationException("Cannot get a MixinExtrasService from " + serviceImpl);
+        return ProxyUtils.getProxy(serviceImpl, MixinExtrasService.class);
     }
 
     static MixinExtrasServiceImpl getInstance() {
