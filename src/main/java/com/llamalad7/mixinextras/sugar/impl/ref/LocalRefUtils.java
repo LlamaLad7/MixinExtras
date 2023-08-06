@@ -77,6 +77,21 @@ public class LocalRefUtils {
         ));
     }
 
+    public static void generateDisposal(InsnList insns, Type innerType) {
+        String refImpl = LocalRefClassGenerator.getForType(innerType);
+
+        insns.add(new MethodInsnNode(
+                Opcodes.INVOKEVIRTUAL,
+                refImpl,
+                "dispose",
+                Type.getMethodDescriptor(getErasedType(innerType)),
+                false
+        ));
+        if (!ASMUtils.isPrimitive(innerType)) {
+            insns.add(new TypeInsnNode(Opcodes.CHECKCAST, innerType.getInternalName()));
+        }
+    }
+
     public static void generateUnwrapping(InsnList insns, Type innerType, Runnable load) {
         String refInterface = Type.getInternalName(getInterfaceFor(innerType));
 

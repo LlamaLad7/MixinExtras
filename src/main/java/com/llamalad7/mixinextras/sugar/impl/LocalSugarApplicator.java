@@ -107,10 +107,8 @@ class LocalSugarApplicator extends SugarApplicator {
             target.insertBefore(node, initialization);
 
             InsnList after = new InsnList();
-            LocalRefUtils.generateUnwrapping(
-                    after, targetLocalType,
-                    () -> after.add(new VarInsnNode(Opcodes.ALOAD, refIndex))
-            );
+            after.add(new VarInsnNode(Opcodes.ALOAD, refIndex));
+            LocalRefUtils.generateDisposal(after, targetLocalType);
             after.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ISTORE), index));
             target.insns.insert(node.getCurrentTarget(), after);
         });

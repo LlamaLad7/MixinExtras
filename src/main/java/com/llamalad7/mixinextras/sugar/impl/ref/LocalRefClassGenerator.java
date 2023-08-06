@@ -92,6 +92,16 @@ public class LocalRefClassGenerator {
             code.putfield(owner, "initialized", "Z");
             code.areturn(Type.VOID_TYPE);
         });
+
+        genMethod(node, "dispose", "()" + innerDesc, code -> {
+            checkInitialized.accept(code);
+            code.load(0, objectType);
+            code.iconst(0);
+            code.putfield(owner, "initialized", "Z");
+            code.load(0, objectType);
+            code.getfield(owner, "value", innerDesc);
+            code.areturn(innerType);
+        });
     }
 
     private static void genMethod(ClassVisitor cv, String name, String desc, Consumer<InstructionAdapter> code) {
