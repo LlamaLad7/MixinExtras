@@ -7,8 +7,10 @@ dependencies {
     compileOnly("net.minecraftforge:forge:1.16.4-35.1.37:universal")
 }
 
-tasks.withType<Jar> {
-    from(rootProject.tasks.named<Jar>("jar").get().archiveFile) {
+val proguardFile: File by rootProject.extra
+
+tasks.named<Jar>("jar") {
+    from(proguardFile) {
         rename { "META-INF/jars/MixinExtras-${project.version}.jar" }
     }
     from(rootProject.file("LICENSE")) {
