@@ -170,6 +170,7 @@ public class SugarWrapperInjectionInfo extends InjectionInfo implements LateAppl
         original.accept(newMethod);
         original.visibleAnnotations.remove(originalAnnotation);
         newMethod.name = original.name;
+        newMethod.tryCatchBlocks = null;
         newMethod.visitAnnotation(Type.getDescriptor(SugarBridge.class), false);
         handlerInfo.transformHandler(classNode, newMethod);
         handlerInfo.transformGenerics(generics);
