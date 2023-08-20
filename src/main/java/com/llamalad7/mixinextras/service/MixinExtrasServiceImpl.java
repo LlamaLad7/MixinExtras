@@ -1,6 +1,5 @@
 package com.llamalad7.mixinextras.service;
 
-import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValueInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReceiverInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReturnValueInjectionInfo;
@@ -113,7 +112,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     @Override
     public void initialize() {
         requireNotInitialized();
-        LOGGER.info("Initializing MixinExtras version {} via {}.", MixinExtrasBootstrap.getVersion(), this);
+        LOGGER.info("Initializing MixinExtras via {}.", this);
         detectBetaPackages();
         initialized = true;
     }

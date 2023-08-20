@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 public class MixinExtrasBootstrap {
     private static boolean initialized = false;
 
+    @Deprecated
     public static String getVersion() {
         return MixinExtrasVersion.LATEST.toString();
     }
