@@ -1,8 +1,8 @@
 package com.llamalad7.mixinextras.sugar.impl.ref;
 
+import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.ref.*;
 import com.llamalad7.mixinextras.utils.ASMUtils;
-import com.llamalad7.mixinextras.utils.PackageUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -30,7 +30,7 @@ public class LocalRefUtils {
     }
 
     public static Type getTargetType(Type type, Type generic) {
-        if (type.getSort() != Type.OBJECT || !type.getClassName().startsWith(PackageUtils.getPackage())) {
+        if (type.getSort() != Type.OBJECT || !MixinExtrasService.getInstance().isClassOwned(type.getClassName())) {
             return type;
         }
         switch (StringUtils.substringAfterLast(type.getInternalName(), "/")) {
@@ -51,19 +51,45 @@ public class LocalRefUtils {
         }
     }
 
-    public static void generateWrapping(InsnList insns, Type innerType, Runnable load) {
+    public static void generateNew(InsnList insns, Type innerType) {
         String refImpl = LocalRefClassGenerator.getForType(innerType);
 
         insns.add(new TypeInsnNode(Opcodes.NEW, refImpl));
         insns.add(new InsnNode(Opcodes.DUP));
-        load.run();
         insns.add(new MethodInsnNode(
                 Opcodes.INVOKESPECIAL,
                 refImpl,
                 "<init>",
+                "()V",
+                false
+        ));
+    }
+
+    public static void generateInitialization(InsnList insns, Type innerType) {
+        String refImpl = LocalRefClassGenerator.getForType(innerType);
+
+        insns.add(new MethodInsnNode(
+                Opcodes.INVOKEVIRTUAL,
+                refImpl,
+                "init",
                 Type.getMethodDescriptor(Type.VOID_TYPE, getErasedType(innerType)),
                 false
         ));
+    }
+
+    public static void generateDisposal(InsnList insns, Type innerType) {
+        String refImpl = LocalRefClassGenerator.getForType(innerType);
+
+        insns.add(new MethodInsnNode(
+                Opcodes.INVOKEVIRTUAL,
+                refImpl,
+                "dispose",
+                Type.getMethodDescriptor(getErasedType(innerType)),
+                false
+        ));
+        if (!ASMUtils.isPrimitive(innerType)) {
+            insns.add(new TypeInsnNode(Opcodes.CHECKCAST, innerType.getInternalName()));
+        }
     }
 
     public static void generateUnwrapping(InsnList insns, Type innerType, Runnable load) {

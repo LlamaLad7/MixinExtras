@@ -1,8 +1,6 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
 import com.llamalad7.mixinextras.injector.LateApplyingInjectorInfo;
-import com.llamalad7.mixinextras.utils.Blackboard;
-import com.llamalad7.mixinextras.utils.UniquenessHelper;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
@@ -15,8 +13,7 @@ import java.util.*;
  * injection phase. Applying them here means we are guaranteed to run after every other injector, which is crucial.
  */
 public class WrapOperationApplicatorExtension implements IExtension {
-    private static final Map<ITargetClassContext, List<Runnable[]>> QUEUED_INJECTIONS =
-            Blackboard.getOrPut("WrapOperation_queuedInjections", () -> Collections.synchronizedMap(new HashMap<>()));
+    private static final Map<ITargetClassContext, List<Runnable[]>> QUEUED_INJECTIONS = Collections.synchronizedMap(new HashMap<>());
 
     static void offerInjection(ITargetClassContext targetClassContext, LateApplyingInjectorInfo injectorInfo) {
         QUEUED_INJECTIONS.computeIfAbsent(targetClassContext, k -> new ArrayList<>()).add(new Runnable[]{injectorInfo::lateInject, injectorInfo::latePostInject});
@@ -43,7 +40,6 @@ public class WrapOperationApplicatorExtension implements IExtension {
             }
             QUEUED_INJECTIONS.remove(context);
         }
-        UniquenessHelper.clear(context.getClassNode().name);
     }
 
     @Override

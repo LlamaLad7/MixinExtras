@@ -1,18 +1,22 @@
 package com.llamalad7.mixinextras.utils;
 
-import org.spongepowered.asm.util.Counter;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class UniquenessHelper {
-    private static final Map<String, Counter> TARGET_TO_COUNTER = Blackboard.getOrPut("UniquenessHelper_TargetToCounter", HashMap::new);
-
-    public static int getNextId(String classRef) {
-        return TARGET_TO_COUNTER.computeIfAbsent(classRef, k -> new Counter()).value++;
-    }
-
-    public static void clear(String classRef) {
-        TARGET_TO_COUNTER.remove(classRef);
+    public static String getUniqueMethodName(ClassNode classNode, String name) {
+        for (int counter = classNode.methods.size(); ; counter++) {
+            String candidate = name + '$' + counter;
+            boolean isValid = true;
+            for (MethodNode methodNode : classNode.methods) {
+                if (methodNode.name.equals(candidate)) {
+                    isValid = false;
+                    break;
+                }
+            }
+            if (isValid) {
+                return candidate;
+            }
+        }
     }
 }

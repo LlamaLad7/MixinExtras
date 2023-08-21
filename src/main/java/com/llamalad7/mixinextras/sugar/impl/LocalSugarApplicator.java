@@ -90,22 +90,28 @@ class LocalSugarApplicator extends SugarApplicator {
         // We have to create the reference ourselves as we are the first to need it.
         int refIndex = target.allocateLocal();
         target.addLocalVariable(refIndex, "ref" + refIndex, 'L' + refImpl + ';');
-        // Make and store the reference object with the local's current value.
-        InsnList before = new InsnList();
-        LocalRefUtils.generateWrapping(
-                before, targetLocalType,
-                () -> before.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ILOAD), index))
-        );
-        before.add(new VarInsnNode(Opcodes.ASTORE, refIndex));
-        target.insertBefore(node, before);
-        // Write the reference's value back to its target local after the handler call.
-        InsnList after = new InsnList();
-        LocalRefUtils.generateUnwrapping(
-                after, targetLocalType,
-                () -> after.add(new VarInsnNode(Opcodes.ALOAD, refIndex))
-        );
-        after.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ISTORE), index));
-        target.insns.insert(node.getCurrentTarget(), after);
+        // Make and store the reference object, currently uninitialized.
+        InsnList construction = new InsnList();
+        LocalRefUtils.generateNew(construction, targetLocalType);
+        construction.add(new VarInsnNode(Opcodes.ASTORE, refIndex));
+        target.insertBefore(node, construction);
+
+        SugarPostProcessingExtension.enqueuePostProcessing(this, () -> {
+            // When all injectors have finished applying, we need to initialize the refs before the handler call,
+            // and write them back to the target method after. It's important to do this late so they're as tight
+            // as possible around the call and we don't have any issues with stale values being used.
+            InsnList initialization = new InsnList();
+            initialization.add(new VarInsnNode(Opcodes.ALOAD, refIndex));
+            initialization.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ILOAD), index));
+            LocalRefUtils.generateInitialization(initialization, targetLocalType);
+            target.insertBefore(node, initialization);
+
+            InsnList after = new InsnList();
+            after.add(new VarInsnNode(Opcodes.ALOAD, refIndex));
+            LocalRefUtils.generateDisposal(after, targetLocalType);
+            after.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ISTORE), index));
+            target.insns.insert(node.getCurrentTarget(), after);
+        });
         // Tell future injectors where to find the reference.
         refIndices.put(index, refIndex);
         return refIndex;
@@ -122,7 +128,7 @@ class LocalSugarApplicator extends SugarApplicator {
     }
 
     private String getLocalContextKey() {
-        return String.format("mixinextras_localSugarContext(%s,%s)", targetLocalType, isArgsOnly ? "argsOnly" : "fullFrame");
+        return String.format(Decorations.PERSISTENT + "localSugarContext(%s,%s)", targetLocalType, isArgsOnly ? "argsOnly" : "fullFrame");
     }
 
     private void printLocals(Target target, AbstractInsnNode node, Context context, LocalVariableDiscriminator discriminator) {

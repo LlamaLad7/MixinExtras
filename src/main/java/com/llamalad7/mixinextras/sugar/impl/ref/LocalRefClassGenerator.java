@@ -1,17 +1,17 @@
 package com.llamalad7.mixinextras.sugar.impl.ref;
 
+import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.impl.ref.generated.GeneratedImplDummy;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.llamalad7.mixinextras.utils.ClassGenUtils;
-import com.llamalad7.mixinextras.utils.PackageUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
+import org.objectweb.asm.commons.InstructionAdapter;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * We must generate implementations of {@link LocalRef} and co. at runtime so they implement all the required interfaces.
@@ -39,37 +39,72 @@ public class LocalRefClassGenerator {
     }
 
     private static void generateClass(ClassNode node, String owner, String innerDesc, String interfaceName) {
-        for (String name : PackageUtils.getAllClassNames(interfaceName)) {
+        Type objectType = Type.getType(Object.class);
+        Type innerType = Type.getType(innerDesc);
+
+        for (String name : MixinExtrasService.getInstance().getAllClassNames(interfaceName)) {
             node.interfaces.add(name.replace('.', '/'));
         }
         node.visitField(Opcodes.ACC_PRIVATE, "value", innerDesc, null, null);
+        node.visitField(Opcodes.ACC_PRIVATE, "initialized", "Z", null, null);
 
-        MethodVisitor ctor = node.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "(" + innerDesc + ")V", null, null);
-        ctor.visitCode();
-        ctor.visitVarInsn(Opcodes.ALOAD, 0);
-        ctor.visitMethodInsn(Opcodes.INVOKESPECIAL, Type.getInternalName(Object.class), "<init>", "()V", false);
-        ctor.visitVarInsn(Opcodes.ALOAD, 0);
-        ctor.visitVarInsn(Type.getType(innerDesc).getOpcode(Opcodes.ILOAD), 1);
-        ctor.visitFieldInsn(Opcodes.PUTFIELD, owner, "value", innerDesc);
-        ctor.visitInsn(Opcodes.RETURN);
-        ctor.visitMaxs(3, 3);
-        ctor.visitEnd();
+        Consumer<InstructionAdapter> checkInitialized = code -> {
+            Type illegalStateException = Type.getType(IllegalStateException.class);
+            code.load(0, objectType);
+            code.getfield(owner, "initialized", "Z");
+            Label passed = new Label();
+            code.ifne(passed);
+            code.anew(illegalStateException);
+            code.dup();
+            code.aconst("Uninitialized LocalRef! This should never happen! Please report to LlamaLad7!");
+            code.invokespecial(illegalStateException.getInternalName(), "<init>", "(Ljava/lang/String;)V", false);
+            code.athrow();
+            code.mark(passed);
+        };
 
-        MethodVisitor getter = node.visitMethod(Opcodes.ACC_PUBLIC, "get", "()" + innerDesc, null, null);
-        getter.visitCode();
-        getter.visitVarInsn(Opcodes.ALOAD, 0);
-        getter.visitFieldInsn(Opcodes.GETFIELD, owner, "value", innerDesc);
-        getter.visitInsn(Type.getType(innerDesc).getOpcode(Opcodes.IRETURN));
-        getter.visitMaxs(2, 1);
-        getter.visitEnd();
+        genMethod(node, "<init>", "()V", code -> {
+            code.load(0, objectType);
+            code.invokespecial(objectType.getInternalName(), "<init>", "()V", false);
+            code.areturn(Type.VOID_TYPE);
+        });
 
-        MethodVisitor setter = node.visitMethod(Opcodes.ACC_PUBLIC, "set", "(" + innerDesc + ")V", null, null);
-        setter.visitCode();
-        setter.visitVarInsn(Opcodes.ALOAD, 0);
-        setter.visitVarInsn(Type.getType(innerDesc).getOpcode(Opcodes.ILOAD), 1);
-        setter.visitFieldInsn(Opcodes.PUTFIELD, owner, "value", innerDesc);
-        setter.visitInsn(Opcodes.RETURN);
-        setter.visitMaxs(3, 3);
-        setter.visitEnd();
+        genMethod(node, "get", "()" + innerDesc, code -> {
+            checkInitialized.accept(code);
+            code.load(0, objectType);
+            code.getfield(owner, "value", innerDesc);
+            code.areturn(innerType);
+        });
+
+        genMethod(node, "set", "(" + innerDesc + ")V", code -> {
+            checkInitialized.accept(code);
+            code.load(0, objectType);
+            code.load(1, innerType);
+            code.putfield(owner, "value", innerDesc);
+            code.areturn(Type.VOID_TYPE);
+        });
+
+        genMethod(node, "init", "(" + innerDesc + ")V", code -> {
+            code.load(0, objectType);
+            code.load(1, innerType);
+            code.putfield(owner, "value", innerDesc);
+            code.load(0, objectType);
+            code.iconst(1);
+            code.putfield(owner, "initialized", "Z");
+            code.areturn(Type.VOID_TYPE);
+        });
+
+        genMethod(node, "dispose", "()" + innerDesc, code -> {
+            checkInitialized.accept(code);
+            code.load(0, objectType);
+            code.iconst(0);
+            code.putfield(owner, "initialized", "Z");
+            code.load(0, objectType);
+            code.getfield(owner, "value", innerDesc);
+            code.areturn(innerType);
+        });
+    }
+
+    private static void genMethod(ClassVisitor cv, String name, String desc, Consumer<InstructionAdapter> code) {
+        code.accept(new InstructionAdapter(cv.visitMethod(Opcodes.ACC_PUBLIC, name, desc, null, null)));
     }
 }

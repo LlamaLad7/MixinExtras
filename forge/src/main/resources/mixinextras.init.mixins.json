@@ -1,4 +1,5 @@
 {
   "minVersion": "0.8",
-  "plugin": "com.llamalad7.mixinextras.platform.forge.MixinExtrasConfigPlugin"
+  "plugin": "com.llamalad7.mixinextras.platform.forge.MixinExtrasConfigPlugin",
+  "package": "com.llamalad7.mixinextras.platform.forge.mixins"
 }

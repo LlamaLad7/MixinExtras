@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.utils;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
@@ -22,6 +23,7 @@ public class CompatibilityHelper {
     private static final Method INJECTION_INFO_GET_MIXIN_METHOD;
     private static final Constructor<Context> LVT_CONTEXT_CONSTRUCTOR;
     private static final Method INJECTION_INFO_PRE_INJECT_METHOD;
+    private static final Method INJECTION_INFO_GET_ANNOTATION_METHOD;
 
     static {
         INVALID_INJECTION_EXCEPTION_CONSTRUCTOR =
@@ -54,6 +56,11 @@ public class CompatibilityHelper {
 
         INJECTION_INFO_PRE_INJECT_METHOD = Arrays.stream(InjectionInfo.class.getMethods())
                 .filter(it -> it.getName().equals("preInject"))
+                .findFirst()
+                .orElse(null);
+
+        INJECTION_INFO_GET_ANNOTATION_METHOD = Arrays.stream(InjectionInfo.class.getMethods())
+                .filter(it -> it.getName().startsWith("getAnnotation") && it.getReturnType() == AnnotationNode.class)
                 .findFirst()
                 .orElse(null);
     }
@@ -89,6 +96,14 @@ public class CompatibilityHelper {
     public static void preInject(InjectionInfo info) {
         try {
             INJECTION_INFO_PRE_INJECT_METHOD.invoke(info);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static AnnotationNode getAnnotation(InjectionInfo info) {
+        try {
+            return (AnnotationNode) INJECTION_INFO_GET_ANNOTATION_METHOD.invoke(info);
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
