@@ -130,10 +130,8 @@ allprojects {
                 url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
                 authentication {
                     credentials {
-                        val ossrhUsername: String by properties
-                        val ossrhPassword: String by properties
-                        username = ossrhUsername
-                        password = ossrhPassword
+                        username = properties["ossrhUsername"] as? String ?: return@credentials
+                        password = properties["ossrhPassword"] as? String ?: return@credentials
                     }
                 }
             }
