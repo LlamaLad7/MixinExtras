@@ -12,6 +12,8 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
+val isLocal = (properties["isLocal"] as? String).toBoolean()
+
 allprojects {
     apply(plugin = "java")
     apply(plugin = "maven-publish")
@@ -124,14 +126,16 @@ subprojects {
 
 allprojects {
     extensions.configure<PublishingExtension> {
-        repositories {
-            maven {
-                name = "Sonatype"
-                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                authentication {
-                    credentials {
-                        username = properties["ossrhUsername"] as? String ?: return@credentials
-                        password = properties["ossrhPassword"] as? String ?: return@credentials
+        if (isLocal) {
+            repositories {
+                maven {
+                    name = "Sonatype"
+                    url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    authentication {
+                        credentials {
+                            username = properties["ossrhUsername"] as String
+                            password = properties["ossrhPassword"] as String
+                        }
                     }
                 }
             }
@@ -176,8 +180,10 @@ allprojects {
             }
         }
     }
-    extensions.configure<SigningExtension> {
-        sign(extensions.getByType<PublishingExtension>().publications["maven"])
+    if (isLocal) {
+        extensions.configure<SigningExtension> {
+            sign(extensions.getByType<PublishingExtension>().publications["maven"])
+        }
     }
 }
 
