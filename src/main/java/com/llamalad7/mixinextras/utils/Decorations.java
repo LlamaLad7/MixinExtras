@@ -15,7 +15,7 @@ public class Decorations {
      */
     public static final String POPPED_OPERATION = "mixinextras_operationIsImmediatelyPopped";
     /**
-     * Stores a map of LVT index of target local -> LVT index of applicable {@link LocalRef}.
+     * Stores a map of LVT index of target local -&gt; LVT index of applicable {@link LocalRef}.
      * References should be shared by injectors that wrap/replace the same target instruction.
      */
     public static final String LOCAL_REF_MAP = "mixinextras_localRefMap";

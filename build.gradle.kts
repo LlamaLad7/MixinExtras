@@ -15,6 +15,7 @@ plugins {
 allprojects {
     apply(plugin = "java")
     apply(plugin = "maven-publish")
+    apply(plugin = "signing")
 
     group = "com.llamalad7"
     version = "0.2.0-beta.10"
@@ -34,6 +35,7 @@ allprojects {
         targetCompatibility = JavaVersion.VERSION_1_8
 
         withSourcesJar()
+        withJavadocJar()
     }
 
     tasks.withType<Jar> {
@@ -109,15 +111,36 @@ subprojects {
 
         tasks.named<Jar>("sourcesJar") {
             from(rootProject.sourceSets.main.get().allSource)
+            from(sourceSets.main.get().allSource)
+        }
+
+        tasks.named<Javadoc>("javadoc") {
+            classpath += rootProject.configurations.compileClasspath.get()
+            source(rootProject.sourceSets.main.get().java)
+            source(sourceSets.main.get().java)
         }
     }
 }
 
 allprojects {
     extensions.configure<PublishingExtension> {
+        repositories {
+            maven {
+                name = "Sonatype"
+                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                authentication {
+                    credentials {
+                        val ossrhUsername: String by properties
+                        val ossrhPassword: String by properties
+                        username = ossrhUsername
+                        password = ossrhPassword
+                    }
+                }
+            }
+        }
         publications {
             create<MavenPublication>("maven") {
-                groupId = "com.llamalad7.mixinextras"
+                groupId = "io.github.llamalad7"
                 artifactId = "mixinextras-$moduleName"
 
                 if (parent == null) {
@@ -128,8 +151,35 @@ allprojects {
                     artifact(tasks.getByName("jar"))
                 }
                 artifact(tasks.getByName("sourcesJar"))
+                artifact(tasks.getByName("javadocJar"))
+
+                pom {
+                    name = "MixinExtras"
+                    description = "Companion library to Mixin with lots of features to improve the compatibility and concision of your mixins!"
+                    url = "https://github.com/LlamaLad7/MixinExtras"
+                    licenses {
+                        license {
+                            name = "MIT License"
+                            url = "http://www.opensource.org/licenses/mit-license.php"
+                        }
+                    }
+                    developers {
+                        developer {
+                            name = "LlamaLad7"
+                            url = "https://github.com/LlamaLad7"
+                        }
+                    }
+                    scm {
+                        connection = "scm:git:git://github.com/LlamaLad7/MixinExtras.git"
+                        developerConnection = "scm:git:git://github.com/LlamaLad7/MixinExtras.git"
+                        url = "https://github.com/LlamaLad7/MixinExtras/tree/master"
+                    }
+                }
             }
         }
+    }
+    extensions.configure<SigningExtension> {
+        sign(extensions.getByType<PublishingExtension>().publications["maven"])
     }
 }
 
