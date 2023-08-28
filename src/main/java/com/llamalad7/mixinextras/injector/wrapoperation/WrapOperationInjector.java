@@ -320,9 +320,17 @@ class WrapOperationInjector extends Injector {
     private Type[] getEffectiveArgTypes(AbstractInsnNode node) {
         if (node instanceof MethodInsnNode) {
             MethodInsnNode methodInsnNode = ((MethodInsnNode) node);
-            return node.getOpcode() == Opcodes.INVOKESTATIC ?
-                    Type.getArgumentTypes(methodInsnNode.desc) :
-                    ArrayUtils.addAll(new Type[]{Type.getObjectType(methodInsnNode.owner)}, Type.getArgumentTypes(methodInsnNode.desc));
+            Type[] args = Type.getArgumentTypes(methodInsnNode.desc);
+            switch (methodInsnNode.getOpcode()) {
+                case Opcodes.INVOKESTATIC:
+                    break;
+                case Opcodes.INVOKESPECIAL:
+                    args = ArrayUtils.add(args, 0, Type.getObjectType(classNode.name));
+                    break;
+                default:
+                    args = ArrayUtils.add(args, 0, Type.getObjectType(methodInsnNode.owner));
+            }
+            return args;
         }
         if (node instanceof FieldInsnNode) {
             FieldInsnNode fieldInsnNode = ((FieldInsnNode) node);

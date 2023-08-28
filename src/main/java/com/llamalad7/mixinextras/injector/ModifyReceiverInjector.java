@@ -70,10 +70,13 @@ public class ModifyReceiverInjector extends Injector {
     private Type[] getEffectiveArgTypes(AbstractInsnNode node) {
         switch (node.getOpcode()) {
             case Opcodes.INVOKEVIRTUAL:
-            case Opcodes.INVOKESPECIAL:
             case Opcodes.INVOKEINTERFACE: {
-                MethodInsnNode methodInsnNode = ((MethodInsnNode) node);
+                MethodInsnNode methodInsnNode = (MethodInsnNode) node;
                 return ArrayUtils.addAll(new Type[]{Type.getObjectType(methodInsnNode.owner)}, Type.getArgumentTypes(methodInsnNode.desc));
+            }
+            case Opcodes.INVOKESPECIAL: {
+                MethodInsnNode methodInsnNode = (MethodInsnNode) node;
+                return ArrayUtils.addAll(new Type[]{Type.getObjectType(classNode.name)}, Type.getArgumentTypes(methodInsnNode.desc));
             }
             case Opcodes.GETFIELD: {
                 FieldInsnNode fieldInsnNode = ((FieldInsnNode) node);
