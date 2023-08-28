@@ -20,7 +20,7 @@ allprojects {
     apply(plugin = "signing")
 
     group = "com.llamalad7"
-    version = "0.2.0-beta.10"
+    version = "0.2.0-beta.11"
 
     repositories {
         mavenCentral()
