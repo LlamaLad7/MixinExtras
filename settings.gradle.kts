@@ -1,3 +1,5 @@
 rootProject.name = "mixinextras"
-include("fabric")
-include("forge")
+include("platform")
+include("platform:common")
+include("platform:fabric")
+include("platform:forge")
