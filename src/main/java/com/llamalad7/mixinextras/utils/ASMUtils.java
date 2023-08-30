@@ -2,11 +2,11 @@ package com.llamalad7.mixinextras.utils;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AnnotationNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
+import org.spongepowered.asm.mixin.injection.struct.Target;
+import org.spongepowered.asm.util.Constants;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -95,5 +95,31 @@ public class ASMUtils {
             default:
                 throw new UnsupportedOperationException();
         }
+    }
+
+    /**
+     * Mixin already has this method in {@link Target} but it's wrong.
+     */
+    public static MethodInsnNode findInitNodeFor(Target target, TypeInsnNode newNode) {
+        int start = target.indexOf(newNode);
+        int depth = 0;
+        for (Iterator<AbstractInsnNode> it = target.insns.iterator(start); it.hasNext();) {
+            AbstractInsnNode insn = it.next();
+            if (insn instanceof TypeInsnNode && insn.getOpcode() == Opcodes.NEW) {
+                TypeInsnNode typeNode = (TypeInsnNode) insn;
+                if (typeNode.desc.equals(newNode.desc)) {
+                    depth++;
+                }
+            } else if (insn instanceof MethodInsnNode && insn.getOpcode() == Opcodes.INVOKESPECIAL) {
+                MethodInsnNode methodNode = (MethodInsnNode) insn;
+                if (Constants.CTOR.equals(methodNode.name) && methodNode.owner.equals(newNode.desc)) {
+                    depth--;
+                    if (depth == 0) {
+                        return methodNode;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

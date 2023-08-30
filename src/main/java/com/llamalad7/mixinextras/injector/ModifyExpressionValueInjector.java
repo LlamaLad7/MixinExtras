@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector;
 
+import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -23,7 +24,7 @@ public class ModifyExpressionValueInjector extends Injector {
         AbstractInsnNode valueNode = node.getCurrentTarget();
         Type valueType = getReturnType(valueNode);
         if (valueNode instanceof TypeInsnNode && valueNode.getOpcode() == Opcodes.NEW) {
-            valueNode = target.findInitNodeFor(((TypeInsnNode) valueNode));
+            valueNode = ASMUtils.findInitNodeFor(target, (TypeInsnNode) valueNode);
         }
 
         this.injectValueModifier(target, valueNode, valueType);
