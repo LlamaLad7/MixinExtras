@@ -1,5 +1,9 @@
 val isLocal = (properties["isLocal"] as? String).toBoolean()
 
+val inclusions = listOf(
+    project(":mixin-versions").subprojects.toList()
+).flatten()
+
 subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
@@ -18,11 +22,17 @@ subprojects {
 
         tasks.named<Jar>("sourcesJar") {
             from(rootProject.sourceSets.main.get().allSource)
+            inclusions.forEach {
+                from(it.sourceSets.main.get().allSource)
+            }
         }
 
         tasks.named<Javadoc>("javadoc") {
             classpath += rootProject.configurations.compileClasspath.get()
             source(rootProject.sourceSets.main.get().java)
+            inclusions.forEach {
+                source(it.sourceSets.main.get().java)
+            }
         }
     }
 

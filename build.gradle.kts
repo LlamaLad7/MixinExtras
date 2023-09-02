@@ -41,12 +41,15 @@ val shade by configurations.creating {
     configurations.compileOnly.get().extendsFrom(this)
 }
 
+val shadeOnly by configurations.creating
+
 dependencies {
     shade("org.apache.commons:commons-lang3:3.3.2")
+    shadeOnly(project("mixin-versions"))
 }
 
 tasks.named<ShadowJar>("shadowJar") {
-    configurations = listOf(shade)
+    configurations = listOf(shade, shadeOnly)
     archiveClassifier = "fat"
     relocate("org.apache.commons.lang3", "com.llamalad7.mixinextras.lib.apache.commons")
     exclude("META-INF/maven/**/*", "META-INF/*.txt")
