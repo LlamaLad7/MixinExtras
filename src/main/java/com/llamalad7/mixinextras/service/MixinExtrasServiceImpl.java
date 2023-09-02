@@ -40,7 +40,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
 
     @Override
     public int getVersion() {
-        return MixinExtrasVersion.LATEST.ordinal();
+        return MixinExtrasVersion.LATEST.getNumber();
     }
 
     @Override
