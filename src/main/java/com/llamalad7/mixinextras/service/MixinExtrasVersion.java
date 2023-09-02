@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.service;
 
 public enum MixinExtrasVersion {
-    V0_2_0_BETA_11("0.2.0-beta.11", 1);
+    V0_2_0_RC_1("0.2.0-rc.1", 2);
 
     public static final MixinExtrasVersion LATEST = values()[values().length - 1];
 
