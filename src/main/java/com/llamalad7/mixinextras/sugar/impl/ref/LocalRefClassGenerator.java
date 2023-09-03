@@ -46,37 +46,38 @@ public class LocalRefClassGenerator {
             node.interfaces.add(name.replace('.', '/'));
         }
         node.visitField(Opcodes.ACC_PRIVATE, "value", innerDesc, null, null);
-        node.visitField(Opcodes.ACC_PRIVATE, "initialized", "Z", null, null);
+        node.visitField(Opcodes.ACC_PRIVATE, "state", "B", null, null);
 
-        Consumer<InstructionAdapter> checkInitialized = code -> {
-            Type illegalStateException = Type.getType(IllegalStateException.class);
+        Consumer<InstructionAdapter> checkState = code -> {
+            String runtime = Type.getInternalName(LocalRefRuntime.class);
             code.load(0, objectType);
-            code.getfield(owner, "initialized", "Z");
+            code.getfield(owner, "state", "B");
             Label passed = new Label();
-            code.ifne(passed);
-            code.anew(illegalStateException);
-            code.dup();
-            code.aconst("Uninitialized LocalRef! This should never happen! Please report to LlamaLad7!");
-            code.invokespecial(illegalStateException.getInternalName(), "<init>", "(Ljava/lang/String;)V", false);
-            code.athrow();
+            code.ifeq(passed);
+            code.load(0, objectType);
+            code.getfield(owner, "state", "B");
+            code.invokestatic(runtime, "checkState", "(B)V", false);
             code.mark(passed);
         };
 
         genMethod(node, "<init>", "()V", code -> {
             code.load(0, objectType);
             code.invokespecial(objectType.getInternalName(), "<init>", "()V", false);
+            code.load(0, objectType);
+            code.iconst(LocalRefRuntime.UNINITIALIZED);
+            code.putfield(owner, "state", "B");
             code.areturn(Type.VOID_TYPE);
         });
 
         genMethod(node, "get", "()" + innerDesc, code -> {
-            checkInitialized.accept(code);
+            checkState.accept(code);
             code.load(0, objectType);
             code.getfield(owner, "value", innerDesc);
             code.areturn(innerType);
         });
 
         genMethod(node, "set", "(" + innerDesc + ")V", code -> {
-            checkInitialized.accept(code);
+            checkState.accept(code);
             code.load(0, objectType);
             code.load(1, innerType);
             code.putfield(owner, "value", innerDesc);
@@ -88,16 +89,16 @@ public class LocalRefClassGenerator {
             code.load(1, innerType);
             code.putfield(owner, "value", innerDesc);
             code.load(0, objectType);
-            code.iconst(1);
-            code.putfield(owner, "initialized", "Z");
+            code.iconst(0);
+            code.putfield(owner, "state", "B");
             code.areturn(Type.VOID_TYPE);
         });
 
         genMethod(node, "dispose", "()" + innerDesc, code -> {
-            checkInitialized.accept(code);
+            checkState.accept(code);
             code.load(0, objectType);
-            code.iconst(0);
-            code.putfield(owner, "initialized", "Z");
+            code.iconst(LocalRefRuntime.DISPOSED);
+            code.putfield(owner, "state", "B");
             code.load(0, objectType);
             code.getfield(owner, "value", innerDesc);
             code.areturn(innerType);
