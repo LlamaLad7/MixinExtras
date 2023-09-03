@@ -32,7 +32,14 @@ public class LocalRefClassGenerator {
         String innerDesc = desc.length() == 1 ? desc : Type.getDescriptor(Object.class);
         interfaceToImpl.put(refInterface, owner);
         ClassNode node = new ClassNode();
-        node.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, owner, null, Type.getInternalName(Object.class), null);
+        node.visit(
+                Opcodes.V1_8,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER | Opcodes.ACC_FINAL,
+                owner,
+                null,
+                Type.getInternalName(Object.class),
+                null
+        );
         generateClass(node, owner, innerDesc, refInterface.getName());
         ClassGenUtils.defineClass(node, GeneratedImplDummy.getLookup());
         return owner;
