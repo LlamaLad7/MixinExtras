@@ -16,6 +16,7 @@ import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,9 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     private final List<Versioned<IExtension>> offeredExtensions = new ArrayList<>();
     private final List<Versioned<Class<? extends InjectionInfo>>> offeredInjectors = new ArrayList<>();
     private final String ownPackage = StringUtils.substringBefore(getClass().getName(), ".service.");
-    private final List<String> allPackages = new ArrayList<>(Collections.singletonList(ownPackage));
+    private final List<Versioned<String>> allPackages = new ArrayList<>(Collections.singletonList(
+            new Versioned<>(getVersion(), ownPackage)
+    ));
     private final List<IExtension> ownExtensions = Arrays.asList(
             new SugarApplicatorExtension(), new ServiceInitializationExtension(this),
             new WrapOperationApplicatorExtension(), new SugarPostProcessingExtension()
@@ -85,7 +88,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     public void offerPackage(int version, String packageName) {
         requireNotInitialized();
         offeredPackages.add(new Versioned<>(version, packageName));
-        allPackages.add(packageName);
+        allPackages.add(new Versioned<>(version, packageName));
         ownInjectors.forEach(it -> registerInjector(it, packageName));
     }
 
@@ -122,7 +125,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
             MixinInternals.unregisterExtension(extension);
         }
         for (Class<? extends InjectionInfo> injector : ownInjectors) {
-            allPackages.forEach(it -> unregisterInjector(injector, it));
+            allPackages.forEach(it -> unregisterInjector(injector, it.value));
         }
     }
 
@@ -145,12 +148,24 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     }
 
     public Set<String> getAllClassNames(String ourName) {
+        return getAllClassNamesAtLeast(ourName, Integer.MIN_VALUE);
+    }
+
+    public Set<String> getAllClassNamesAtLeast(String ourName, MixinExtrasVersion minVersion) {
+        return getAllClassNamesAtLeast(ourName, minVersion.getNumber());
+    }
+
+    private Set<String> getAllClassNamesAtLeast(String ourName, int minVersion) {
         String ourBinaryName = ourName.replace('/', '.');
-        return allPackages.stream().map(it -> StringUtils.replaceOnce(ourBinaryName, ownPackage, it)).collect(Collectors.toSet());
+        return allPackages.stream()
+                .filter(it -> it.version >= minVersion)
+                .map(it -> it.value)
+                .map(it -> StringUtils.replaceOnce(ourBinaryName, ownPackage, it))
+                .collect(Collectors.toSet());
     }
 
     public boolean isClassOwned(String name) {
-        return allPackages.stream().anyMatch(name::startsWith);
+        return allPackages.stream().map(it -> it.value).anyMatch(name::startsWith);
     }
 
     private void requireNotInitialized() {
@@ -170,10 +185,39 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
             if (name.endsWith(suffix) && !isClassOwned(name)) {
                 // We have to assume this is from one of the offending versions.
                 String packageName = StringUtils.removeEnd(name, suffix);
-                allPackages.add(packageName);
-                LOGGER.warn("Found problematic active MixinExtras instance at {}", packageName);
+                MixinExtrasVersion version = getBetaVersion(packageName);
+                allPackages.add(new Versioned<>(version.getNumber(), packageName));
+                LOGGER.warn("Found problematic active MixinExtras instance at {} (version {})", packageName, version);
                 LOGGER.warn("Versions from 0.2.0-beta.1 to 0.2.0-beta.9 have limited support and it is strongly recommended to update.");
             }
+        }
+    }
+
+    private MixinExtrasVersion getBetaVersion(String packageName) {
+        String bootstrapClassName = packageName + ".MixinExtrasBootstrap";
+        try {
+            Class<?> bootstrapClass = Class.forName(bootstrapClassName);
+            Field versionField = bootstrapClass.getDeclaredField("VERSION");
+            versionField.setAccessible(true);
+            String versionName = (String) versionField.get(null);
+            switch (versionName) {
+                case "0.2.0-beta.1": return MixinExtrasVersion.V0_2_0_BETA_1;
+                case "0.2.0-beta.2": return MixinExtrasVersion.V0_2_0_BETA_2;
+                case "0.2.0-beta.3": return MixinExtrasVersion.V0_2_0_BETA_3;
+                case "0.2.0-beta.4": return MixinExtrasVersion.V0_2_0_BETA_4;
+                case "0.2.0-beta.5": return MixinExtrasVersion.V0_2_0_BETA_5;
+                case "0.2.0-beta.6": return MixinExtrasVersion.V0_2_0_BETA_6;
+                case "0.2.0-beta.7": return MixinExtrasVersion.V0_2_0_BETA_7;
+                case "0.2.0-beta.8": return MixinExtrasVersion.V0_2_0_BETA_8;
+                case "0.2.0-beta.9": return MixinExtrasVersion.V0_2_0_BETA_9;
+            }
+            throw new IllegalArgumentException("Unrecognized version " + versionName);
+        } catch (Exception e) {
+            LOGGER.error(
+                    String.format("Failed to determine version of MixinExtras instance at %s, assuming 0.2.0-beta.1", packageName),
+                    e
+            );
+            return MixinExtrasVersion.V0_2_0_BETA_1;
         }
     }
 }

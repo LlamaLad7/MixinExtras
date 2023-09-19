@@ -14,6 +14,8 @@ public interface MixinExtrasLogger {
 
     void debug(String message, Object... args);
 
+    void error(String message, Throwable t);
+
     static MixinExtrasLogger get(String name) {
         Object impl;
         try {

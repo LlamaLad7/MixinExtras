@@ -1,6 +1,9 @@
 package com.llamalad7.mixinextras.injector;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.service.MixinExtrasService;
+import com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo;
+import com.llamalad7.mixinextras.utils.MixinExtrasLogger;
 import com.llamalad7.mixinextras.utils.ProxyUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -12,6 +15,16 @@ public interface LateApplyingInjectorInfo {
     void latePostInject();
 
     void wrap(LateApplyingInjectorInfo outer);
+
+    /**
+     * Will be called by 0.2.0-beta.1 when enqueueing a {@link SugarWrapperInjectionInfo} for a {@link WrapOperation}.
+     */
+    @Deprecated
+    default void lateApply() {
+        lateInject();
+        MixinExtrasLogger logger = MixinExtrasLogger.get("MixinExtras|Sugar");
+        logger.warn("Skipping post injection checks for {} since it is from 0.2.0-beta.1 and cannot be saved", this);
+    }
 
     /**
      * Handles the inner injection info being from a different package to ours.

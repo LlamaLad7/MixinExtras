@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.sugar.impl.ref;
 
 import com.llamalad7.mixinextras.service.MixinExtrasService;
+import com.llamalad7.mixinextras.service.MixinExtrasVersion;
 import com.llamalad7.mixinextras.sugar.impl.ref.generated.GeneratedImplDummy;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.llamalad7.mixinextras.utils.ClassGenUtils;
@@ -49,7 +50,7 @@ public class LocalRefClassGenerator {
         Type objectType = Type.getType(Object.class);
         Type innerType = Type.getType(innerDesc);
 
-        for (String name : MixinExtrasService.getInstance().getAllClassNames(interfaceName)) {
+        for (String name : MixinExtrasService.getInstance().getAllClassNamesAtLeast(interfaceName, MixinExtrasVersion.V0_2_0_BETA_5)) {
             node.interfaces.add(name.replace('.', '/'));
         }
         node.visitField(Opcodes.ACC_PRIVATE, "value", innerDesc, null, null);
