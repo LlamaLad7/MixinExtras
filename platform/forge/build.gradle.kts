@@ -4,7 +4,17 @@ repositories {
 
 dependencies {
     compileOnly(rootProject)
-    compileOnly("net.minecraftforge:forge:1.16.4-35.1.37:universal")
+    for (artifact in arrayOf("forge", "fmlloader", "fmlcore", "javafmllanguage")) {
+        compileOnly("net.minecraftforge:$artifact:1.18.2-40.2.4")
+    }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 val proguardFile: File by rootProject.extra
