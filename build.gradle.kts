@@ -3,7 +3,7 @@ import proguard.gradle.ProGuardTask
 
 buildscript {
     dependencies {
-        classpath("com.guardsquare:proguard-gradle:7.1.0")
+        classpath("com.guardsquare:proguard-gradle:7.3.2")
     }
 }
 
