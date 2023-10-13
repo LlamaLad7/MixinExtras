@@ -7,14 +7,14 @@ More information about each feature offered can be found at the [Wiki](https://g
 
 ## Setup
 
-Since `0.2.0-beta.10` MixinExtras is available on Maven Central.
+MixinExtras is available on Maven Central.
 
 The setup steps vary based on your platform:
 <details><summary>Fabric / Quilt</summary>
 
 ```gradle
 dependencies {
-    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.2.0-rc.5")))
+    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.2.0")))
 }
 ```
 
@@ -23,9 +23,9 @@ dependencies {
 
 ```gradle
 dependencies {
-    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.0-rc.5"))
-    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.2.0-rc.5")) {
-        jarJar.ranged(it, "[0.2.0-rc.5,)")
+    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.0"))
+    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.2.0")) {
+        jarJar.ranged(it, "[0.2.0,)")
     }
 }
 ```
@@ -35,8 +35,8 @@ dependencies {
 
 ```gradle
 dependencies {
-    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.0-rc.5"))
-    implementation(include("io.github.llamalad7:mixinextras-forge:0.2.0-rc.5"))
+    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.0"))
+    implementation(include("io.github.llamalad7:mixinextras-forge:0.2.0"))
 }
 ```
 
@@ -55,7 +55,7 @@ configurations {
 }
 
 dependencies {
-    shadow(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.0-rc.5"))
+    shadow(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.0"))
 }
 
 shadowJar {
