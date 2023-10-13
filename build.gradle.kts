@@ -35,6 +35,10 @@ allprojects {
         withSourcesJar()
         withJavadocJar()
     }
+
+    tasks.withType<Javadoc> {
+        (options as CoreJavadocOptions).addStringOption("Xdoclint:none", "-quiet")
+    }
 }
 
 val shade by configurations.creating {
