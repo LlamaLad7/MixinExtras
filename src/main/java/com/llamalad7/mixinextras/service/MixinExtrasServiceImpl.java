@@ -6,11 +6,12 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValueInjectionInfo;
 import com.llamalad7.mixinextras.injector.WrapWithConditionInjectionInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationApplicatorExtension;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
-import com.llamalad7.mixinextras.sugar.impl.SugarApplicatorExtension;
 import com.llamalad7.mixinextras.sugar.impl.SugarPostProcessingExtension;
 import com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo;
+import com.llamalad7.mixinextras.transformer.MixinTransformerExtension;
 import com.llamalad7.mixinextras.utils.MixinExtrasLogger;
 import com.llamalad7.mixinextras.utils.MixinInternals;
+import com.llamalad7.mixinextras.wrapper.factory.FactoryRedirectWrapperInjectionInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
@@ -21,7 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class MixinExtrasServiceImpl implements MixinExtrasService {
-    private static final MixinExtrasLogger LOGGER = MixinExtrasLogger.get("MixinExtras|Service");
+    private static final MixinExtrasLogger LOGGER = MixinExtrasLogger.get("Service");
 
     private final List<Versioned<String>> offeredPackages = new ArrayList<>();
     private final List<Versioned<IExtension>> offeredExtensions = new ArrayList<>();
@@ -31,12 +32,13 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
             new Versioned<>(getVersion(), ownPackage)
     ));
     private final List<IExtension> ownExtensions = Arrays.asList(
-            new SugarApplicatorExtension(), new ServiceInitializationExtension(this),
+            new MixinTransformerExtension(), new ServiceInitializationExtension(this),
             new WrapOperationApplicatorExtension(), new SugarPostProcessingExtension()
     );
     private final List<Class<? extends InjectionInfo>> ownInjectors = Arrays.asList(
             ModifyExpressionValueInjectionInfo.class, ModifyReceiverInjectionInfo.class, ModifyReturnValueInjectionInfo.class,
-            WrapOperationInjectionInfo.class, WrapWithConditionInjectionInfo.class, SugarWrapperInjectionInfo.class
+            WrapOperationInjectionInfo.class, WrapWithConditionInjectionInfo.class, SugarWrapperInjectionInfo.class,
+            FactoryRedirectWrapperInjectionInfo.class
     );
 
     boolean initialized;
@@ -59,7 +61,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
             // Our new applicator *must* be present in the list before any old ones, which this ensures.
             // We can then hide the sugar from them, so they remain inactive.
             // We prioritise the initialization extension so it's definitely before the sugar one.
-            MixinInternals.registerExtension(it, it instanceof ServiceInitializationExtension || it instanceof SugarApplicatorExtension);
+            MixinInternals.registerExtension(it, it instanceof ServiceInitializationExtension || it instanceof MixinTransformerExtension);
         });
         ownInjectors.forEach(it -> registerInjector(it, ownPackage));
     }

@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.impl.SugarParameter;
 import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefUtils;
 import com.llamalad7.mixinextras.utils.ASMUtils;
+import com.llamalad7.mixinextras.wrapper.factory.FactoryRedirectWrapper;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -24,7 +25,8 @@ import java.util.Set;
 class LocalHandlerTransformer extends HandlerTransformer {
     private static final Set<String> TARGET_INJECTORS = new HashSet<>(Arrays.asList(
             Type.getDescriptor(ModifyConstant.class),
-            Type.getDescriptor(Redirect.class)
+            Type.getDescriptor(Redirect.class),
+            Type.getDescriptor(FactoryRedirectWrapper.class)
     ));
 
     static {

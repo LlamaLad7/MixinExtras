@@ -14,6 +14,7 @@ public interface LateApplyingInjectorInfo {
 
     void latePostInject();
 
+    @SuppressWarnings("unused")
     void wrap(LateApplyingInjectorInfo outer);
 
     /**
@@ -22,7 +23,7 @@ public interface LateApplyingInjectorInfo {
     @Deprecated
     default void lateApply() {
         lateInject();
-        MixinExtrasLogger logger = MixinExtrasLogger.get("MixinExtras|Sugar");
+        MixinExtrasLogger logger = MixinExtrasLogger.get("Sugar");
         logger.warn("Skipping post injection checks for {} since it is from 0.2.0-beta.1 and cannot be saved", this);
     }
 

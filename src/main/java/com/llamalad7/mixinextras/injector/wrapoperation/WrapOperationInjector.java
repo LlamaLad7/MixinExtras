@@ -19,6 +19,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -48,23 +49,67 @@ class WrapOperationInjector extends Injector {
     private void checkNode(Target target, InjectionNode node) {
         AbstractInsnNode originalTarget = node.getOriginalTarget();
         AbstractInsnNode currentTarget = node.getCurrentTarget();
-        if (!(currentTarget instanceof MethodInsnNode || currentTarget instanceof FieldInsnNode || originalTarget.getOpcode() == Opcodes.INSTANCEOF)) {
-            throw CompatibilityHelper.makeInvalidInjectionException(this.info,
+        if (currentTarget instanceof MethodInsnNode) {
+            MethodInsnNode methodInsnNode = ((MethodInsnNode) currentTarget);
+            if (methodInsnNode.name.equals("<init>")) {
+                throw CompatibilityHelper.makeInvalidInjectionException(
+                        this.info,
+                        String.format(
+                                "%s annotation is trying to target an <init> call in %s in %s! If this is an instantiation, target the NEW instead.",
+                                this.annotationType, target, this
+                        )
+                );
+            }
+            return;
+        }
+        if (!(currentTarget instanceof FieldInsnNode ||
+                originalTarget.getOpcode() == Opcodes.INSTANCEOF ||
+                originalTarget.getOpcode() == Opcodes.NEW)) {
+            throw CompatibilityHelper.makeInvalidInjectionException(
+                    this.info,
                     String.format(
                             "%s annotation is targeting an invalid insn in %s in %s",
                             this.annotationType, target, this
-                    ));
+                    )
+            );
         }
     }
 
     private void wrapOperation(Target target, InjectionNode node) {
-        AbstractInsnNode currentTarget = node.getCurrentTarget();
-        Type[] argTypes = getEffectiveArgTypes(currentTarget);
-        Type returnType = getReturnType(node);
+        AbstractInsnNode initialTarget = node.getCurrentTarget();
         InsnList insns = new InsnList();
+        boolean isNew = initialTarget.getOpcode() == Opcodes.NEW;
+        boolean isDupedNew = InjectorUtils.isDupedNew(node);
+        if (isNew) {
+            node.decorate(Decorations.WRAPPED, true);
+            node = target.addInjectionNode(ASMUtils.findInitNodeFor(target, (TypeInsnNode) initialTarget));
+        }
+        Type[] argTypes = getCurrentArgTypes(node);
+        Type returnType = getReturnType(node);
         AbstractInsnNode champion = this.invokeHandler(target, node, argTypes, returnType, insns);
-        target.wrapNode(currentTarget, champion, insns, new InsnList());
-        target.insns.remove(currentTarget);
+        if (isDupedNew) {
+            // We replace the `NEW` object with a `null` reference, for convenience:
+            target.insns.set(initialTarget, new InsnNode(Opcodes.ACONST_NULL));
+            // Then, after invoking the handler, we have 2 null references and the actual new object on the stack.
+            // We want to get rid of the null references:
+            insns.add(new InsnNode(Opcodes.DUP_X2));
+            insns.add(new InsnNode(Opcodes.POP));
+            insns.add(new InsnNode(Opcodes.POP));
+            insns.add(new InsnNode(Opcodes.POP));
+        } else if (isNew) {
+            // "Get rid" of the `NEW` instruction:
+            target.insns.set(initialTarget, new InsnNode(Opcodes.NOP));
+            // And pop the result of the wrapper since it isn't used:
+            insns.add(new InsnNode(Opcodes.POP));
+        }
+        AbstractInsnNode finalTarget = node.getCurrentTarget();
+        target.wrapNode(finalTarget, champion, insns, new InsnList());
+        if (isNew) {
+            // We've already replaced the <init> call, but we want to replace the NEW instruction.
+            target.getInjectionNode(initialTarget).replace(champion);
+        }
+        node.decorate(Decorations.WRAPPED, true);
+        target.insns.remove(finalTarget);
     }
 
     private AbstractInsnNode invokeHandler(Target target, InjectionNode node, Type[] argTypes, Type returnType, InsnList insns) {
@@ -74,7 +119,7 @@ class WrapOperationInjector extends Injector {
             // We will add the extra `this` in ourselves in the generated bridge method later.
             argTypes = ArrayUtils.remove(argTypes, 0);
         }
-        Type[] originalArgs = getEffectiveArgTypes(node.getOriginalTarget());
+        Type[] originalArgs = getOriginalArgTypes(node);
         this.validateParams(handler, returnType, ArrayUtils.add(originalArgs, operationType));
 
         // Store *all* the args, including ones added by redirectors and previous operation wrappers.
@@ -127,7 +172,7 @@ class WrapOperationInjector extends Injector {
                 // The SAM method will take an array of args and return an `Object` (the return value of the wrapped call)
                 Type.getMethodType(Type.getType(Object.class), Type.getType(Object[].class)),
                 // The implementation method will be generated for us to handle array unpacking
-                generateSyntheticBridge(target, node, argTypes, hasExtraThis, trailingParams),
+                generateSyntheticBridge(target, node, argTypes, returnType, hasExtraThis, trailingParams),
                 // Specialization of the SAM signature
                 Type.getMethodType(
                         ASMUtils.isPrimitive(returnType) ? Type.getObjectType(returnType == Type.VOID_TYPE ? "java/lang/Void" : Bytecode.getBoxingType(returnType)) : returnType,
@@ -136,10 +181,8 @@ class WrapOperationInjector extends Injector {
         ));
     }
 
-    private Handle generateSyntheticBridge(Target target, InjectionNode node, Type[] argTypes, boolean virtual, Type[] boundParams) {
+    private Handle generateSyntheticBridge(Target target, InjectionNode node, Type[] argTypes, Type returnType, boolean virtual, Type[] boundParams) {
         // The bridge method's args will consist of any bound parameters followed by an array
-
-        Type returnType = getReturnType(node);
 
         MethodNode method = new MethodNode(
                 ASM.API_VERSION,
@@ -154,11 +197,8 @@ class WrapOperationInjector extends Injector {
                 null, null
         );
         method.instructions = new InsnList() {{
-            int paramArrayIndex = virtual ? 1 : 0;
             // Bound params have to come first.
-            for (Type boundParamType : boundParams) {
-                paramArrayIndex += boundParamType.getSize();
-            }
+            int paramArrayIndex = Arrays.stream(boundParams).mapToInt(Type::getSize).sum() + (virtual ? 1 : 0);
             // Provide a user-friendly error if the wrong args are passed.
             add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
             add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
@@ -174,43 +214,46 @@ class WrapOperationInjector extends Injector {
             if (virtual) {
                 add(new VarInsnNode(Opcodes.ALOAD, 0));
             }
-            add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
-            for (int i = 0; i < argTypes.length; i++) {
-                Type argType = argTypes[i];
-                add(new InsnNode(Opcodes.DUP));
-                // I'm assuming a wrapped method won't have more than 127 args...
-                add(new IntInsnNode(Opcodes.BIPUSH, i));
-                add(new InsnNode(Opcodes.AALOAD));
-                if (ASMUtils.isPrimitive(argType)) {
-                    // Primitive, cast and unbox
-                    add(new TypeInsnNode(Opcodes.CHECKCAST, Bytecode.getBoxingType(argType)));
-                    add(new MethodInsnNode(
-                            Opcodes.INVOKEVIRTUAL,
-                            Bytecode.getBoxingType(argType),
-                            Bytecode.getUnboxingMethod(argType),
-                            Type.getMethodDescriptor(argType),
-                            false
-                    ));
-                } else {
-                    // Object type, just cast
-                    add(new TypeInsnNode(Opcodes.CHECKCAST, argType.getInternalName()));
+            Consumer<InsnList> loadArgs = insns -> {
+                insns.add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
+                for (int i = 0; i < argTypes.length; i++) {
+                    Type argType = argTypes[i];
+                    insns.add(new InsnNode(Opcodes.DUP));
+                    // I'm assuming a wrapped method won't have more than 127 args...
+                    insns.add(new IntInsnNode(Opcodes.BIPUSH, i));
+                    insns.add(new InsnNode(Opcodes.AALOAD));
+                    if (ASMUtils.isPrimitive(argType)) {
+                        // Primitive, cast and unbox
+                        insns.add(new TypeInsnNode(Opcodes.CHECKCAST, Bytecode.getBoxingType(argType)));
+                        insns.add(new MethodInsnNode(
+                                Opcodes.INVOKEVIRTUAL,
+                                Bytecode.getBoxingType(argType),
+                                Bytecode.getUnboxingMethod(argType),
+                                Type.getMethodDescriptor(argType),
+                                false
+                        ));
+                    } else {
+                        // Object type, just cast
+                        insns.add(new TypeInsnNode(Opcodes.CHECKCAST, argType.getInternalName()));
+                    }
+                    // Swap to get the array back on the top of the stack
+                    if (argType.getSize() == 2) {
+                        insns.add(new InsnNode(Opcodes.DUP2_X1));
+                        insns.add(new InsnNode(Opcodes.POP2));
+                    } else {
+                        insns.add(new InsnNode(Opcodes.SWAP));
+                    }
                 }
-                // Swap to get the array back on the top of the stack
-                if (argType.getSize() == 2) {
-                    add(new InsnNode(Opcodes.DUP2_X1));
-                    add(new InsnNode(Opcodes.POP2));
-                } else {
-                    add(new InsnNode(Opcodes.SWAP));
+                // We have one dangling array reference, get rid of it
+                insns.add(new InsnNode(Opcodes.POP));
+                // Next load the bound params:
+                int boundParamIndex = virtual ? 1 : 0;
+                for (Type boundParamType : boundParams) {
+                    insns.add(new VarInsnNode(boundParamType.getOpcode(Opcodes.ILOAD), boundParamIndex));
+                    boundParamIndex += boundParamType.getSize();
                 }
-            }
-            // We have one dangling array reference, get rid of it
-            add(new InsnNode(Opcodes.POP));
-            int boundParamIndex = virtual ? 1 : 0;
-            for (Type boundParamType : boundParams) {
-                add(new VarInsnNode(boundParamType.getOpcode(Opcodes.ILOAD), boundParamIndex));
-                boundParamIndex += boundParamType.getSize();
-            }
-            add(copyNode(node, paramArrayIndex, target));
+            };
+            add(copyNode(node, paramArrayIndex, target, loadArgs));
             if (returnType == Type.VOID_TYPE) {
                 add(new InsnNode(Opcodes.ACONST_NULL));
                 add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Void"));
@@ -237,9 +280,19 @@ class WrapOperationInjector extends Injector {
         );
     }
 
-    private InsnList copyNode(InjectionNode node, int paramArrayIndex, Target target) {
+    private InsnList copyNode(InjectionNode node, int paramArrayIndex, Target target, Consumer<InsnList> loadArgs) {
+        AbstractInsnNode currentTarget = node.getCurrentTarget();
         InsnList insns = new InsnList();
-        insns.add(node.getCurrentTarget().clone(Collections.emptyMap()));
+        if (currentTarget instanceof MethodInsnNode) {
+            MethodInsnNode methodInsnNode = (MethodInsnNode) currentTarget;
+            if (methodInsnNode.name.equals("<init>")) {
+                insns.add(new TypeInsnNode(Opcodes.NEW, methodInsnNode.owner));
+                insns.add(new InsnNode(Opcodes.DUP));
+            }
+        }
+
+        loadArgs.accept(insns);
+        insns.add(currentTarget.clone(Collections.emptyMap()));
 
         if (InjectorUtils.isDynamicInstanceofRedirect(node)) {
             // We have a Class object and need to get it back to a boolean using the first element of the lambda args.
@@ -253,7 +306,7 @@ class WrapOperationInjector extends Injector {
             checkAndMoveNodes(
                     target.insns,
                     insns,
-                    node,
+                    currentTarget,
                     it -> it.getOpcode() == Opcodes.DUP,
                     it -> it.getOpcode() == Opcodes.IFNONNULL,
                     it -> it.getOpcode() == Opcodes.NEW && ((TypeInsnNode) it).desc.equals(NPE),
@@ -275,12 +328,32 @@ class WrapOperationInjector extends Injector {
                     it -> it instanceof LabelNode
             );
         }
+
+        if (InjectorUtils.isDupedFactoryRedirect(node)) wrap:{
+            AbstractInsnNode ldc = InjectorUtils.findFactoryRedirectThrowString(target, currentTarget);
+            if (ldc == null) break wrap;
+            // We need to encompass the null check added by RedirectInjector.
+            checkAndMoveNodes(
+                    target.insns,
+                    insns,
+                    currentTarget,
+                    it -> it.getOpcode() == Opcodes.DUP,
+                    it -> it.getOpcode() == Opcodes.IFNONNULL,
+                    it -> it.getOpcode() == Opcodes.NEW && ((TypeInsnNode) it).desc.equals(NPE),
+                    it -> it.getOpcode() == Opcodes.DUP,
+                    it -> it == ldc,
+                    it -> it.getOpcode() == Opcodes.INVOKESPECIAL && ((MethodInsnNode) it).name.equals("<init>"),
+                    it -> it.getOpcode() == Opcodes.ATHROW,
+                    it -> it instanceof LabelNode
+            );
+        }
+
         return insns;
     }
 
     @SafeVarargs
-    private final void checkAndMoveNodes(InsnList from, InsnList to, InjectionNode node, Predicate<AbstractInsnNode>... predicates) {
-        AbstractInsnNode current = node.getCurrentTarget().getNext();
+    private final void checkAndMoveNodes(InsnList from, InsnList to, AbstractInsnNode node, Predicate<AbstractInsnNode>... predicates) {
+        AbstractInsnNode current = node.getNext();
         for (Predicate<AbstractInsnNode> predicate : predicates) {
             if (!predicate.test(current)) {
                 throw new AssertionError("Failed assertion when wrapping instructions. Please inform LlamaLad7!");
@@ -304,6 +377,9 @@ class WrapOperationInjector extends Injector {
 
         if (currentTarget instanceof MethodInsnNode) {
             MethodInsnNode methodInsnNode = (MethodInsnNode) currentTarget;
+            if (methodInsnNode.name.equals("<init>")) {
+                return Type.getObjectType(methodInsnNode.owner);
+            }
             return Type.getReturnType(methodInsnNode.desc);
         }
         if (currentTarget instanceof FieldInsnNode) {
@@ -317,10 +393,25 @@ class WrapOperationInjector extends Injector {
         throw new UnsupportedOperationException();
     }
 
+    private Type[] getOriginalArgTypes(InjectionNode node) {
+        if (node.hasDecoration(Decorations.NEW_ARG_TYPES)) {
+            return node.getDecoration(Decorations.NEW_ARG_TYPES);
+        }
+        return getEffectiveArgTypes(node.getOriginalTarget());
+    }
+
+    private Type[] getCurrentArgTypes(InjectionNode node) {
+        return getEffectiveArgTypes(node.getCurrentTarget());
+    }
+
     private Type[] getEffectiveArgTypes(AbstractInsnNode node) {
         if (node instanceof MethodInsnNode) {
             MethodInsnNode methodInsnNode = ((MethodInsnNode) node);
             Type[] args = Type.getArgumentTypes(methodInsnNode.desc);
+            if (methodInsnNode.name.equals("<init>")) {
+                // The receiver isn't truly an arg because we'll make it ourselves.
+                return args;
+            }
             switch (methodInsnNode.getOpcode()) {
                 case Opcodes.INVOKESTATIC:
                     break;
@@ -354,6 +445,11 @@ class WrapOperationInjector extends Injector {
 
     private String getName(AbstractInsnNode node) {
         if (node instanceof MethodInsnNode) {
+            MethodInsnNode methodInsnNode = (MethodInsnNode) node;
+            if (methodInsnNode.name.equals("<init>")) {
+                String desc = methodInsnNode.owner;
+                return "new" + desc.substring(desc.lastIndexOf('/') + 1);
+            }
             return ((MethodInsnNode) node).name;
         }
         if (node instanceof FieldInsnNode) {

@@ -2,22 +2,28 @@ package com.llamalad7.mixinextras.injector.wrapoperation;
 
 import com.llamalad7.mixinextras.injector.LateApplyingInjectorInfo;
 import com.llamalad7.mixinextras.injector.MixinExtrasInjectionInfo;
-import com.llamalad7.mixinextras.utils.CompatibilityHelper;
+import com.llamalad7.mixinextras.utils.*;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AnnotationNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.points.BeforeConstant;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo.HandlerPrefix;
+import org.spongepowered.asm.mixin.injection.struct.InjectionNodes;
+import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 import org.spongepowered.asm.util.Annotations;
+import org.spongepowered.asm.util.Bytecode;
 
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 @InjectionInfo.AnnotationType(WrapOperation.class)
 @HandlerPrefix("wrapOperation")
 public class WrapOperationInjectionInfo extends MixinExtrasInjectionInfo implements LateApplyingInjectorInfo {
+    private static final MixinExtrasLogger LOGGER = MixinExtrasLogger.get("WrapOperation");
     private LateApplyingInjectorInfo injectionInfoToQueue = this;
 
     public WrapOperationInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
@@ -27,6 +33,28 @@ public class WrapOperationInjectionInfo extends MixinExtrasInjectionInfo impleme
     @Override
     protected Injector parseInjector(AnnotationNode injectAnnotation) {
         return new WrapOperationInjector(this);
+    }
+
+    @Override
+    public void prepare() {
+        super.prepare();
+        InjectorUtils.checkForDupedNews(this.targetNodes);
+        for (Map.Entry<Target, List<InjectionNodes.InjectionNode>> entry : this.targetNodes.entrySet()) {
+            Target target = entry.getKey();
+            for (ListIterator<InjectionNodes.InjectionNode> it = entry.getValue().listIterator(); it.hasNext(); ) {
+                InjectionNodes.InjectionNode node = it.next();
+                AbstractInsnNode currentTarget = node.getCurrentTarget();
+                if (currentTarget.getOpcode() == Opcodes.NEW) {
+                    MethodInsnNode initCall = ASMUtils.findInitNodeFor(target, (TypeInsnNode) currentTarget);
+                    if (initCall == null) {
+                        LOGGER.warn("NEW node {} in {} has no init call?", Bytecode.describeNode(currentTarget), target);
+                        it.remove();
+                        continue;
+                    }
+                    node.decorate(Decorations.NEW_ARG_TYPES, Type.getArgumentTypes(initCall.desc));
+                }
+            }
+        }
     }
 
     @Override
