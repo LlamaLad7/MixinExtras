@@ -15,7 +15,7 @@ public @interface WrapOperation {
     String[] method();
 
     /**
-     * Selector for targeting method calls and field gets/sets.
+     * Selector for targeting method calls, field gets/sets and object instantiations.
      */
     At[] at() default {};
 
