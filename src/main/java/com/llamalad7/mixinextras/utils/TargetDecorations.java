@@ -1,4 +1,4 @@
-package com.llamalad7.mixinextras.sugar.impl;
+package com.llamalad7.mixinextras.utils;
 
 import org.spongepowered.asm.mixin.injection.struct.Target;
 
@@ -8,7 +8,7 @@ import java.util.WeakHashMap;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-class TargetDecorations {
+public class TargetDecorations {
     private static final Map<Target, Map<String, Object>> IMPL = new WeakHashMap<>();
 
     public static boolean has(Target target, String key) {

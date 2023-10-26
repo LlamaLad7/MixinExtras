@@ -21,9 +21,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 class SugarInjector {
-//    private static final String SUGAR_PACKAGE = Type.getDescriptor(Local.class).substring(0, Type.getDescriptor(Local.class).lastIndexOf('/') + 1);
-    private static final Set<ClassNode> PREPARED_MIXINS = Collections.newSetFromMap(new WeakHashMap<>());
-
     private final InjectionInfo injectionInfo;
     private final IMixinInfo mixin;
     private final MethodNode handler;
@@ -47,17 +44,11 @@ class SugarInjector {
     }
 
     static void prepareMixin(IMixinInfo mixinInfo, ClassNode mixinNode) {
-        if (PREPARED_MIXINS.contains(mixinNode)) {
-            // Don't scan the whole class again.
-            return;
-        }
-
         for (MethodNode method : mixinNode.methods) {
             if (hasSugar(method)) {
                 wrapInjectorAnnotation(mixinInfo, method);
             }
         }
-        PREPARED_MIXINS.add(mixinNode);
     }
 
     static HandlerInfo getHandlerInfo(IMixinInfo mixin, MethodNode handler, List<AnnotationNode> sugarAnnotations, List<Type> generics) {

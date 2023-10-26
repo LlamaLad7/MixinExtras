@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.utils;
 
+import com.llamalad7.mixinextras.wrapper.WrapperInjectionInfo;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -60,6 +61,9 @@ public class MixinInternals {
     }
 
     public static Map<Target, List<InjectionNode>> getTargets(InjectionInfo info) {
+        if (info instanceof WrapperInjectionInfo) {
+            return ((WrapperInjectionInfo) info).getTargetMap();
+        }
         return INJECTION_INFO_TARGET_NODES.get(info);
     }
 

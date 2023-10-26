@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.utils;
 
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 
 public class Decorations {
@@ -19,4 +20,17 @@ public class Decorations {
      * References should be shared by injectors that wrap/replace the same target instruction.
      */
     public static final String LOCAL_REF_MAP = "mixinextras_localRefMap";
+    /**
+     * Stores that a NEW instruction is immediately DUPed so that {@link WrapOperation} can handle it properly.
+     */
+    public static final String NEW_IS_DUPED = "mixinextras_newIsDuped";
+    /**
+     * Stores the types that a NEW's &lt;init&gt; takes as its parameters.
+     */
+    public static final String NEW_ARG_TYPES = "mixinextras_newArgTypes";
+
+    /**
+     * Stores that this node has been wrapped by a {@link WrapOperation}.
+     */
+    public static final String WRAPPED = "mixinextras_wrappedOperation";
 }

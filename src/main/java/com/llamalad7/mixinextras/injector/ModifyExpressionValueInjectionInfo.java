@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector;
 
+import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.injection.code.Injector;
@@ -17,5 +18,11 @@ public class ModifyExpressionValueInjectionInfo extends MixinExtrasInjectionInfo
     @Override
     protected Injector parseInjector(AnnotationNode injectAnnotation) {
         return new ModifyExpressionValueInjector(this);
+    }
+
+    @Override
+    public void prepare() {
+        super.prepare();
+        InjectorUtils.checkForDupedNews(this.targetNodes);
     }
 }

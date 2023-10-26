@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.sugar.impl;
 
 import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefUtils;
 import com.llamalad7.mixinextras.utils.ASMUtils;
+import com.llamalad7.mixinextras.utils.TargetDecorations;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;

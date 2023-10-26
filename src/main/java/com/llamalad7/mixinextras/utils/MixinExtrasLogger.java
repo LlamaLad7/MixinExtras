@@ -21,7 +21,7 @@ public interface MixinExtrasLogger {
         try {
             IMixinService service = MixinService.getService();
             Method getLogger = service.getClass().getMethod("getLogger", String.class);
-            impl = getLogger.invoke(service, name);
+            impl = getLogger.invoke(service, "MixinExtras|" + name);
         } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e1) {
             try {
                 impl = Class.forName("org.apache.logging.log4j.LogManager").getMethod("getLogger", String.class).invoke(null, name);
