@@ -51,6 +51,7 @@ public class ModifyReceiverInjector extends Injector {
     private void injectReceiverModifier(Target target, Type[] originalArgTypes, Type[] currentArgTypes, boolean isVirtualRedirect, InsnList insns) {
         InjectorData handler = new InjectorData(target, "receiver modifier");
         this.validateParams(handler, originalArgTypes[0], originalArgTypes);
+        StackExtension stack = new StackExtension(target);
 
         int[] argMap = this.storeArgs(target, currentArgTypes, insns, 0);
         int[] handlerArgMap = ArrayUtils.addAll(argMap, target.getArgIndices());
@@ -60,6 +61,9 @@ public class ModifyReceiverInjector extends Injector {
             // We also need to ensure it remains on the stack before the receiver
             insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
         }
+
+        stack.receiver(this.isStatic);
+        stack.capturedArgs(target.arguments, handler.captureTargetArgs);
 
         this.invokeHandlerWithArgs(this.methodArgs, insns, handlerArgMap);
 

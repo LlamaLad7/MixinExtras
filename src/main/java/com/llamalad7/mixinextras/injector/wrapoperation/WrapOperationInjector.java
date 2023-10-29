@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
+import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.utils.*;
 import org.apache.commons.lang3.ArrayUtils;
@@ -76,6 +77,7 @@ class WrapOperationInjector extends Injector {
     }
 
     private void wrapOperation(Target target, InjectionNode node) {
+        StackExtension stack = new StackExtension(target);
         AbstractInsnNode initialTarget = node.getCurrentTarget();
         InsnList insns = new InsnList();
         boolean isNew = initialTarget.getOpcode() == Opcodes.NEW;
@@ -86,12 +88,13 @@ class WrapOperationInjector extends Injector {
         }
         Type[] argTypes = getCurrentArgTypes(node);
         Type returnType = getReturnType(node);
-        AbstractInsnNode champion = this.invokeHandler(target, node, argTypes, returnType, insns);
+        AbstractInsnNode champion = this.invokeHandler(target, node, argTypes, returnType, insns, stack);
         if (isDupedNew) {
             // We replace the `NEW` object with a `null` reference, for convenience:
             target.insns.set(initialTarget, new InsnNode(Opcodes.ACONST_NULL));
             // Then, after invoking the handler, we have 2 null references and the actual new object on the stack.
             // We want to get rid of the null references:
+            stack.extra(1);
             insns.add(new InsnNode(Opcodes.DUP_X2));
             insns.add(new InsnNode(Opcodes.POP));
             insns.add(new InsnNode(Opcodes.POP));
@@ -112,7 +115,7 @@ class WrapOperationInjector extends Injector {
         target.insns.remove(finalTarget);
     }
 
-    private AbstractInsnNode invokeHandler(Target target, InjectionNode node, Type[] argTypes, Type returnType, InsnList insns) {
+    private AbstractInsnNode invokeHandler(Target target, InjectionNode node, Type[] argTypes, Type returnType, InsnList insns, StackExtension stack) {
         InjectorData handler = new InjectorData(target, "operation wrapper");
         boolean hasExtraThis = node.isReplaced() && node.getCurrentTarget().getOpcode() != Opcodes.INVOKESTATIC;
         if (hasExtraThis) {
@@ -144,6 +147,11 @@ class WrapOperationInjector extends Injector {
         if (handler.captureTargetArgs > 0) {
             this.pushArgs(target.arguments, insns, target.getArgIndices(), 0, handler.captureTargetArgs);
         }
+
+        stack.receiver(this.isStatic);
+        stack.extra(1); // Operation
+        stack.capturedArgs(target.arguments, handler.captureTargetArgs);
+
         AbstractInsnNode champion = super.invokeHandler(insns);
 
         if (InjectorUtils.isDynamicInstanceofRedirect(node)) {

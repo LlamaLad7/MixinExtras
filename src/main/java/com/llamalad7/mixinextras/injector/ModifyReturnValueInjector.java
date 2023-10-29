@@ -26,6 +26,7 @@ public class ModifyReturnValueInjector extends Injector {
 
     private void injectReturnValueModifier(Target target, InjectionNode node) {
         InjectorData handler = new InjectorData(target, "return value modifier");
+        StackExtension stack = new StackExtension(target);
         InsnList insns = new InsnList();
 
         this.validateParams(handler, target.returnType, target.returnType);
@@ -33,6 +34,7 @@ public class ModifyReturnValueInjector extends Injector {
         if (!this.isStatic) {
             insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
             if (target.returnType.getSize() == 2) {
+                stack.extra(1);
                 insns.add(new InsnNode(Opcodes.DUP_X2));
                 insns.add(new InsnNode(Opcodes.POP));
             } else {
@@ -43,6 +45,9 @@ public class ModifyReturnValueInjector extends Injector {
         if (handler.captureTargetArgs > 0) {
             this.pushArgs(target.arguments, insns, target.getArgIndices(), 0, handler.captureTargetArgs);
         }
+
+        stack.receiver(this.isStatic);
+        stack.capturedArgs(target.arguments, handler.captureTargetArgs);
 
         this.invokeHandler(insns);
         target.insertBefore(node, insns);

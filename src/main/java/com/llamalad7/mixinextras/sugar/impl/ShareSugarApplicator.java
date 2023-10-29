@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
+import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefUtils;
 import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.TargetDecorations;
@@ -37,7 +38,7 @@ class ShareSugarApplicator extends SugarApplicator {
     }
 
     @Override
-    void inject(Target target, InjectionNodes.InjectionNode node) {
+    void inject(Target target, InjectionNodes.InjectionNode node, StackExtension stack) {
         Map<String, Integer> refIndices = TargetDecorations.getOrPut(target, "ShareSugar_LocalRefIndices", HashMap::new);
         int localRefIndex;
         if (!refIndices.containsKey(id)) {
@@ -59,9 +60,11 @@ class ShareSugarApplicator extends SugarApplicator {
             init.add(new InsnNode(ASMUtils.getDummyOpcodeForType(innerType)));
             LocalRefUtils.generateInitialization(init, innerType);
             target.insns.insert(start, init);
+            stack.ensureAtLeast(innerType.getSize() + 1); // ref and dummy value
         } else {
             localRefIndex = refIndices.get(id);
         }
+        stack.extra(1);
         target.insns.insertBefore(node.getCurrentTarget(), new VarInsnNode(Opcodes.ALOAD, localRefIndex));
     }
 

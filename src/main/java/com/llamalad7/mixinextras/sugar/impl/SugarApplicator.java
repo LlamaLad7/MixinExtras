@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
+import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
@@ -57,7 +58,7 @@ abstract class SugarApplicator {
 
     abstract void prepare(Target target, InjectionNode node);
 
-    abstract void inject(Target target, InjectionNode node);
+    abstract void inject(Target target, InjectionNode node, StackExtension stack);
 
     static SugarApplicator create(InjectionInfo info, SugarParameter parameter) {
         try {

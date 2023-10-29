@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
+import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefClassGenerator;
 import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefUtils;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
@@ -57,7 +58,7 @@ class LocalSugarApplicator extends SugarApplicator {
     }
 
     @Override
-    void inject(Target target, InjectionNode node) {
+    void inject(Target target, InjectionNode node, StackExtension stack) {
         LocalVariableDiscriminator discriminator = LocalVariableDiscriminator.parse(sugar);
         Context context = node.getDecoration(getLocalContextKey());
         int index = discriminator.findLocal(context);
@@ -65,19 +66,21 @@ class LocalSugarApplicator extends SugarApplicator {
             throw new SugarApplicationException("Failed to match a local, this should have been caught during validation.");
         }
         if (isMutable) {
-            initAndLoadLocalRef(target, node, index);
+            initAndLoadLocalRef(target, node, index, stack);
         } else {
+            stack.extra(targetLocalType.getSize());
             target.insns.insertBefore(node.getCurrentTarget(), new VarInsnNode(targetLocalType.getOpcode(Opcodes.ILOAD), index));
         }
     }
 
-    private void initAndLoadLocalRef(Target target, InjectionNode node, int index) {
+    private void initAndLoadLocalRef(Target target, InjectionNode node, int index, StackExtension stack) {
         String refName = LocalRefClassGenerator.getForType(targetLocalType);
-        int refIndex = getOrCreateRef(target, node, index, refName);
+        int refIndex = getOrCreateRef(target, node, index, refName, stack);
+        stack.extra(1);
         target.insns.insertBefore(node.getCurrentTarget(), new VarInsnNode(Opcodes.ALOAD, refIndex));
     }
 
-    private int getOrCreateRef(Target target, InjectionNode node, int index, String refImpl) {
+    private int getOrCreateRef(Target target, InjectionNode node, int index, String refImpl, StackExtension stack) {
         Map<Integer, Integer> refIndices = node.getDecoration(Decorations.LOCAL_REF_MAP);
         if (refIndices == null) {
             refIndices = new HashMap<>();
@@ -105,6 +108,7 @@ class LocalSugarApplicator extends SugarApplicator {
             initialization.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ILOAD), index));
             LocalRefUtils.generateInitialization(initialization, targetLocalType);
             target.insertBefore(node, initialization);
+            stack.extra(targetLocalType.getSize() + 1);
 
             InsnList after = new InsnList();
             after.add(new VarInsnNode(Opcodes.ALOAD, refIndex));

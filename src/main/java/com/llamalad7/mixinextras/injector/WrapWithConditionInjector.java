@@ -61,6 +61,7 @@ public class WrapWithConditionInjector extends Injector {
     private void invokeHandler(Target target, Type returnType, Type[] originalArgTypes, Type[] currentArgTypes, boolean isVirtualRedirect, InsnList before, InsnList after) {
         InjectorData handler = new InjectorData(target, "condition wrapper");
         this.validateParams(handler, Type.BOOLEAN_TYPE, originalArgTypes);
+        StackExtension stack = new StackExtension(target);
 
         int[] argMap = this.storeArgs(target, currentArgTypes, before, 0);
         int[] handlerArgMap = ArrayUtils.addAll(argMap, target.getArgIndices());
@@ -68,6 +69,10 @@ public class WrapWithConditionInjector extends Injector {
             // We need to disregard the extra "this" which will be added for a virtual redirect.
             handlerArgMap = ArrayUtils.remove(handlerArgMap, 0);
         }
+
+        stack.receiver(this.isStatic);
+        stack.capturedArgs(target.arguments, handler.captureTargetArgs);
+        stack.extra(1); // boolean return value
 
         this.invokeHandlerWithArgs(this.methodArgs, before, handlerArgMap);
 

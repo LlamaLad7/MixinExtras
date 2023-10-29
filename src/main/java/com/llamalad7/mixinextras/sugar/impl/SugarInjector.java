@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
+import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.sugar.impl.handlers.HandlerInfo;
 import com.llamalad7.mixinextras.sugar.impl.handlers.HandlerTransformer;
 import com.llamalad7.mixinextras.utils.ASMUtils;
@@ -223,6 +224,7 @@ class SugarInjector {
     void transformHandlerCalls(Map<Target, List<Pair<InjectionNode, MethodInsnNode>>> calls) {
         for (Map.Entry<Target, List<Pair<InjectionNode, MethodInsnNode>>> entry : calls.entrySet()) {
             Target target = entry.getKey();
+            StackExtension stack = new StackExtension(target);
             for (Pair<InjectionNode, MethodInsnNode> pair : entry.getValue()) {
                 InjectionNode sourceNode = pair.getLeft();
                 MethodInsnNode handlerCall = pair.getRight();
@@ -236,7 +238,7 @@ class SugarInjector {
                 }
                 try {
                     for (SugarApplicator applicator : applicators) {
-                        applicator.inject(target, node);
+                        applicator.inject(target, node, stack);
                     }
                 } catch (Exception e) {
                     throw new SugarApplicationException(

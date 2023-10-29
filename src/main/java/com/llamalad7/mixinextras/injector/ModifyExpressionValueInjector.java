@@ -24,19 +24,22 @@ public class ModifyExpressionValueInjector extends Injector {
         this.checkTargetReturnsAValue(target, node);
         this.checkTargetModifiers(target, false);
 
+        StackExtension stack = new StackExtension(target);
         AbstractInsnNode valueNode = node.getCurrentTarget();
         Type valueType = getReturnType(valueNode);
+
         boolean shouldPop = false;
         if (valueNode instanceof TypeInsnNode && valueNode.getOpcode() == Opcodes.NEW) {
             if (!InjectorUtils.isDupedNew(node)) {
                 target.insns.insert(valueNode, new InsnNode(Opcodes.DUP));
+                stack.extra(1);
                 node.decorate(Decorations.NEW_IS_DUPED, true);
                 shouldPop = true;
             }
             valueNode = ASMUtils.findInitNodeFor(target, (TypeInsnNode) valueNode);
         }
 
-        this.injectValueModifier(target, valueNode, valueType, InjectorUtils.isDupedFactoryRedirect(node), shouldPop);
+        this.injectValueModifier(target, valueNode, valueType, InjectorUtils.isDupedFactoryRedirect(node), shouldPop, stack);
     }
 
     private void checkTargetReturnsAValue(Target target, InjectionNode node) {
@@ -55,24 +58,23 @@ public class ModifyExpressionValueInjector extends Injector {
         }
     }
 
-    private void injectValueModifier(Target target, AbstractInsnNode valueNode, Type valueType, boolean isDupedFactoryRedirect, boolean shouldPop) {
-        Target.Extension extraStack = target.extendStack();
+    private void injectValueModifier(Target target, AbstractInsnNode valueNode, Type valueType, boolean isDupedFactoryRedirect, boolean shouldPop, StackExtension stack) {
         final InsnList after = new InsnList();
-        this.invokeHandler(valueType, target, extraStack, after);
-        extraStack.apply();
+        this.invokeHandler(valueType, target, after, stack);
         if (shouldPop) {
             after.add(new InsnNode(Opcodes.POP));
         }
         target.insns.insert(getInsertionPoint(valueNode, target, isDupedFactoryRedirect), after);
     }
 
-    private void invokeHandler(Type valueType, Target target, Target.Extension extraStack, InsnList after) {
+    private void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
         InjectorData handler = new InjectorData(target, "expression value modifier");
         this.validateParams(handler, valueType, valueType);
 
         if (!this.isStatic) {
             after.add(new VarInsnNode(Opcodes.ALOAD, 0));
             if (valueType.getSize() == 2) {
+                stack.extra(1);
                 after.add(new InsnNode(Opcodes.DUP_X2));
                 after.add(new InsnNode(Opcodes.POP));
             } else {
@@ -81,8 +83,11 @@ public class ModifyExpressionValueInjector extends Injector {
         }
 
         if (handler.captureTargetArgs > 0) {
-            this.pushArgs(target.arguments, after, target.getArgIndices(), 0, handler.captureTargetArgs, extraStack);
+            this.pushArgs(target.arguments, after, target.getArgIndices(), 0, handler.captureTargetArgs);
         }
+
+        stack.receiver(this.isStatic);
+        stack.capturedArgs(target.arguments, handler.captureTargetArgs);
 
         this.invokeHandler(after);
     }
