@@ -37,8 +37,10 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     );
     private final List<Class<? extends InjectionInfo>> ownInjectors = Arrays.asList(
             ModifyExpressionValueInjectionInfo.class, ModifyReceiverInjectionInfo.class, ModifyReturnValueInjectionInfo.class,
-            WrapOperationInjectionInfo.class, WrapWithConditionInjectionInfo.class, SugarWrapperInjectionInfo.class,
-            FactoryRedirectWrapperInjectionInfo.class
+            WrapOperationInjectionInfo.class, WrapWithConditionInjectionInfo.class
+    );
+    private final List<Class<? extends InjectionInfo>> internalInjectors = Arrays.asList(
+            SugarWrapperInjectionInfo.class, FactoryRedirectWrapperInjectionInfo.class
     );
 
     boolean initialized;
@@ -119,6 +121,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
         requireNotInitialized();
         LOGGER.info("Initializing MixinExtras via {}.", this);
         detectBetaPackages();
+        internalInjectors.forEach(InjectionInfo::register);
         initialized = true;
     }
 
