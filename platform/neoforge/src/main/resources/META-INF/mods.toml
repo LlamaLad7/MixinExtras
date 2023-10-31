@@ -1,0 +1,14 @@
+modLoader = "javafml"
+loaderVersion = "*"
+license = "MIT"
+
+[[mods]]
+modId = "mixinextras"
+version = "${version}"
+displayName = "MixinExtras"
+description = '''
+Companion library to Mixin with lots of features to improve the compatibility and concision of your mixins!
+'''
+authors = "LlamaLad7"
+displayURL = "https://github.com/LlamaLad7/MixinExtras"
+displayTest="IGNORE_SERVER_VERSION"
