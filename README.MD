@@ -19,6 +19,21 @@ dependencies {
 ```
 
 </details>
+<details><summary>NeoForge with NeoGradle</summary>
+
+```gradle
+jarJar.enable()
+
+dependencies {
+    implementation(jarJar("io.github.llamalad7:mixinextras-neoforge:0.2.0")) {
+        jarJar.ranged(it, "[0.2.0,)")
+    }
+}
+
+tasks.named('build').configure { dependsOn('jarJar') }
+```
+
+</details>
 <details><summary>Forge 1.18.2+ with ForgeGradle</summary>
 
 ```gradle
