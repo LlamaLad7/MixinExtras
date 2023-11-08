@@ -8,12 +8,12 @@ buildscript {
 }
 
 plugins {
-    java
+    `java-library`
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 allprojects {
-    apply(plugin = "java")
+    apply(plugin = "java-library")
 
     group = "com.llamalad7"
     version = "0.3.5"

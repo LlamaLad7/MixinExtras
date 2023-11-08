@@ -13,7 +13,7 @@ subprojects {
 
     if (project.name != "forge") {
         dependencies {
-            compileOnly(rootProject)
+            implementation(rootProject)
         }
 
         tasks.named<Jar>("jar") {
@@ -90,6 +90,16 @@ subprojects {
                         connection = "scm:git:git://github.com/LlamaLad7/MixinExtras.git"
                         developerConnection = "scm:git:git://github.com/LlamaLad7/MixinExtras.git"
                         url = "https://github.com/LlamaLad7/MixinExtras/tree/master"
+                    }
+                    withXml {
+                        val node = asNode().appendNode("dependencies")
+                        configurations.api.get().dependencies.forEach {
+                            val dep = node.appendNode("dependency")
+                            dep.appendNode("groupId", it.group)
+                            dep.appendNode("artifactId", it.name)
+                            dep.appendNode("version", it.version)
+                            dep.appendNode("scope", "runtime")
+                        }
                     }
                 }
             }

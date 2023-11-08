@@ -4,6 +4,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
+import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
@@ -12,6 +13,7 @@ import org.spongepowered.asm.util.VersionNumber;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class MixinVersion {
@@ -52,4 +54,6 @@ public abstract class MixinVersion {
     public abstract void preInject(InjectionInfo info);
 
     public abstract AnnotationNode getAnnotation(InjectionInfo info);
+
+    public abstract Collection<Target> getTargets(InjectionInfo info);
 }

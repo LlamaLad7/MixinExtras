@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.transformer;
 
+import com.llamalad7.mixinextras.expression.impl.wrapper.ExpressionInjectorWrapperTransformer;
 import com.llamalad7.mixinextras.sugar.impl.SugarMixinTransformer;
 import com.llamalad7.mixinextras.utils.MixinInternals;
 import com.llamalad7.mixinextras.wrapper.factory.FactoryRedirectWrapperMixinTransformer;
@@ -15,7 +16,8 @@ import java.util.*;
 public class MixinTransformerExtension implements IExtension {
     private final Set<ClassNode> preparedMixins = Collections.newSetFromMap(new WeakHashMap<>());
     private final List<MixinTransformer> transformers = Arrays.asList(
-            new FactoryRedirectWrapperMixinTransformer(), new SugarMixinTransformer()
+            new FactoryRedirectWrapperMixinTransformer(), new SugarMixinTransformer(),
+            new ExpressionInjectorWrapperTransformer()
     );
 
     @Override

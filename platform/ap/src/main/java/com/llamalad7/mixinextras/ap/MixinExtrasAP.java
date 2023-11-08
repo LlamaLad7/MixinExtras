@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.ap;
 
+import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValueInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReceiverInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReturnValueInjectionInfo;
@@ -11,20 +12,24 @@ import org.spongepowered.asm.util.logging.MessageRouter;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.tools.FileObject;
+import javax.tools.StandardLocation;
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-@SupportedAnnotationTypes({})
 public class MixinExtrasAP extends AbstractProcessor {
-    static {
-        if (setup()) {
-            registerInjectors();
-        }
-    }
+    private static final boolean MIXIN = setupMixin();
 
-    private static boolean setup() {
+    private static boolean setupMixin() {
         try {
             // Use a simple logger until Mixin sets up its own.
             MessageRouter.setMessager(new StdoutMessager());
@@ -33,6 +38,12 @@ public class MixinExtrasAP extends AbstractProcessor {
             return false;
         }
         return true;
+    }
+
+    static {
+        if (MIXIN) {
+            registerInjectors();
+        }
     }
 
     private static void registerInjectors() {
@@ -46,11 +57,45 @@ public class MixinExtrasAP extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        return false;
+        processExpressions(roundEnv);
+        writeInfo();
+        return true;
+    }
+
+    private void processExpressions(RoundEnvironment roundEnv) {
+        for (Element elem : roundEnv.getElementsAnnotatedWith(Expression.class)) {
+            Expression ann = elem.getAnnotation(Expression.class);
+            for (String expr : ann.value()) {
+                ExtraMixinInfoWriter.offerExpression(elem, expr);
+            }
+        }
+    }
+
+    private void writeInfo() {
+        ExtraMixinInfoWriter.build((mixin, contents) -> {
+            String fileName = "META-INF/mixinextras/" + mixin + ".json";
+            new File(fileName).getParentFile().mkdirs();
+            try {
+                FileObject file = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", fileName);
+                try (Writer writer = file.openWriter()) {
+                    writer.write(contents);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to write MixinExtras info file: ", e);
+            }
+        });
     }
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latestSupported();
+    }
+
+    @Override
+    public Set<String> getSupportedAnnotationTypes() {
+        List<Class<? extends Annotation>> types = Arrays.asList(
+                Expression.class
+        );
+        return types.stream().map(Class::getName).collect(Collectors.toSet());
     }
 }

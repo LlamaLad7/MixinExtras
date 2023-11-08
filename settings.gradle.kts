@@ -1,5 +1,6 @@
 rootProject.name = "mixinextras"
 include("platform")
+include("platform:ap")
 include("platform:common")
 include("platform:fabric")
 include("platform:forge")

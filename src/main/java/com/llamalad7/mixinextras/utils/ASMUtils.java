@@ -122,4 +122,32 @@ public class ASMUtils {
         }
         return null;
     }
+
+    public static Integer getIntConstant(AbstractInsnNode insn) {
+        switch (insn.getOpcode()) {
+            case Opcodes.ICONST_M1:
+                return -1;
+            case Opcodes.ICONST_0:
+                return 0;
+            case Opcodes.ICONST_1:
+                return 1;
+            case Opcodes.ICONST_2:
+                return 2;
+            case Opcodes.ICONST_3:
+                return 3;
+            case Opcodes.ICONST_4:
+                return 4;
+            case Opcodes.ICONST_5:
+                return 5;
+            case Opcodes.BIPUSH:
+            case Opcodes.SIPUSH:
+                return ((IntInsnNode) insn).operand;
+            case Opcodes.LDC:
+                Object cst = ((LdcInsnNode) insn).cst;
+                if (cst instanceof Integer) {
+                    return (Integer) cst;
+                }
+        }
+        return null;
+    }
 }

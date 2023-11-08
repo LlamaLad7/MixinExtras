@@ -3,11 +3,15 @@ package com.llamalad7.mixinextras.versions;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
+import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException;
 import org.spongepowered.asm.mixin.refmap.IMixinContext;
+
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class MixinVersionImpl_v0_8 extends MixinVersion {
@@ -34,5 +38,11 @@ public class MixinVersionImpl_v0_8 extends MixinVersion {
     @Override
     public AnnotationNode getAnnotation(InjectionInfo info) {
         return info.getAnnotation();
+    }
+
+    @Override
+    public Collection<Target> getTargets(InjectionInfo info) {
+        IMixinContext mixin = MixinVersion.getInstance().getMixin(info);
+        return info.getTargets().stream().map(mixin::getTargetMethod).collect(Collectors.toList());
     }
 }

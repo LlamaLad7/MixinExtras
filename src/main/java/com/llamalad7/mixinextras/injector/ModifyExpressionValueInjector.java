@@ -26,7 +26,7 @@ public class ModifyExpressionValueInjector extends Injector {
 
         StackExtension stack = new StackExtension(target);
         AbstractInsnNode valueNode = node.getCurrentTarget();
-        Type valueType = getReturnType(valueNode);
+        Type valueType = getReturnType(node);
 
         boolean shouldPop = false;
         if (valueNode instanceof TypeInsnNode && valueNode.getOpcode() == Opcodes.NEW) {
@@ -43,7 +43,7 @@ public class ModifyExpressionValueInjector extends Injector {
     }
 
     private void checkTargetReturnsAValue(Target target, InjectionNode node) {
-        Type returnType = getReturnType(node.getCurrentTarget());
+        Type returnType = getReturnType(node);
         if (returnType == Type.VOID_TYPE) {
             throw CompatibilityHelper.makeInvalidInjectionException(this.info,
                     String.format(
@@ -114,26 +114,31 @@ public class ModifyExpressionValueInjector extends Injector {
         return node;
     }
 
-    private Type getReturnType(AbstractInsnNode node) {
-        if (node instanceof MethodInsnNode) {
-            MethodInsnNode methodInsnNode = (MethodInsnNode) node;
+    private Type getReturnType(InjectionNode node) {
+        if (node.hasDecoration(Decorations.SIMPLE_EXPRESSION_TYPE)) {
+            return node.getDecoration(Decorations.SIMPLE_EXPRESSION_TYPE);
+        }
+        AbstractInsnNode current = node.getCurrentTarget();
+
+        if (current instanceof MethodInsnNode) {
+            MethodInsnNode methodInsnNode = (MethodInsnNode) current;
             return Type.getReturnType(methodInsnNode.desc);
         }
 
-        if (node instanceof FieldInsnNode) {
-            FieldInsnNode fieldInsnNode = (FieldInsnNode) node;
+        if (current instanceof FieldInsnNode) {
+            FieldInsnNode fieldInsnNode = (FieldInsnNode) current;
             if (fieldInsnNode.getOpcode() == Opcodes.GETFIELD || fieldInsnNode.getOpcode() == Opcodes.GETSTATIC) {
                 return Type.getType(fieldInsnNode.desc);
             }
             return Type.VOID_TYPE;
         }
 
-        if (Bytecode.isConstant(node)) {
-            return Bytecode.getConstantType(node);
+        if (Bytecode.isConstant(current)) {
+            return Bytecode.getConstantType(current);
         }
 
-        if (node instanceof TypeInsnNode && node.getOpcode() == Opcodes.NEW) {
-            TypeInsnNode typeInsnNode = ((TypeInsnNode) node);
+        if (current instanceof TypeInsnNode && current.getOpcode() == Opcodes.NEW) {
+            TypeInsnNode typeInsnNode = ((TypeInsnNode) current);
             return Type.getObjectType(typeInsnNode.desc);
         }
 

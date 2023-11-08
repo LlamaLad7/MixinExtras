@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.utils;
 
+import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
@@ -33,4 +34,9 @@ public class Decorations {
      * Stores that this node has been wrapped by a {@link WrapOperation}.
      */
     public static final String WRAPPED = "mixinextras_wrappedOperation";
+
+    /**
+     * Stores the type of a simple expression targeted by an {@link Expression}.
+     */
+    public static final String SIMPLE_EXPRESSION_TYPE = "mixinextras_simpleExpressionType";
 }

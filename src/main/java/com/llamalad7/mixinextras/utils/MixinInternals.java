@@ -1,11 +1,13 @@
 package com.llamalad7.mixinextras.utils;
 
 import com.llamalad7.mixinextras.wrapper.WrapperInjectionInfo;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
@@ -53,6 +55,8 @@ public class MixinInternals {
             = InternalField.of(InjectionInfo.class, "registry");
     private static final InternalField<InjectionInfo, Class<? extends Annotation>[]> INJECTION_INFO_REGISTERED_ANNOTATIONS
             = InternalField.of(InjectionInfo.class, "registeredAnnotations");
+    private static final InternalField<?, Map<String, Class<? extends InjectionPoint>>> INJECTION_POINT_TYPES
+            = InternalField.of(InjectionPoint.class, "types");
 
     public static List<Pair<IMixinInfo, ClassNode>> getMixinsFor(ITargetClassContext context) {
         List<Pair<IMixinInfo, ClassNode>> result = new ArrayList<>();
@@ -161,5 +165,10 @@ public class MixinInternals {
             annotations.add(INJECTOR_ENTRY_ANNOTATION_TYPE.get(injector));
         }
         INJECTION_INFO_REGISTERED_ANNOTATIONS.set(null, annotations.toArray(new Class[0]));
+    }
+
+    public static void registerInjectionPoint(Class<? extends InjectionPoint> point) {
+        String code = point.getAnnotation(InjectionPoint.AtCode.class).value();
+        INJECTION_POINT_TYPES.get(null).put(code, point);
     }
 }

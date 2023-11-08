@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.wrapper;
 
 import com.llamalad7.mixinextras.injector.LateApplyingInjectorInfo;
 import com.llamalad7.mixinextras.injector.MixinExtrasInjectionInfo;
+import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.MixinInternals;
 import com.llamalad7.mixinextras.utils.ProxyUtils;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -12,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -123,5 +125,13 @@ public abstract class WrapperInjectionInfo extends MixinExtrasInjectionInfo impl
 
     public Map<Target, List<InjectionNode>> getTargetMap() {
         return MixinInternals.getTargets(delegate);
+    }
+
+    public List<Target> getSelectedTargets() {
+        return CompatibilityHelper.getTargets(delegate);
+    }
+
+    public InjectionInfo getDelegate() {
+        return delegate;
     }
 }
