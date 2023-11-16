@@ -16,7 +16,7 @@ public class IntLiteralExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         Object cst = Bytecode.getConstant(node.getInsn());
         if (cst == null) {
             return false;

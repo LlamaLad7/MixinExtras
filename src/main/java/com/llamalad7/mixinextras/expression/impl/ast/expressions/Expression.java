@@ -3,28 +3,29 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.utils.Decorations;
-import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 public interface Expression {
-    default boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    default boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         return false;
     }
 
-    default void capture(FlowValue node, CaptureSink sink) {
-        if (node.getType() == Type.VOID_TYPE) {
-            sink.accept(node.getInsn());
-            return;
+    default void capture(FlowValue node, OutputSink sink) {
+        if (node.getType() != Type.VOID_TYPE) {
+            sink.decorate(node.getInsn(), Decorations.SIMPLE_EXPRESSION_TYPE, node.getType());
         }
-        sink.acceptExpression(node);
+        sink.capture(node.getInsn());
     }
 
-    default boolean inputsMatch(FlowValue node, IdentifierPool pool, CaptureSink sink, Expression... values) {
+    default boolean inputsMatch(FlowValue node, IdentifierPool pool, OutputSink sink, Expression... values) {
         return inputsMatch(0, node, pool, sink, values);
     }
 
-    default boolean inputsMatch(int start, FlowValue node, IdentifierPool pool, CaptureSink sink, Expression... values) {
+    default boolean inputsMatch(int start, FlowValue node, IdentifierPool pool, OutputSink sink, Expression... values) {
+        if (values.length != node.inputCount() - start) {
+            return false;
+        }
         for (int i = 0; i < values.length; i++) {
             Expression value = values[i];
             if (!value.matches(node.getInput(i + start), pool, sink)) {
@@ -34,11 +35,9 @@ public interface Expression {
         return true;
     }
 
-    interface CaptureSink {
-        void accept(AbstractInsnNode node, Pair<String, Object>... decorations);
+    interface OutputSink {
+        void capture(AbstractInsnNode insn);
 
-        default void acceptExpression(FlowValue node) {
-            accept(node.getInsn(), Pair.of(Decorations.SIMPLE_EXPRESSION_TYPE, node.getType()));
-        }
+        void decorate(AbstractInsnNode insn, String key, Object value);
     }
 }

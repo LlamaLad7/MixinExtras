@@ -21,7 +21,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
 
     public Map<AbstractInsnNode, FlowValue> finish() {
         for (Map.Entry<AbstractInsnNode, FlowValue> entry : cache.entrySet()) {
-            entry.getValue().linkToParents();
+            entry.getValue().finish();
         }
         cache.entrySet().removeIf(it -> it.getValue() == FlowValue.NULL);
         return Collections.unmodifiableMap(cache);
@@ -133,6 +133,13 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case DUP2_X2:
             case SWAP:
                 return value;
+            case ISTORE:
+            case LSTORE:
+            case FSTORE:
+            case DSTORE:
+            case ASTORE:
+                // The type will be fixed later,the interpreter needs STOREs to be a "copy" operation
+                return cache.computeIfAbsent(insn, k -> new FlowValue(Collections.singletonList(value), value.getType(), insn));
         }
         return cache.computeIfAbsent(insn, k -> new FlowValue(Collections.emptyList(), value.getType(), insn));
     }

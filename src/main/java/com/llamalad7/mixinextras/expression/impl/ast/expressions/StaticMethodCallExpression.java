@@ -5,7 +5,6 @@ import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
-import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -24,7 +23,7 @@ public class StaticMethodCallExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         AbstractInsnNode insn = node.getInsn();
         return insn.getOpcode() == Opcodes.INVOKESTATIC
                 && name.matches(pool, insn) && inputsMatch(node, pool, sink, arguments.toArray(new Expression[0]));

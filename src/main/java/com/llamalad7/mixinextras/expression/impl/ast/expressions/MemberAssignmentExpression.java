@@ -24,7 +24,7 @@ public class MemberAssignmentExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         AbstractInsnNode insn = node.getInsn();
         return insn.getOpcode() == Opcodes.PUTFIELD
                 && name.matches(pool, node.getInsn()) && inputsMatch(node, pool, sink, receiver, value);

@@ -16,7 +16,7 @@ public class IdentifierExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.ILOAD:
             case Opcodes.LLOAD:

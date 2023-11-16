@@ -22,7 +22,7 @@ public class ArrayStoreExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.IASTORE:
             case Opcodes.LASTORE:

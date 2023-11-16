@@ -8,7 +8,7 @@ import org.objectweb.asm.Opcodes;
 @SerializedTypeName("null")
 public class NullLiteralExpression implements Expression {
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         return node.getInsn().getOpcode() == Opcodes.ACONST_NULL;
     }
 }

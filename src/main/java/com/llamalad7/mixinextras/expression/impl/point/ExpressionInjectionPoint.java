@@ -61,14 +61,26 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         Set<AbstractInsnNode> result = new HashSet<>();
         for (Expression expr : parseExpressions()) {
             for (AbstractInsnNode candidate : target) {
+                Map<AbstractInsnNode, Map<String, Object>> allDecorations = new IdentityHashMap<>();
                 List<AbstractInsnNode> captured = new ArrayList<>();
 
-                Expression.CaptureSink sink = (node, decorations) -> {
-                    InjectionNode injectionNode = target.addInjectionNode(node);
-                    for (Pair<String, Object> decoration : decorations) {
-                        injectionNode.decorate(decoration.getKey(), decoration.getValue());
+                Expression.OutputSink sink = new Expression.OutputSink() {
+                    @Override
+                    public void capture(AbstractInsnNode insn) {
+                        Map<String, Object> decorations = allDecorations.get(insn);
+                        if (decorations != null) {
+                            InjectionNode injectionNode = target.addInjectionNode(insn);
+                            for (Map.Entry<String, Object> decoration : decorations.entrySet()) {
+                                injectionNode.decorate(decoration.getKey(), decoration.getValue());
+                            }
+                        }
+                        captured.add(insn);
                     }
-                    captured.add(node);
+
+                    @Override
+                    public void decorate(AbstractInsnNode insn, String key, Object value) {
+                        allDecorations.computeIfAbsent(insn, k -> new HashMap<>()).put(key, value);
+                    }
                 };
 
                 FlowValue flow = flows.get(candidate);

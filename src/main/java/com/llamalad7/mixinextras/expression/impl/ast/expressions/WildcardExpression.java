@@ -7,7 +7,7 @@ import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeNam
 @SerializedTypeName("?")
 public class WildcardExpression implements Expression {
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         return true;
     }
 }

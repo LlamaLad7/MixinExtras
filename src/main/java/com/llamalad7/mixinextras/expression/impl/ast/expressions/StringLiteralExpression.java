@@ -18,7 +18,7 @@ public class StringLiteralExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         Object cst = Bytecode.getConstant(node.getInsn());
         return Objects.equals(cst, value) || (!value.isEmpty() && Objects.equals(cst, value.charAt(0)));
     }

@@ -53,6 +53,9 @@ public class IdentifierPool {
         for (Type type : Annotations.<Type>getValue(entry, "type", true)) {
             addEntry(id, new TypePoolEntry(type));
         }
+        for (AnnotationNode local : Annotations.<AnnotationNode>getValue(entry, "local", true)) {
+            addEntry(id, new LocalPoolEntry(local, info, target));
+        }
     }
 
     private void addEntry(String id, PoolEntry entry) {

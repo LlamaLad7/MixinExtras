@@ -19,7 +19,7 @@ public class UnaryExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         switch (operator) {
             case MINUS:
                 switch (node.getInsn().getOpcode()) {

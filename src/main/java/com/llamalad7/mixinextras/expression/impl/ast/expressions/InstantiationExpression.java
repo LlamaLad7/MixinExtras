@@ -25,7 +25,7 @@ public class InstantiationExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         AbstractInsnNode insn = node.getInsn();
         if (insn.getOpcode() != Opcodes.NEW || !type.matches(pool, insn)) {
             return false;
@@ -47,7 +47,7 @@ public class InstantiationExpression implements Expression {
     }
 
     @Override
-    public void capture(FlowValue node, CaptureSink sink) {
-        sink.accept(node.getInsn());
+    public void capture(FlowValue node, OutputSink sink) {
+        sink.capture(node.getInsn());
     }
 }

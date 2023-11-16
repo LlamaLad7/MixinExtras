@@ -23,7 +23,7 @@ public class BinaryExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         return operator.matches(node.getInsn()) && inputsMatch(node, pool, sink, left, right);
     }
 

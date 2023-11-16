@@ -15,7 +15,7 @@ public class CapturingExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         boolean matches = expression.matches(node, pool, sink);
         if (matches) {
             expression.capture(node, sink);

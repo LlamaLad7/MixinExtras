@@ -1,5 +1,7 @@
 package com.llamalad7.mixinextras.sugar;
 
+import com.llamalad7.mixinextras.expression.Pool;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -50,4 +52,9 @@ public @interface Local {
      * Whether only the method's parameters should be included. This makes the capture more efficient.
      */
     boolean argsOnly() default false;
+
+    /**
+     * Only for use in {@link Pool}s.
+     */
+    Class<?> type() default void.class;
 }

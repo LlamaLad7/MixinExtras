@@ -7,7 +7,6 @@ import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 import java.util.List;
 
@@ -27,7 +26,7 @@ public class MethodCallExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.INVOKEVIRTUAL:
             case Opcodes.INVOKESPECIAL:

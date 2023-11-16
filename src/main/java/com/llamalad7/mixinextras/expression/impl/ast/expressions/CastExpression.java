@@ -7,8 +7,6 @@ import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.TypeInsnNode;
-import org.objectweb.asm.tree.analysis.BasicValue;
 
 @SerializedTypeName("as")
 public class CastExpression implements Expression {
@@ -23,7 +21,7 @@ public class CastExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         AbstractInsnNode insn = node.getInsn();
         switch (insn.getOpcode()) {
             case Opcodes.CHECKCAST:

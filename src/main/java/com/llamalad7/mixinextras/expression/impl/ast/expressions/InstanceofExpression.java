@@ -21,7 +21,7 @@ public class InstanceofExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         AbstractInsnNode insn = node.getInsn();
         return insn.getOpcode() == Opcodes.INSTANCEOF && type.matches(pool, insn) && inputsMatch(node, pool, sink, expression);
     }

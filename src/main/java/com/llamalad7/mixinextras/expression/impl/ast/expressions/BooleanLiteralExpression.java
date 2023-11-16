@@ -16,7 +16,7 @@ public class BooleanLiteralExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, CaptureSink sink) {
+    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         if (value) {
             return node.getInsn().getOpcode() == Opcodes.ICONST_1;
         }

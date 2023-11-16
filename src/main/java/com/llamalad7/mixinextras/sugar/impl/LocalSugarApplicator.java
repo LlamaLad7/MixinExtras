@@ -3,8 +3,8 @@ package com.llamalad7.mixinextras.sugar.impl;
 import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefClassGenerator;
 import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefUtils;
-import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -37,9 +37,9 @@ class LocalSugarApplicator extends SugarApplicator {
     @Override
     void validate(Target target, InjectionNode node) {
         LocalVariableDiscriminator discriminator = LocalVariableDiscriminator.parse(sugar);
-        Context context = getOrCreateLocalContext(target, node);
+        Context context = InjectorUtils.getOrCreateLocalContext(target, node, info, targetLocalType, isArgsOnly);
         if (discriminator.printLVT()) {
-            printLocals(target, node.getCurrentTarget(), context, discriminator);
+            InjectorUtils.printLocals(target, node.getCurrentTarget(), context, discriminator, targetLocalType, isArgsOnly);
             info.addCallbackInvocation(info.getMethod());
             throw new SugarApplicationException("Application aborted because locals are being printed instead.");
         }
@@ -54,13 +54,13 @@ class LocalSugarApplicator extends SugarApplicator {
 
     @Override
     void prepare(Target target, InjectionNode node) {
-        getOrCreateLocalContext(target, node);
+        InjectorUtils.getOrCreateLocalContext(target, node, info, targetLocalType, isArgsOnly);
     }
 
     @Override
     void inject(Target target, InjectionNode node, StackExtension stack) {
         LocalVariableDiscriminator discriminator = LocalVariableDiscriminator.parse(sugar);
-        Context context = node.getDecoration(getLocalContextKey());
+        Context context = InjectorUtils.getOrCreateLocalContext(target, node, info, targetLocalType, isArgsOnly);
         int index = discriminator.findLocal(context);
         if (index < 0) {
             throw new SugarApplicationException("Failed to match a local, this should have been caught during validation.");
@@ -119,42 +119,5 @@ class LocalSugarApplicator extends SugarApplicator {
         // Tell future injectors where to find the reference.
         refIndices.put(index, refIndex);
         return refIndex;
-    }
-
-    private Context getOrCreateLocalContext(Target target, InjectionNode node) {
-        String decorationKey = getLocalContextKey();
-        if (node.hasDecoration(decorationKey)) {
-            return node.getDecoration(decorationKey);
-        }
-        Context context = CompatibilityHelper.makeLvtContext(info, targetLocalType, isArgsOnly, target, node.getCurrentTarget());
-        node.decorate(decorationKey, context);
-        return context;
-    }
-
-    private String getLocalContextKey() {
-        return String.format(Decorations.PERSISTENT + "localSugarContext(%s,%s)", targetLocalType, isArgsOnly ? "argsOnly" : "fullFrame");
-    }
-
-    private void printLocals(Target target, AbstractInsnNode node, Context context, LocalVariableDiscriminator discriminator) {
-        int baseArgIndex = target.isStatic ? 0 : 1;
-
-        new PrettyPrinter()
-                .kvWidth(20)
-                .kv("Target Class", target.classNode.name.replace('/', '.'))
-                .kv("Target Method", target.method.name)
-                .kv("Capture Type", SignaturePrinter.getTypeName(targetLocalType, false))
-                .kv("Instruction", "[%d] %s %s", target.insns.indexOf(node), node.getClass().getSimpleName(),
-                        Bytecode.getOpcodeName(node.getOpcode())).hr()
-                .kv("Match mode", isImplicit(discriminator, baseArgIndex) ? "IMPLICIT (match single)" : "EXPLICIT (match by criteria)")
-                .kv("Match ordinal", discriminator.getOrdinal() < 0 ? "any" : discriminator.getOrdinal())
-                .kv("Match index", discriminator.getIndex() < baseArgIndex ? "any" : discriminator.getIndex())
-                .kv("Match name(s)", discriminator.hasNames() ? discriminator.getNames() : "any")
-                .kv("Args only", isArgsOnly).hr()
-                .add(context)
-                .print(System.err);
-    }
-
-    private boolean isImplicit(LocalVariableDiscriminator discriminator, int baseArgIndex) {
-        return discriminator.getOrdinal() < 0 && discriminator.getIndex() < baseArgIndex && discriminator.getNames().isEmpty();
     }
 }

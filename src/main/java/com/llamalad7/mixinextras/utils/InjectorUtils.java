@@ -5,10 +5,15 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
+import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
+import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
+import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Bytecode;
+import org.spongepowered.asm.util.PrettyPrinter;
+import org.spongepowered.asm.util.SignaturePrinter;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -94,5 +99,42 @@ public class InjectorUtils {
             default:
                 return false;
         }
+    }
+
+    public static Context getOrCreateLocalContext(Target target, InjectionNode node, InjectionInfo info, Type targetType, boolean isArgsOnly) {
+        String decorationKey = getLocalContextKey(targetType, isArgsOnly);
+        if (node.hasDecoration(decorationKey)) {
+            return node.getDecoration(decorationKey);
+        }
+        Context context = CompatibilityHelper.makeLvtContext(info, targetType, isArgsOnly, target, node.getCurrentTarget());
+        node.decorate(decorationKey, context);
+        return context;
+    }
+
+    private static String getLocalContextKey(Type targetType, boolean isArgsOnly) {
+        return String.format(Decorations.PERSISTENT + "localContext(%s,%s)", targetType, isArgsOnly ? "argsOnly" : "fullFrame");
+    }
+
+    public static void printLocals(Target target, AbstractInsnNode node, Context context, LocalVariableDiscriminator discriminator, Type targetType, boolean isArgsOnly) {
+        int baseArgIndex = target.isStatic ? 0 : 1;
+
+        new PrettyPrinter()
+                .kvWidth(20)
+                .kv("Target Class", target.classNode.name.replace('/', '.'))
+                .kv("Target Method", target.method.name)
+                .kv("Capture Type", SignaturePrinter.getTypeName(targetType, false))
+                .kv("Instruction", "[%d] %s %s", target.insns.indexOf(node), node.getClass().getSimpleName(),
+                        Bytecode.getOpcodeName(node.getOpcode())).hr()
+                .kv("Match mode", isImplicit(discriminator, baseArgIndex) ? "IMPLICIT (match single)" : "EXPLICIT (match by criteria)")
+                .kv("Match ordinal", discriminator.getOrdinal() < 0 ? "any" : discriminator.getOrdinal())
+                .kv("Match index", discriminator.getIndex() < baseArgIndex ? "any" : discriminator.getIndex())
+                .kv("Match name(s)", discriminator.hasNames() ? discriminator.getNames() : "any")
+                .kv("Args only", isArgsOnly).hr()
+                .add(context)
+                .print(System.err);
+    }
+
+    private static boolean isImplicit(LocalVariableDiscriminator discriminator, int baseArgIndex) {
+        return discriminator.getOrdinal() < 0 && discriminator.getIndex() < baseArgIndex && discriminator.getNames().isEmpty();
     }
 }

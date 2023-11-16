@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.analysis.Value;
@@ -11,7 +12,7 @@ public class FlowValue implements Value {
     public static final FlowValue NULL = new FlowValue(Collections.emptyList(), Type.VOID_TYPE, null);
     private final List<FlowValue> parents;
     private final Set<Pair<FlowValue, Integer>> next = new HashSet<>();
-    private final Type type;
+    private Type type;
     private final AbstractInsnNode insn;
 
     public FlowValue(FlowValue parent, Type type, AbstractInsnNode insn) {
@@ -28,9 +29,12 @@ public class FlowValue implements Value {
         next.add(Pair.of(value, index));
     }
 
-    public void linkToParents() {
+    public void finish() {
         for (int i = 0; i < parents.size(); i++) {
             parents.get(i).addChild(this, i);
+        }
+        if (insn.getOpcode() >= Opcodes.ISTORE && insn.getOpcode() <= Opcodes.ASTORE) {
+            type = Type.VOID_TYPE;
         }
     }
 
@@ -53,5 +57,9 @@ public class FlowValue implements Value {
 
     public FlowValue getInput(int index) {
         return parents.get(index);
+    }
+
+    public int inputCount() {
+        return parents.size();
     }
 }
