@@ -1,9 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.expression.impl.utils.ComplexComparisonInfo;
 import com.llamalad7.mixinextras.utils.ASMUtils;
@@ -13,20 +11,14 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 
-@SerializedTypeName("cmp")
 public class ComparisonExpression implements Expression {
-    @SerializedName("l")
-    public final Expression left;
-    @SerializedName("op")
-    public final Operator operator;
-    @SerializedName("r")
-    public final Expression right;
+    private static final long serialVersionUID = -5524038763761980419L;
 
-    @SerializedName("0")
+    public final Expression left;
+    public final Operator operator;
+    public final Expression right;
     private final boolean isWithZero;
-    @SerializedName("null")
     private final boolean isWithNull;
-    @SerializedName("?")
     private final boolean isWildcard;
 
     public ComparisonExpression(Expression left, Operator operator, Expression right) {
@@ -59,17 +51,11 @@ public class ComparisonExpression implements Expression {
     }
 
     public enum Operator implements Opcodes {
-        @SerializedName("==")
         EQ(IF_ACMPEQ, IF_ICMPEQ, IF_ACMPNE, IF_ICMPNE, FCMPL, DCMPL),
-        @SerializedName("!=")
         NE(IF_ACMPNE, IF_ICMPNE, IF_ACMPEQ, IF_ICMPEQ, FCMPL, DCMPL),
-        @SerializedName("<")
         LT(0, IF_ICMPLT, 0, IF_ICMPGE, FCMPG, DCMPG),
-        @SerializedName("<=")
         LE(0, IF_ICMPLE, 0, IF_ICMPGT, FCMPG, DCMPG),
-        @SerializedName(">")
         GT(0, IF_ICMPGT, 0, IF_ICMPLE, FCMPL, DCMPL),
-        @SerializedName(">=")
         GE(0, IF_ICMPGE, 0, IF_ICMPLT, FCMPL, DCMPL);
 
         private static final int WITH_ZERO_OFFSET = IF_ICMPEQ - IFEQ;

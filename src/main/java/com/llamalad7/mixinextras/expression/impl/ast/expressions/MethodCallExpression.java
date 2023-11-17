@@ -1,22 +1,18 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
 
 import java.util.List;
 
-@SerializedTypeName(".()")
 public class MethodCallExpression implements SimpleExpression {
-    @SerializedName("ex")
+    private static final long serialVersionUID = 2782177700401016742L;
+
     public final Expression receiver;
-    @SerializedName("id")
     public final Identifier name;
-    @SerializedName("args")
     public final List<Expression> arguments;
 
     public MethodCallExpression(Expression receiver, Identifier name, List<Expression> arguments) {

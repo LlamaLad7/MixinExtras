@@ -2,11 +2,14 @@ package com.llamalad7.mixinextras.utils.info;
 
 import com.llamalad7.mixinextras.expression.impl.ast.expressions.Expression;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class ExtraMixinInfo {
+public class ExtraMixinInfo implements Serializable {
+    private static final long serialVersionUID = 5651000861756615613L;
+
     private final Map<String, Expression> parsedExpressions = new HashMap<>();
 
     public void offerExpression(String expr, Supplier<Expression> parser) {

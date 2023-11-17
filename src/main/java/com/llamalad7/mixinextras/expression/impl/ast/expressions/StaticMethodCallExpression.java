@@ -1,20 +1,17 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.List;
 
-@SerializedTypeName("()")
 public class StaticMethodCallExpression implements SimpleExpression {
-    @SerializedName("id")
+    private static final long serialVersionUID = 4367453693416541367L;
+
     public final Identifier name;
-    @SerializedName("args")
     public final List<Expression> arguments;
 
     public StaticMethodCallExpression(Identifier name, List<Expression> arguments) {

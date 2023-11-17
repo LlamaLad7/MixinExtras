@@ -1,10 +1,8 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -12,11 +10,10 @@ import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.util.List;
 
-@SerializedTypeName("new")
 public class InstantiationExpression implements Expression {
-    @SerializedName("t")
+    private static final long serialVersionUID = -5119008925820708327L;
+
     public final Identifier type;
-    @SerializedName("args")
     public final List<Expression> arguments;
 
     public InstantiationExpression(Identifier type, List<Expression> arguments) {

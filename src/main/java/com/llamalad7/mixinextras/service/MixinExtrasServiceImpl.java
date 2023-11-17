@@ -170,6 +170,17 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
         return Type.getObjectType((theirPackage + StringUtils.substringAfter(ourType.getName(), ownPackage)).replace('.', '/'));
     }
 
+    public String changePackageToOurs(String theirName) {
+        for (Versioned<String> thePackage : allPackages) {
+            String packageName = thePackage.value;
+            if (theirName.startsWith(packageName)) {
+                String suffix = StringUtils.removeStart(theirName, packageName);
+                return ownPackage + suffix;
+            }
+        }
+        return theirName;
+    }
+
     public Set<String> getAllClassNames(String ourName) {
         return getAllClassNamesAtLeast(ourName, Integer.MIN_VALUE);
     }

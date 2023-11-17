@@ -2,11 +2,11 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.utils.Decorations;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-public interface Expression {
+import java.io.Serializable;
+
+public interface Expression extends Serializable {
     default boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         return false;
     }

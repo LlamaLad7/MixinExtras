@@ -1,7 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.wrapper;
 
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionInjectionPoint;
-import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.wrapper.InjectorWrapperImpl;
 import com.llamalad7.mixinextras.wrapper.WrapperInjectionInfo;
 import org.objectweb.asm.tree.AnnotationNode;

@@ -1,20 +1,16 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-@SerializedTypeName(".=")
 public class MemberAssignmentExpression implements Expression {
-    @SerializedName("ex")
+    private static final long serialVersionUID = 1823824033873312616L;
+
     public final Expression receiver;
-    @SerializedName("id")
     public final Identifier name;
-    @SerializedName("v")
     public final Expression value;
 
     public MemberAssignmentExpression(Expression receiver, Identifier name, Expression value) {

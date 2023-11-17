@@ -1,18 +1,15 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-@SerializedTypeName(".")
 public class MemberAccessExpression implements SimpleExpression {
-    @SerializedName("ex")
+    private static final long serialVersionUID = 6076770192300216063L;
+
     public final Expression receiver;
-    @SerializedName("id")
     public final Identifier name;
 
     public MemberAccessExpression(Expression receiver, Identifier name) {

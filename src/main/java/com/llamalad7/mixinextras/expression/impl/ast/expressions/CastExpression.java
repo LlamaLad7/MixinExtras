@@ -1,18 +1,15 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-@SerializedTypeName("as")
 public class CastExpression implements SimpleExpression {
-    @SerializedName("t")
+    private static final long serialVersionUID = -4431553484492491514L;
+
     public final Identifier type;
-    @SerializedName("ex")
     public final Expression expression;
 
     public CastExpression(Identifier type, Expression expression) {

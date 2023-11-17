@@ -6,7 +6,6 @@ plugins {
 dependencies {
     antlr("org.antlr:antlr4:4.13.1")
     api("org.antlr:antlr4-runtime:4.13.1")
-    api("com.google.code.gson:gson:2.2.4")
     api("org.ow2.asm:asm-debug-all:5.2")
 }
 

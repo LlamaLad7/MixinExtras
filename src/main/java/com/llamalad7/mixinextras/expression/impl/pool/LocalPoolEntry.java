@@ -27,6 +27,7 @@ public class LocalPoolEntry implements PoolEntry {
         isArgsOnly = Annotations.getValue(local, "argsOnly", (Boolean) false);
         this.target = target;
     }
+
     @Override
     public boolean matches(AbstractInsnNode insn) {
         if (!(insn instanceof VarInsnNode)) {

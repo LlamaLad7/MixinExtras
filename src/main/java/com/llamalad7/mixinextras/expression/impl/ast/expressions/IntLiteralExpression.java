@@ -1,14 +1,12 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.spongepowered.asm.util.Bytecode;
 
-@SerializedTypeName("int")
 public class IntLiteralExpression implements SimpleExpression {
-    @SerializedName("v")
+    private static final long serialVersionUID = 4621397287736101267L;
+
     public final long value;
 
     public IntLiteralExpression(long value) {

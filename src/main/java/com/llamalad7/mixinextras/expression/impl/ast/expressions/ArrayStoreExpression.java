@@ -1,18 +1,14 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.objectweb.asm.Opcodes;
 
-@SerializedTypeName("[]=")
 public class ArrayStoreExpression implements Expression {
-    @SerializedName("arr")
+    private static final long serialVersionUID = -3433941561737164358L;
+
     public final Expression arr;
-    @SerializedName("i")
     public final Expression index;
-    @SerializedName("v")
     public final Expression value;
 
     public ArrayStoreExpression(Expression arr, Expression index, Expression value) {

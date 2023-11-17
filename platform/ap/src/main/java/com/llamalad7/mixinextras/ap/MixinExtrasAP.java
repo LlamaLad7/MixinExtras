@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValueInjectionInfo;
 import com.llamalad7.mixinextras.injector.WrapWithConditionV1InjectionInfo;
 import com.llamalad7.mixinextras.injector.v2.WrapWithConditionInjectionInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
+import com.llamalad7.mixinextras.utils.info.ExtraMixinInfoSerializer;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.util.logging.MessageRouter;
 
@@ -17,9 +18,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
-import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
@@ -72,13 +71,13 @@ public class MixinExtrasAP extends AbstractProcessor {
     }
 
     private void writeInfo() {
-        ExtraMixinInfoWriter.build((mixin, contents) -> {
-            String fileName = "META-INF/mixinextras/" + mixin + ".json";
+        ExtraMixinInfoWriter.build((mixin, info) -> {
+            String fileName = "META-INF/mixinextras/" + mixin + ".info";
             new File(fileName).getParentFile().mkdirs();
             try {
                 FileObject file = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", fileName);
-                try (Writer writer = file.openWriter()) {
-                    writer.write(contents);
+                try (OutputStream fileStream = file.openOutputStream()) {
+                    ExtraMixinInfoSerializer.serialize(info, fileStream);
                 }
             } catch (IOException e) {
                 throw new RuntimeException("Failed to write MixinExtras info file: ", e);

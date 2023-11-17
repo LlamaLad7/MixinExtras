@@ -1,16 +1,14 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.objectweb.asm.Opcodes;
 
-@SerializedTypeName("un")
+
 public class UnaryExpression implements SimpleExpression {
-    @SerializedName("op")
+    private static final long serialVersionUID = 3397714610705690343L;
+
     public final Operator operator;
-    @SerializedName("ex")
     public final Expression expression;
 
     public UnaryExpression(Operator operator, Expression expression) {
@@ -40,9 +38,7 @@ public class UnaryExpression implements SimpleExpression {
     }
 
     public enum Operator {
-        @SerializedName("-")
         MINUS,
-        @SerializedName("~")
-        BITWISE_NOT;
+        BITWISE_NOT
     }
 }

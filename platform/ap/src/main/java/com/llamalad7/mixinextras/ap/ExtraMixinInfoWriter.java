@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.utils.info.ExtraMixinInfoSerializer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -14,9 +15,9 @@ import java.util.function.BiConsumer;
 class ExtraMixinInfoWriter {
     private static final Map<String, ExtraMixinInfo> INFO = new HashMap<>();
 
-    public static void build(BiConsumer<String, String> output) {
+    public static void build(BiConsumer<String, ExtraMixinInfo> output) {
         for (Map.Entry<String, ExtraMixinInfo> entry : INFO.entrySet()) {
-            output.accept(entry.getKey(), ExtraMixinInfoSerializer.serialize(entry.getValue()));
+            output.accept(entry.getKey(), entry.getValue());
         }
         INFO.clear();
     }

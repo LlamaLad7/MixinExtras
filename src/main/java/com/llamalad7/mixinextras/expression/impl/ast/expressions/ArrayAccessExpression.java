@@ -1,16 +1,13 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 import org.objectweb.asm.Opcodes;
 
-@SerializedTypeName("[]")
 public class ArrayAccessExpression implements SimpleExpression {
-    @SerializedName("arr")
+    private static final long serialVersionUID = -2463724143455495283L;
+
     public final Expression arr;
-    @SerializedName("i")
     public final Expression index;
 
     public ArrayAccessExpression(Expression arr, Expression index) {

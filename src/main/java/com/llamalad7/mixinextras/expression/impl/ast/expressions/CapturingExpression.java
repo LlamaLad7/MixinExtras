@@ -1,13 +1,11 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.google.gson.annotations.SerializedName;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 
-@SerializedTypeName("@")
 public class CapturingExpression implements SimpleExpression {
-    @SerializedName("ex")
+    private static final long serialVersionUID = 4108519745378235418L;
+
     public final Expression expression;
 
     public CapturingExpression(Expression expression) {
