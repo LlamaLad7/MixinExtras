@@ -8,7 +8,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 @SerializedTypeName("bin")
-public class BinaryExpression implements Expression {
+public class BinaryExpression implements SimpleExpression {
     @SerializedName("l")
     public final Expression left;
     @SerializedName("op")

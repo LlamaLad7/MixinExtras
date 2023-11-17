@@ -178,7 +178,7 @@ class WrapOperationInjector extends Injector {
                 // We want to generate the impl with LMF
                 LMF_HANDLE,
                 // The SAM method will take an array of args and return an `Object` (the return value of the wrapped call)
-                Type.getMethodType(Type.getType(Object.class), Type.getType(Object[].class)),
+                Type.getMethodType(ASMUtils.OBJECT_TYPE, Type.getType(Object[].class)),
                 // The implementation method will be generated for us to handle array unpacking
                 generateSyntheticBridge(target, node, argTypes, returnType, hasExtraThis, trailingParams),
                 // Specialization of the SAM signature
@@ -445,7 +445,7 @@ class WrapOperationInjector extends Injector {
             }
         }
         if (node.getOpcode() == Opcodes.INSTANCEOF) {
-            return new Type[]{Type.getType(Object.class)};
+            return new Type[]{ASMUtils.OBJECT_TYPE};
         }
 
         throw new UnsupportedOperationException();

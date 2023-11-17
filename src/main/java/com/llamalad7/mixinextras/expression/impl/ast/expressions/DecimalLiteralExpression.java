@@ -7,7 +7,7 @@ import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeNam
 import org.spongepowered.asm.util.Bytecode;
 
 @SerializedTypeName("dec")
-public class DecimalLiteralExpression implements Expression {
+public class DecimalLiteralExpression implements SimpleExpression {
     @SerializedName("v")
     public final double value;
 

@@ -11,7 +11,7 @@ import org.objectweb.asm.Opcodes;
 import java.util.List;
 
 @SerializedTypeName(".()")
-public class MethodCallExpression implements Expression {
+public class MethodCallExpression implements SimpleExpression {
     @SerializedName("ex")
     public final Expression receiver;
     @SerializedName("id")

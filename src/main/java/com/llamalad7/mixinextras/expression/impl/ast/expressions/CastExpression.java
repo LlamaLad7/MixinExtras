@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 @SerializedTypeName("as")
-public class CastExpression implements Expression {
+public class CastExpression implements SimpleExpression {
     @SerializedName("t")
     public final Identifier type;
     @SerializedName("ex")

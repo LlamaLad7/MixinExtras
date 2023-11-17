@@ -7,7 +7,7 @@ import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeNam
 import org.objectweb.asm.Opcodes;
 
 @SerializedTypeName("[]")
-public class ArrayAccessExpression implements Expression {
+public class ArrayAccessExpression implements SimpleExpression {
     @SerializedName("arr")
     public final Expression arr;
     @SerializedName("i")

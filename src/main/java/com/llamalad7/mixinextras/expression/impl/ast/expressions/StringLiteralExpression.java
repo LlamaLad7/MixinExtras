@@ -9,7 +9,7 @@ import org.spongepowered.asm.util.Bytecode;
 import java.util.Objects;
 
 @SerializedTypeName("str")
-public class StringLiteralExpression implements Expression {
+public class StringLiteralExpression implements SimpleExpression {
     @SerializedName("v")
     public final String value;
 

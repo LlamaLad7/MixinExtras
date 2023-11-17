@@ -1,9 +1,11 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
+import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Interpreter;
+import org.spongepowered.asm.util.Locals;
 import org.spongepowered.asm.util.asm.ASM;
 
 import java.lang.invoke.MethodHandle;
@@ -14,9 +16,13 @@ import static org.objectweb.asm.Opcodes.*;
 
 public class FlowInterpreter extends Interpreter<FlowValue> {
     private final Map<AbstractInsnNode, FlowValue> cache = new IdentityHashMap<>();
+    private final ClassNode classNode;
+    private final MethodNode methodNode;
 
-    public FlowInterpreter() {
+    public FlowInterpreter(ClassNode classNode, MethodNode methodNode) {
         super(ASM.API_VERSION);
+        this.classNode = classNode;
+        this.methodNode = methodNode;
     }
 
     public Map<AbstractInsnNode, FlowValue> finish() {
@@ -44,7 +50,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             Type type;
             switch (insn.getOpcode()) {
                 case ACONST_NULL:
-                    type = Type.getType(Object.class);
+                    type = ASMUtils.OBJECT_TYPE;
                     break;
                 case ICONST_M1:
                 case ICONST_0:
@@ -138,10 +144,12 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case FSTORE:
             case DSTORE:
             case ASTORE:
-                // The type will be fixed later,the interpreter needs STOREs to be a "copy" operation
-                return cache.computeIfAbsent(insn, k -> new FlowValue(Collections.singletonList(value), value.getType(), insn));
+                return cache.computeIfAbsent(insn, k -> new FlowValue(Collections.singletonList(value), Type.VOID_TYPE, insn));
         }
-        return cache.computeIfAbsent(insn, k -> new FlowValue(Collections.emptyList(), value.getType(), insn));
+        VarInsnNode varNode = ((VarInsnNode) insn);
+        LocalVariableNode local = Locals.getLocalVariableAt(classNode, methodNode, insn, varNode.var);
+        Type type = local != null ? Type.getType(local.desc) : Type.VOID_TYPE;
+        return cache.computeIfAbsent(insn, k -> new FlowValue(Collections.emptyList(), type, insn));
     }
 
     @Override

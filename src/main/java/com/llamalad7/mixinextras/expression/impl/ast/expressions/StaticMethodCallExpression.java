@@ -11,7 +11,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import java.util.List;
 
 @SerializedTypeName("()")
-public class StaticMethodCallExpression implements Expression {
+public class StaticMethodCallExpression implements SimpleExpression {
     @SerializedName("id")
     public final Identifier name;
     @SerializedName("args")

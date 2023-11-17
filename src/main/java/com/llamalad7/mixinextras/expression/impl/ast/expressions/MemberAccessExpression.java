@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 @SerializedTypeName(".")
-public class MemberAccessExpression implements Expression {
+public class MemberAccessExpression implements SimpleExpression {
     @SerializedName("ex")
     public final Expression receiver;
     @SerializedName("id")

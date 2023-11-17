@@ -7,7 +7,7 @@ import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeNam
 import org.objectweb.asm.Opcodes;
 
 @SerializedTypeName("id")
-public class IdentifierExpression implements Expression {
+public class IdentifierExpression implements SimpleExpression {
     @SerializedName("id")
     public final String identifier;
 

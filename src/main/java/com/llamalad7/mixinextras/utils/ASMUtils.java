@@ -8,9 +8,12 @@ import org.spongepowered.asm.util.Constants;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ASMUtils {
+    public static final Type OBJECT_TYPE = Type.getType(Object.class);
+
     public static String annotationToString(AnnotationNode annotation) {
         StringBuilder builder = new StringBuilder("@").append(typeToString(Type.getType(annotation.desc)));
         List<Object> values = annotation.values;

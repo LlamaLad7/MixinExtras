@@ -45,9 +45,4 @@ public class InstantiationExpression implements Expression {
         }
         return false;
     }
-
-    @Override
-    public void capture(FlowValue node, OutputSink sink) {
-        sink.capture(node.getInsn());
-    }
 }

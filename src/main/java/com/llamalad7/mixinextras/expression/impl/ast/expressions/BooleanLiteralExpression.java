@@ -7,7 +7,7 @@ import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeNam
 import org.objectweb.asm.Opcodes;
 
 @SerializedTypeName("bool")
-public class BooleanLiteralExpression implements Expression {
+public class BooleanLiteralExpression implements SimpleExpression {
     @SerializedName("v")
     public final boolean value;
 

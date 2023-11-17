@@ -7,7 +7,7 @@ import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeNam
 import org.objectweb.asm.Opcodes;
 
 @SerializedTypeName("un")
-public class UnaryExpression implements Expression {
+public class UnaryExpression implements SimpleExpression {
     @SerializedName("op")
     public final Operator operator;
     @SerializedName("ex")

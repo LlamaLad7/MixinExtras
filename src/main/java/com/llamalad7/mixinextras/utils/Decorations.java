@@ -39,4 +39,9 @@ public class Decorations {
      * Stores the type of a simple expression targeted by an {@link Expression}.
      */
     public static final String SIMPLE_EXPRESSION_TYPE = "mixinextras_simpleExpressionType";
+
+    /**
+     * Stores injector-specific information about modified comparisons.
+     */
+    public static final String COMPARISON_INFO = "mixinextras_comparisonInfo";
 }

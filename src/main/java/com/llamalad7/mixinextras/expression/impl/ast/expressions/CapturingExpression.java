@@ -6,7 +6,7 @@ import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeName;
 
 @SerializedTypeName("@")
-public class CapturingExpression implements Expression {
+public class CapturingExpression implements SimpleExpression {
     @SerializedName("ex")
     public final Expression expression;
 

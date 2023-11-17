@@ -9,7 +9,6 @@ import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.TargetDecorations;
 import com.llamalad7.mixinextras.utils.info.ExtraMixinInfo;
 import com.llamalad7.mixinextras.utils.info.ExtraMixinInfoManager;
-import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.InsnList;
@@ -48,7 +47,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         long startTime = System.currentTimeMillis();
         Target target = getTarget(insns);
         Map<AbstractInsnNode, FlowValue> flows = TargetDecorations.getOrPut(target, "ValueFlow", () -> {
-            FlowInterpreter interpreter = new FlowInterpreter();
+            FlowInterpreter interpreter = new FlowInterpreter(CURRENT_INFO.getClassNode(), target.method);
             try {
                 new Analyzer<>(interpreter).analyze(CURRENT_INFO.getClassNode().name, target.method);
             } catch (AnalyzerException e) {
@@ -80,6 +79,14 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                     @Override
                     public void decorate(AbstractInsnNode insn, String key, Object value) {
                         allDecorations.computeIfAbsent(insn, k -> new HashMap<>()).put(key, value);
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    public void decorateInjectorSpecific(AbstractInsnNode insn, String key, Object value) {
+                        Map<InjectionInfo, Object> map = (Map<InjectionInfo, Object>)
+                                allDecorations.computeIfAbsent(insn, k -> new HashMap<>()).computeIfAbsent(key, k -> new HashMap<>());
+                        map.put(CURRENT_INFO, value);
                     }
                 };
 

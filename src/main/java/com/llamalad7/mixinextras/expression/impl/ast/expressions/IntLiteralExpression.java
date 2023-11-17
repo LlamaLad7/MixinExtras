@@ -7,7 +7,7 @@ import com.llamalad7.mixinextras.expression.impl.serialization.SerializedTypeNam
 import org.spongepowered.asm.util.Bytecode;
 
 @SerializedTypeName("int")
-public class IntLiteralExpression implements Expression {
+public class IntLiteralExpression implements SimpleExpression {
     @SerializedName("v")
     public final long value;
 

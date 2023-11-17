@@ -27,7 +27,7 @@ class ShareSugarApplicator extends SugarApplicator {
 
     @Override
     void validate(Target target, InjectionNodes.InjectionNode node) {
-        innerType = LocalRefUtils.getTargetType(paramType, Type.getType(Object.class));
+        innerType = LocalRefUtils.getTargetType(paramType, ASMUtils.OBJECT_TYPE);
         if (innerType == paramType) {
             throw new SugarApplicationException("@Share parameter must be some variation of LocalRef.");
         }

@@ -12,9 +12,6 @@ public interface Expression {
     }
 
     default void capture(FlowValue node, OutputSink sink) {
-        if (node.getType() != Type.VOID_TYPE) {
-            sink.decorate(node.getInsn(), Decorations.SIMPLE_EXPRESSION_TYPE, node.getType());
-        }
         sink.capture(node.getInsn());
     }
 
@@ -39,5 +36,7 @@ public interface Expression {
         void capture(AbstractInsnNode insn);
 
         void decorate(AbstractInsnNode insn, String key, Object value);
+
+        void decorateInjectorSpecific(AbstractInsnNode insn, String key, Object value);
     }
 }
