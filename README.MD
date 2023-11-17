@@ -100,3 +100,10 @@ and initializing MixinExtras in its `onLoad` method.
 
 Enjoy using the library, and don't hesitate to open an [issue](https://github.com/LlamaLad7/MixinExtras/issues) if you
 have any feedback, questions or suggestions.
+
+## Acknowledgements
+
+<img src="https://www.yourkit.com/images/yklogo.png"></img>
+
+I use [YourKit's Java profiler](https://www.yourkit.com/java/profiler/) when working on MixinExtras. Many thanks to them
+for providing a free license for the project.
