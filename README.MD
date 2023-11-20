@@ -14,7 +14,7 @@ The setup steps vary based on your platform:
 
 ```gradle
 dependencies {
-    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.2.0")))
+    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.2.1")))
 }
 ```
 
@@ -25,8 +25,8 @@ dependencies {
 jarJar.enable()
 
 dependencies {
-    implementation(jarJar("io.github.llamalad7:mixinextras-neoforge:0.2.0")) {
-        jarJar.ranged(it, "[0.2.0,)")
+    implementation(jarJar("io.github.llamalad7:mixinextras-neoforge:0.2.1")) {
+        jarJar.ranged(it, "[0.2.1,)")
     }
 }
 
@@ -38,9 +38,9 @@ tasks.named('build').configure { dependsOn('jarJar') }
 
 ```gradle
 dependencies {
-    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.0"))
-    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.2.0")) {
-        jarJar.ranged(it, "[0.2.0,)")
+    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.1"))
+    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.2.1")) {
+        jarJar.ranged(it, "[0.2.1,)")
     }
 }
 ```
@@ -50,8 +50,8 @@ dependencies {
 
 ```gradle
 dependencies {
-    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.0"))
-    implementation(include("io.github.llamalad7:mixinextras-forge:0.2.0"))
+    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.1"))
+    implementation(include("io.github.llamalad7:mixinextras-forge:0.2.1"))
 }
 ```
 
@@ -70,7 +70,7 @@ configurations {
 }
 
 dependencies {
-    shadow(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.0"))
+    shadow(annotationProcessor("io.github.llamalad7:mixinextras-common:0.2.1"))
 }
 
 shadowJar {
