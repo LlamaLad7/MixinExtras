@@ -16,9 +16,11 @@ import org.spongepowered.asm.mixin.transformer.ext.Extensions;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 import org.spongepowered.asm.mixin.transformer.ext.IExtensionRegistry;
 import org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext;
+import org.spongepowered.asm.mixin.transformer.ext.extensions.ExtensionCheckClass;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Mumfrey, look away.
@@ -100,6 +102,20 @@ public class MixinInternals {
         } else {
             extensions.add(newExtension);
         }
+        // If this runs before our extensions it will fail since we're not done generating our bytecode.
+        shiftLateExtensions(extensions, it -> it instanceof ExtensionCheckClass);
+    }
+
+    private static void shiftLateExtensions(List<IExtension> extensions, Predicate<IExtension> isLate) {
+        List<IExtension> lateExtensions = new ArrayList<>();
+        for (ListIterator<IExtension> it = extensions.listIterator(); it.hasNext(); ) {
+            IExtension extension = it.next();
+            if (isLate.test(extension)) {
+                it.remove();
+                lateExtensions.add(extension);
+            }
+        }
+        extensions.addAll(lateExtensions);
     }
 
     public static Map<String, Object> getDecorations(InjectionNode node) {
