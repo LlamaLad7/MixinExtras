@@ -1,6 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "com_github_llamalad7_mixinextras",
+  "id": "mixinextras",
+  "provides": [
+    "com_github_llamalad7_mixinextras"
+  ],
   "version": "${version}",
   "name": "MixinExtras",
   "description": "Companion library to Mixin with lots of features to improve the compatibility and concision of your mixins!",
@@ -17,7 +20,7 @@
     "mixinextras.init.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.14.11"
+    "fabricloader": ">=0.14.25"
   },
   "custom": {
     "modmenu": {
