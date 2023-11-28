@@ -20,11 +20,3 @@ tasks.named<Jar>("jar") {
         "FMLModType" to "GAMELIBRARY",
     )
 }
-
-tasks.withType<ProcessResources> {
-    inputs.property("version", version)
-
-    filesMatching(listOf("META-INF/mods.toml")) {
-        expand("version" to version)
-    }
-}
