@@ -12,6 +12,9 @@ MixinExtras is available on Maven Central.
 The setup steps vary based on your platform:
 <details><summary>Fabric / Quilt</summary>
 
+**FabricLoader 0.15.0+ includes MixinExtras already.** If you want to maintain compatibility with older versions, or
+want to use a beta, see below:
+
 ```gradle
 dependencies {
     include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.2.1")))
@@ -80,12 +83,6 @@ shadowJar {
 }
 ```
 
-</details>
-
-## Initialization
-
-**If you are on Fabric, Quilt, or Forge 1.18.2+, you can skip this section. Make sure to follow the steps above.**
-
 To initialize MixinExtras, simply call
 
 ```java
@@ -95,6 +92,8 @@ MixinExtrasBootstrap.init();
 somewhere suitably early. In almost all cases I would recommend making
 an [IMixinConfigPlugin](https://github.com/SpongePowered/Mixin/blob/master/src/main/java/org/spongepowered/asm/mixin/extensibility/IMixinConfigPlugin.java)
 and initializing MixinExtras in its `onLoad` method.
+
+</details>
 
 ### You're good to go!
 
