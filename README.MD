@@ -13,7 +13,7 @@ The setup steps vary based on your platform:
 <details><summary>Fabric / Quilt</summary>
 
 **FabricLoader 0.15.0+ includes MixinExtras already.** If you want to maintain compatibility with older versions, or
-want to use a beta, see below:
+want to use a different version than is provided, see below:
 
 ```gradle
 dependencies {
@@ -23,6 +23,9 @@ dependencies {
 
 </details>
 <details><summary>NeoForge with NeoGradle</summary>
+
+**NeoForge 20.2.84+ includes MixinExtras already.** If you want to maintain compatibility with older versions, or
+want to use a different version than is provided, see below:
 
 ```gradle
 jarJar.enable()
