@@ -28,15 +28,11 @@ dependencies {
 want to use a different version than is provided, see below:
 
 ```gradle
-jarJar.enable()
-
 dependencies {
     implementation(jarJar("io.github.llamalad7:mixinextras-neoforge:0.3.1")) {
         jarJar.ranged(it, "[0.3.1,)")
     }
 }
-
-tasks.named('build').configure { dependsOn('jarJar') }
 ```
 
 </details>
