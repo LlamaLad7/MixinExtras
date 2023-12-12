@@ -31,10 +31,6 @@ public class InjectorUtils {
 
     public static void checkForDupedNews(Map<Target, List<InjectionNode>> targets) {
         for (Map.Entry<Target, List<InjectionNode>> entry : targets.entrySet()) {
-            Target target = entry.getKey();
-            if (TargetDecorations.has(target, "ScannedForDupedNews")) {
-                continue;
-            }
             for (InjectionNode node : entry.getValue()) {
                 AbstractInsnNode currentTarget = node.getCurrentTarget();
                 if (currentTarget.getOpcode() == Opcodes.NEW) {
@@ -43,7 +39,6 @@ public class InjectorUtils {
                     }
                 }
             }
-            TargetDecorations.put(target, "ScannedForDupedNews", true);
         }
     }
 
