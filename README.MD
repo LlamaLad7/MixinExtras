@@ -17,7 +17,7 @@ want to use a different version than is provided, see below:
 
 ```gradle
 dependencies {
-    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.2.1")))
+    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.2.2")))
 }
 ```
 
@@ -29,8 +29,8 @@ want to use a different version than is provided, see below:
 
 ```gradle
 dependencies {
-    implementation(jarJar("io.github.llamalad7:mixinextras-neoforge:0.3.1")) {
-        jarJar.ranged(it, "[0.3.1,)")
+    implementation(jarJar("io.github.llamalad7:mixinextras-neoforge:0.3.2")) {
+        jarJar.ranged(it, "[0.3.2,)")
     }
 }
 ```
@@ -40,9 +40,9 @@ dependencies {
 
 ```gradle
 dependencies {
-    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.1"))
-    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.3.1")) {
-        jarJar.ranged(it, "[0.3.1,)")
+    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.2"))
+    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.3.2")) {
+        jarJar.ranged(it, "[0.3.2,)")
     }
 }
 ```
@@ -52,8 +52,8 @@ dependencies {
 
 ```gradle
 dependencies {
-    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.1"))
-    implementation(include("io.github.llamalad7:mixinextras-forge:0.3.1"))
+    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.2"))
+    implementation(include("io.github.llamalad7:mixinextras-forge:0.3.2"))
 }
 ```
 
@@ -72,7 +72,7 @@ configurations {
 }
 
 dependencies {
-    shadow(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.1"))
+    shadow(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.2"))
 }
 
 shadowJar {
