@@ -40,7 +40,7 @@ dependencies {
 
 ```gradle
 dependencies {
-    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.2"))
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.2"))
     implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.3.2")) {
         jarJar.ranged(it, "[0.3.2,)")
     }
