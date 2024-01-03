@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.utils.*;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -35,6 +36,14 @@ class WrapOperationInjector extends Injector {
     private static final String NPE = Type.getInternalName(NullPointerException.class);
 
     private final Type operationType = MixinExtrasService.getInstance().changePackage(Operation.class, Type.getType(CompatibilityHelper.getAnnotation(info).desc), WrapOperation.class);
+    private final List<OperationConstructor> operationTypes = Arrays.asList(
+            DynamicInstanceofRedirectOperation::new,
+            DupedFactoryRedirectOperation::new,
+            MethodCallOperation::new,
+            FieldAccessOperation::new,
+            InstanceofOperation::new,
+            this::newInstantiationOperation
+    );
 
     public WrapOperationInjector(InjectionInfo info) {
         super(info, "@WrapOperation");
@@ -43,79 +52,40 @@ class WrapOperationInjector extends Injector {
     @Override
     protected void inject(Target target, InjectionNode node) {
         this.checkTargetModifiers(target, false);
-        this.checkNode(target, node);
-        this.wrapOperation(target, node);
-    }
-
-    private void checkNode(Target target, InjectionNode node) {
-        AbstractInsnNode originalTarget = node.getOriginalTarget();
-        AbstractInsnNode currentTarget = node.getCurrentTarget();
-        if (currentTarget instanceof MethodInsnNode) {
-            MethodInsnNode methodInsnNode = ((MethodInsnNode) currentTarget);
-            if (methodInsnNode.name.equals("<init>")) {
-                throw CompatibilityHelper.makeInvalidInjectionException(
-                        this.info,
-                        String.format(
-                                "%s annotation is trying to target an <init> call in %s in %s! If this is an instantiation, target the NEW instead.",
-                                this.annotationType, target, this
+        StackExtension stack = new StackExtension(target);
+        OperationType operation = operationTypes.stream()
+                .map(it -> it.make(target, node, stack))
+                .filter(Objects::nonNull)
+                .filter(OperationType::validate)
+                .findFirst()
+                .orElseThrow(
+                        () -> CompatibilityHelper.makeInvalidInjectionException(
+                                this.info,
+                                String.format(
+                                        "%s annotation is targeting an invalid insn in %s in %s",
+                                        this.annotationType, target, this
+                                )
                         )
                 );
-            }
-            return;
-        }
-        if (!(currentTarget instanceof FieldInsnNode ||
-                originalTarget.getOpcode() == Opcodes.INSTANCEOF ||
-                originalTarget.getOpcode() == Opcodes.NEW)) {
-            throw CompatibilityHelper.makeInvalidInjectionException(
-                    this.info,
-                    String.format(
-                            "%s annotation is targeting an invalid insn in %s in %s",
-                            this.annotationType, target, this
-                    )
-            );
-        }
+        this.wrapOperation(target, operation, stack);
     }
 
-    private void wrapOperation(Target target, InjectionNode node) {
-        StackExtension stack = new StackExtension(target);
-        AbstractInsnNode initialTarget = node.getCurrentTarget();
+    private void wrapOperation(Target target, OperationType operation, StackExtension stack) {
         InsnList insns = new InsnList();
-        boolean isNew = initialTarget.getOpcode() == Opcodes.NEW;
-        boolean isDupedNew = InjectorUtils.isDupedNew(node);
-        if (isNew) {
-            node.decorate(Decorations.WRAPPED, true);
-            node = target.addInjectionNode(ASMUtils.findInitNodeFor(target, (TypeInsnNode) initialTarget));
-        }
+        InjectionNode node = operation.node;
         Type[] argTypes = getCurrentArgTypes(node);
         Type returnType = getReturnType(node);
-        AbstractInsnNode champion = this.invokeHandler(target, node, argTypes, returnType, insns, stack);
-        if (isDupedNew) {
-            // We replace the `NEW` object with a `null` reference, for convenience:
-            target.insns.set(initialTarget, new InsnNode(Opcodes.ACONST_NULL));
-            // Then, after invoking the handler, we have 2 null references and the actual new object on the stack.
-            // We want to get rid of the null references:
-            stack.extra(1);
-            insns.add(new InsnNode(Opcodes.DUP_X2));
-            insns.add(new InsnNode(Opcodes.POP));
-            insns.add(new InsnNode(Opcodes.POP));
-            insns.add(new InsnNode(Opcodes.POP));
-        } else if (isNew) {
-            // "Get rid" of the `NEW` instruction:
-            target.insns.set(initialTarget, new InsnNode(Opcodes.NOP));
-            // And pop the result of the wrapper since it isn't used:
-            insns.add(new InsnNode(Opcodes.POP));
-        }
+
+        AbstractInsnNode champion = this.invokeHandler(target, operation, node, argTypes, returnType, insns, stack);
+        operation.afterHandlerCall(insns, champion);
+
         AbstractInsnNode finalTarget = node.getCurrentTarget();
         target.wrapNode(finalTarget, champion, insns, new InsnList());
-        if (isNew) {
-            // We've already replaced the <init> call, but we want to replace the NEW instruction.
-            target.getInjectionNode(initialTarget).replace(champion);
-        }
         node.decorate(Decorations.WRAPPED, true);
         target.insns.remove(finalTarget);
     }
 
-    private AbstractInsnNode invokeHandler(Target target, InjectionNode node, Type[] argTypes, Type returnType, InsnList insns, StackExtension stack) {
+    private AbstractInsnNode invokeHandler(Target target, OperationType operation, InjectionNode node, Type[] argTypes, Type returnType, InsnList insns, StackExtension stack) {
         InjectorData handler = new InjectorData(target, "operation wrapper");
         boolean hasExtraThis = node.isReplaced() && node.getCurrentTarget().getOpcode() != Opcodes.INVOKESTATIC;
         if (hasExtraThis) {
@@ -143,7 +113,7 @@ class WrapOperationInjector extends Injector {
         }
         this.pushArgs(argTypes, insns, argMap, originalArgs.length, argMap.length);
         // The trailing params are any arguments which come after the original args, and should therefore be bound to the lambda.
-        this.makeSupplier(target, originalArgs, returnType, node, insns, hasExtraThis, ArrayUtils.subarray(argTypes, originalArgs.length, argTypes.length));
+        this.makeSupplier(operation, originalArgs, returnType, insns, hasExtraThis, ArrayUtils.subarray(argTypes, originalArgs.length, argTypes.length));
         if (handler.captureTargetArgs > 0) {
             this.pushArgs(target.arguments, insns, target.getArgIndices(), 0, handler.captureTargetArgs);
         }
@@ -152,19 +122,10 @@ class WrapOperationInjector extends Injector {
         stack.extra(1); // Operation
         stack.capturedArgs(target.arguments, handler.captureTargetArgs);
 
-        AbstractInsnNode champion = super.invokeHandler(insns);
-
-        if (InjectorUtils.isDynamicInstanceofRedirect(node)) {
-            // At this point, we have the boolean result and the checked object on the stack.
-            // The object was DUPed by RedirectInjector before the handler was called, so removing the DUP is too risky.
-            // Instead, we simply pop the excess object.
-            insns.add(new InsnNode(Opcodes.SWAP));
-            insns.add(new InsnNode(Opcodes.POP));
-        }
-        return champion;
+        return super.invokeHandler(insns);
     }
 
-    private void makeSupplier(Target target, Type[] argTypes, Type returnType, InjectionNode node, InsnList insns, boolean hasExtraThis, Type[] trailingParams) {
+    private void makeSupplier(OperationType operation, Type[] argTypes, Type returnType, InsnList insns, boolean hasExtraThis, Type[] trailingParams) {
         Type[] descriptorArgs = trailingParams;
         if (hasExtraThis) {
             // The receiver also needs to be a parameter in the INDY descriptor.
@@ -180,7 +141,7 @@ class WrapOperationInjector extends Injector {
                 // The SAM method will take an array of args and return an `Object` (the return value of the wrapped call)
                 Type.getMethodType(ASMUtils.OBJECT_TYPE, Type.getType(Object[].class)),
                 // The implementation method will be generated for us to handle array unpacking
-                generateSyntheticBridge(target, node, argTypes, returnType, hasExtraThis, trailingParams),
+                generateSyntheticBridge(operation, argTypes, returnType, hasExtraThis, trailingParams),
                 // Specialization of the SAM signature
                 Type.getMethodType(
                         ASMUtils.isPrimitive(returnType) ? Type.getObjectType(returnType == Type.VOID_TYPE ? "java/lang/Void" : Bytecode.getBoxingType(returnType)) : returnType,
@@ -189,13 +150,13 @@ class WrapOperationInjector extends Injector {
         ));
     }
 
-    private Handle generateSyntheticBridge(Target target, InjectionNode node, Type[] argTypes, Type returnType, boolean virtual, Type[] boundParams) {
+    private Handle generateSyntheticBridge(OperationType operation, Type[] argTypes, Type returnType, boolean virtual, Type[] boundParams) {
         // The bridge method's args will consist of any bound parameters followed by an array
 
         MethodNode method = new MethodNode(
                 ASM.API_VERSION,
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | (virtual ? 0 : Opcodes.ACC_STATIC),
-                UniquenessHelper.getUniqueMethodName(classNode, "mixinextras$bridge$" + getName(node.getCurrentTarget())),
+                UniquenessHelper.getUniqueMethodName(classNode, "mixinextras$bridge$" + operation.getName()),
                 Bytecode.generateDescriptor(
                         ASMUtils.isPrimitive(returnType) ?
                                 Type.getObjectType(
@@ -261,7 +222,7 @@ class WrapOperationInjector extends Injector {
                     boundParamIndex += boundParamType.getSize();
                 }
             };
-            add(copyNode(node, paramArrayIndex, target, loadArgs));
+            operation.copyNode(this, paramArrayIndex, loadArgs);
             if (returnType == Type.VOID_TYPE) {
                 add(new InsnNode(Opcodes.ACONST_NULL));
                 add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Void"));
@@ -286,77 +247,6 @@ class WrapOperationInjector extends Injector {
                 method.desc,
                 (this.classNode.access & Opcodes.ACC_INTERFACE) != 0
         );
-    }
-
-    private InsnList copyNode(InjectionNode node, int paramArrayIndex, Target target, Consumer<InsnList> loadArgs) {
-        AbstractInsnNode currentTarget = node.getCurrentTarget();
-        InsnList insns = new InsnList();
-        if (currentTarget instanceof MethodInsnNode) {
-            MethodInsnNode methodInsnNode = (MethodInsnNode) currentTarget;
-            if (methodInsnNode.name.equals("<init>")) {
-                insns.add(new TypeInsnNode(Opcodes.NEW, methodInsnNode.owner));
-                insns.add(new InsnNode(Opcodes.DUP));
-            }
-        }
-
-        loadArgs.accept(insns);
-        insns.add(currentTarget.clone(Collections.emptyMap()));
-
-        if (InjectorUtils.isDynamicInstanceofRedirect(node)) {
-            // We have a Class object and need to get it back to a boolean using the first element of the lambda args.
-            // The code added by RedirectInjector expects a reference to the checked object already on the stack, so we
-            // load the first and only lambda arg, and then swap it with the Class<?> result from the redirector.
-            insns.add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
-            insns.add(new InsnNode(Opcodes.ICONST_0));
-            insns.add(new InsnNode(Opcodes.AALOAD));
-            insns.add(new InsnNode(Opcodes.SWAP));
-            // Sanity checks for the instructions being moved based on what I expect RedirectInjector to have added.
-            checkAndMoveNodes(
-                    target.insns,
-                    insns,
-                    currentTarget,
-                    it -> it.getOpcode() == Opcodes.DUP,
-                    it -> it.getOpcode() == Opcodes.IFNONNULL,
-                    it -> it.getOpcode() == Opcodes.NEW && ((TypeInsnNode) it).desc.equals(NPE),
-                    it -> it.getOpcode() == Opcodes.DUP,
-                    it -> it instanceof LdcInsnNode && ((LdcInsnNode) it).cst instanceof String,
-                    it -> it.getOpcode() == Opcodes.INVOKESPECIAL && ((MethodInsnNode) it).owner.equals(NPE),
-                    it -> it.getOpcode() == Opcodes.ATHROW,
-                    it -> it instanceof LabelNode,
-                    it -> it.getOpcode() == Opcodes.SWAP,
-                    it -> it.getOpcode() == Opcodes.DUP,
-                    it -> it.getOpcode() == Opcodes.IFNULL,
-                    it -> it.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) it).name.equals("getClass"),
-                    it -> it.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) it).name.equals("isAssignableFrom"),
-                    it -> it.getOpcode() == Opcodes.GOTO,
-                    it -> it instanceof LabelNode,
-                    it -> it.getOpcode() == Opcodes.POP,
-                    it -> it.getOpcode() == Opcodes.POP,
-                    it -> it.getOpcode() == Opcodes.ICONST_0,
-                    it -> it instanceof LabelNode
-            );
-        }
-
-        if (InjectorUtils.isDupedFactoryRedirect(node)) wrap:{
-            AbstractInsnNode ldc = InjectorUtils.findFactoryRedirectThrowString(target, currentTarget);
-            if (ldc == null) break wrap;
-            // We need to encompass the null check added by RedirectInjector.
-            checkAndMoveNodes(
-                    target.insns,
-                    insns,
-                    currentTarget,
-                    it -> it.getOpcode() == Opcodes.DUP,
-                    it -> it.getOpcode() == Opcodes.IFNONNULL,
-                    it -> it.getOpcode() == Opcodes.NEW && ((TypeInsnNode) it).desc.equals(NPE),
-                    it -> it.getOpcode() == Opcodes.DUP,
-                    it -> it == ldc,
-                    it -> it.getOpcode() == Opcodes.INVOKESPECIAL && ((MethodInsnNode) it).name.equals("<init>"),
-                    it -> it.getOpcode() == Opcodes.ATHROW,
-                    it -> it instanceof LabelNode
-            );
-        }
-
-        return insns;
     }
 
     @SafeVarargs
@@ -451,23 +341,251 @@ class WrapOperationInjector extends Injector {
         throw new UnsupportedOperationException();
     }
 
-    private String getName(AbstractInsnNode node) {
-        if (node instanceof MethodInsnNode) {
-            MethodInsnNode methodInsnNode = (MethodInsnNode) node;
-            if (methodInsnNode.name.equals("<init>")) {
-                String desc = methodInsnNode.owner;
-                return "new" + desc.substring(desc.lastIndexOf('/') + 1);
-            }
-            return ((MethodInsnNode) node).name;
-        }
-        if (node instanceof FieldInsnNode) {
-            return ((FieldInsnNode) node).name;
-        }
-        if (node.getOpcode() == Opcodes.INSTANCEOF) {
-            String desc = ((TypeInsnNode) node).desc;
-            return "instanceof" + desc.substring(desc.lastIndexOf('/') + 1);
+    private abstract static class OperationType {
+        protected final Target target;
+        protected final InjectionNode node;
+        protected final AbstractInsnNode originalTarget;
+        protected final AbstractInsnNode currentTarget;
+        protected final StackExtension stack;
+
+        OperationType(Target target, InjectionNode node, StackExtension stack) {
+            this.target = target;
+            this.node = node;
+            this.originalTarget = node.getOriginalTarget();
+            this.currentTarget = node.getCurrentTarget();
+            this.stack = stack;
         }
 
-        throw new UnsupportedOperationException();
+        abstract boolean validate();
+        abstract String getName();
+        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
+            loadArgs.accept(insns);
+            insns.add(currentTarget.clone(Collections.emptyMap()));
+        }
+        void afterHandlerCall(InsnList insns, AbstractInsnNode champion) {
+        }
+    }
+
+    private class MethodCallOperation extends OperationType {
+        MethodCallOperation(Target target, InjectionNode node, StackExtension stack) {
+            super(target, node, stack);
+        }
+
+        @Override
+        boolean validate() {
+            if (currentTarget instanceof MethodInsnNode) {
+                MethodInsnNode methodInsnNode = (MethodInsnNode) currentTarget;
+                if (methodInsnNode.name.equals("<init>")) {
+                    throw CompatibilityHelper.makeInvalidInjectionException(
+                            info,
+                            String.format(
+                                    "%s annotation is trying to target an <init> call in %s in %s! If this is an instantiation, target the NEW instead.",
+                                    annotationType, target, WrapOperationInjector.this
+                            )
+                    );
+                }
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        String getName() {
+            return ((MethodInsnNode) currentTarget).name;
+        }
+    }
+
+    private static class FieldAccessOperation extends OperationType {
+        FieldAccessOperation(Target target, InjectionNode node, StackExtension stack) {
+            super(target, node, stack);
+        }
+
+        @Override
+        boolean validate() {
+            return currentTarget instanceof FieldInsnNode;
+        }
+
+        @Override
+        String getName() {
+            return ((FieldInsnNode) currentTarget).name;
+        }
+    }
+
+    private static class InstanceofOperation extends OperationType {
+        InstanceofOperation(Target target, InjectionNode node, StackExtension stack) {
+            super(target, node, stack);
+        }
+
+        @Override
+        boolean validate() {
+            return currentTarget.getOpcode() == Opcodes.INSTANCEOF;
+        }
+
+        @Override
+        String getName() {
+            return "instanceof" + StringUtils.substringAfterLast(((TypeInsnNode) currentTarget).desc, "/");
+        }
+    }
+
+    private static class InstantiationOperation extends OperationType {
+        private final InjectionNode newNode;
+        private final AbstractInsnNode newInsn;
+        private final boolean isDuped;
+
+        InstantiationOperation(Target target, InjectionNode node, StackExtension stack, InjectionNode newNode) {
+            super(target, node, stack);
+            this.newNode = newNode;
+            this.newInsn = newNode.getCurrentTarget();
+            this.isDuped = InjectorUtils.isDupedNew(newNode);
+        }
+
+        @Override
+        boolean validate() {
+            return true;
+        }
+
+        @Override
+        String getName() {
+            return "new" + StringUtils.substringAfterLast(((MethodInsnNode) currentTarget).owner, "/");
+        }
+
+        @Override
+        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
+            insns.add(new TypeInsnNode(Opcodes.NEW, ((MethodInsnNode) currentTarget).owner));
+            insns.add(new InsnNode(Opcodes.DUP));
+            super.copyNode(insns, paramArrayIndex, loadArgs);
+        }
+
+        @Override
+        void afterHandlerCall(InsnList insns, AbstractInsnNode champion) {
+            AbstractInsnNode newReplacement;
+            if (isDuped) {
+                // We replace the `NEW` object with a `null` reference, for convenience:
+                newReplacement = new InsnNode(Opcodes.ACONST_NULL);
+                // Then, after invoking the handler, we have 2 null references and the actual new object on the stack.
+                // We want to get rid of the null references:
+                stack.extra(1);
+                insns.add(new InsnNode(Opcodes.DUP_X2));
+                insns.add(new InsnNode(Opcodes.POP));
+                insns.add(new InsnNode(Opcodes.POP));
+                insns.add(new InsnNode(Opcodes.POP));
+            } else {
+                // "Get rid" of the `NEW` instruction:
+                newReplacement = new InsnNode(Opcodes.NOP);
+                // And pop the result of the wrapper since it isn't used:
+                insns.add(new InsnNode(Opcodes.POP));
+            }
+            newNode.replace(champion);
+            // We've already replaced the <init> call, but we want to replace the NEW instruction.
+            target.insns.set(newInsn, newReplacement);
+        }
+    }
+
+    private OperationType newInstantiationOperation(Target target, InjectionNode node, StackExtension stack) {
+        AbstractInsnNode newNode = node.getCurrentTarget();
+        if (newNode.getOpcode() != Opcodes.NEW) {
+            return null;
+        }
+        node.decorate(Decorations.WRAPPED, true);
+        return new InstantiationOperation(
+                target,
+                target.addInjectionNode(ASMUtils.findInitNodeFor(target, (TypeInsnNode) newNode)),
+                stack,
+                node
+        );
+    }
+
+    private class DynamicInstanceofRedirectOperation extends MethodCallOperation {
+        DynamicInstanceofRedirectOperation(Target target, InjectionNode node, StackExtension stack) {
+            super(target, node, stack);
+        }
+
+        @Override
+        boolean validate() {
+            return super.validate() && InjectorUtils.isDynamicInstanceofRedirect(node);
+        }
+
+        @Override
+        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
+            super.copyNode(insns, paramArrayIndex, loadArgs);
+            // We have a Class object and need to get it back to a boolean using the first element of the lambda args.
+            // The code added by RedirectInjector expects a reference to the checked object already on the stack, so we
+            // load the first and only lambda arg, and then swap it with the Class<?> result from the redirector.
+            insns.add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
+            insns.add(new InsnNode(Opcodes.ICONST_0));
+            insns.add(new InsnNode(Opcodes.AALOAD));
+            insns.add(new InsnNode(Opcodes.SWAP));
+            // Sanity checks for the instructions being moved based on what I expect RedirectInjector to have added.
+            checkAndMoveNodes(
+                    target.insns,
+                    insns,
+                    currentTarget,
+                    it -> it.getOpcode() == Opcodes.DUP,
+                    it -> it.getOpcode() == Opcodes.IFNONNULL,
+                    it -> it.getOpcode() == Opcodes.NEW && ((TypeInsnNode) it).desc.equals(NPE),
+                    it -> it.getOpcode() == Opcodes.DUP,
+                    it -> it instanceof LdcInsnNode && ((LdcInsnNode) it).cst instanceof String,
+                    it -> it.getOpcode() == Opcodes.INVOKESPECIAL && ((MethodInsnNode) it).owner.equals(NPE),
+                    it -> it.getOpcode() == Opcodes.ATHROW,
+                    it -> it instanceof LabelNode,
+                    it -> it.getOpcode() == Opcodes.SWAP,
+                    it -> it.getOpcode() == Opcodes.DUP,
+                    it -> it.getOpcode() == Opcodes.IFNULL,
+                    it -> it.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) it).name.equals("getClass"),
+                    it -> it.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) it).name.equals("isAssignableFrom"),
+                    it -> it.getOpcode() == Opcodes.GOTO,
+                    it -> it instanceof LabelNode,
+                    it -> it.getOpcode() == Opcodes.POP,
+                    it -> it.getOpcode() == Opcodes.POP,
+                    it -> it.getOpcode() == Opcodes.ICONST_0,
+                    it -> it instanceof LabelNode
+            );
+        }
+
+        @Override
+        void afterHandlerCall(InsnList insns, AbstractInsnNode champion) {
+            // At this point, we have the boolean result and the checked object on the stack.
+            // The object was DUPed by RedirectInjector before the handler was called, so removing the DUP is too risky.
+            // Instead, we simply pop the excess object.
+            insns.add(new InsnNode(Opcodes.SWAP));
+            insns.add(new InsnNode(Opcodes.POP));
+        }
+    }
+
+    private class DupedFactoryRedirectOperation extends MethodCallOperation {
+        DupedFactoryRedirectOperation(Target target, InjectionNode node, StackExtension stack) {
+            super(target, node, stack);
+        }
+
+        @Override
+        boolean validate() {
+            return super.validate() && InjectorUtils.isDupedFactoryRedirect(node);
+        }
+
+        @Override
+        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
+            super.copyNode(insns, paramArrayIndex, loadArgs);
+            AbstractInsnNode ldc = InjectorUtils.findFactoryRedirectThrowString(target, currentTarget);
+            if (ldc == null) return;
+            // We need to encompass the null check added by RedirectInjector.
+            checkAndMoveNodes(
+                    target.insns,
+                    insns,
+                    currentTarget,
+                    it -> it.getOpcode() == Opcodes.DUP,
+                    it -> it.getOpcode() == Opcodes.IFNONNULL,
+                    it -> it.getOpcode() == Opcodes.NEW && ((TypeInsnNode) it).desc.equals(NPE),
+                    it -> it.getOpcode() == Opcodes.DUP,
+                    it -> it == ldc,
+                    it -> it.getOpcode() == Opcodes.INVOKESPECIAL && ((MethodInsnNode) it).name.equals("<init>"),
+                    it -> it.getOpcode() == Opcodes.ATHROW,
+                    it -> it instanceof LabelNode
+            );
+        }
+    }
+
+    @FunctionalInterface
+    private interface OperationConstructor {
+        OperationType make(Target target, InjectionNode node, StackExtension stack);
     }
 }
