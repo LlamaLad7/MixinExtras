@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -70,7 +69,7 @@ public abstract class WrapperInjectionInfo extends MixinExtrasInjectionInfo impl
         if (lateApply) {
             delegate.inject();
         } else {
-            impl.inject();
+            impl.doInject();
         }
     }
 
@@ -88,7 +87,7 @@ public abstract class WrapperInjectionInfo extends MixinExtrasInjectionInfo impl
 
     @Override
     public void lateInject() {
-        impl.inject();
+        impl.doInject();
     }
 
     @Override

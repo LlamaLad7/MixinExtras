@@ -44,4 +44,14 @@ public class Decorations {
      * Stores injector-specific information about modified comparisons.
      */
     public static final String COMPARISON_INFO = "mixinextras_comparisonInfo";
+
+    /**
+     * Stores whether this comparison wrapper returning true means the jump will go ahead.
+     */
+    public static final String JUMPS_ON_TRUE = "mixinextras_jumpsOnTrue";
+
+    /**
+     * Stores the outermost wrapping InjectionInfo for this node.
+     */
+    public static final String OUTERMOST_WRAPPER = "mixinextras_outermostWrapper";
 }

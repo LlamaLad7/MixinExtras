@@ -9,6 +9,7 @@ import org.spongepowered.asm.util.Constants;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ASMUtils {
@@ -126,31 +127,14 @@ public class ASMUtils {
         return null;
     }
 
-    public static Integer getIntConstant(AbstractInsnNode insn) {
-        switch (insn.getOpcode()) {
-            case Opcodes.ICONST_M1:
-                return -1;
-            case Opcodes.ICONST_0:
-                return 0;
-            case Opcodes.ICONST_1:
-                return 1;
-            case Opcodes.ICONST_2:
-                return 2;
-            case Opcodes.ICONST_3:
-                return 3;
-            case Opcodes.ICONST_4:
-                return 4;
-            case Opcodes.ICONST_5:
-                return 5;
-            case Opcodes.BIPUSH:
-            case Opcodes.SIPUSH:
-                return ((IntInsnNode) insn).operand;
-            case Opcodes.LDC:
-                Object cst = ((LdcInsnNode) insn).cst;
-                if (cst instanceof Integer) {
-                    return (Integer) cst;
-                }
-        }
-        return null;
+    public static void ifElse(InsnList insns, int jumpToSecond, Runnable first, Runnable second) {
+        LabelNode secondLabel = new LabelNode();
+        LabelNode end = new LabelNode();
+        insns.add(new JumpInsnNode(jumpToSecond, secondLabel));
+        first.run();
+        insns.add(new JumpInsnNode(Opcodes.GOTO, end));
+        insns.add(secondLabel);
+        second.run();
+        insns.add(end);
     }
 }

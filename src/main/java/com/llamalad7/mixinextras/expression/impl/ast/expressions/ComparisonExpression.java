@@ -127,7 +127,7 @@ public class ComparisonExpression implements Expression {
                 JumpInsnNode jump = (JumpInsnNode) next;
                 info = new ComplexComparisonInfo(opcode, input, jump, jump.getOpcode() == zeroDirect);
             } else {
-                info = new ComparisonInfo(opcode, input, needsExpanding, opcode == directObject || opcode == directInt);
+                info = new ComparisonInfo(opcode, input, opcode == directObject || opcode == directInt, needsExpanding);
             }
             sink.decorateInjectorSpecific(node.getInsn(), Decorations.COMPARISON_INFO, info);
             return true;

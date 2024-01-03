@@ -4,8 +4,8 @@ import org.objectweb.asm.Type;
 
 public class ComparisonInfo {
     private final int opcode;
-    private final Type input;
-    private final boolean jumpOnTrue;
+    public final Type input;
+    public final boolean jumpOnTrue;
     private final boolean needsExpanding;
 
     public ComparisonInfo(int opcode, Type input, boolean jumpOnTrue, boolean needsExpanding) {

@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
+import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.utils.*;
@@ -39,6 +40,7 @@ class WrapOperationInjector extends Injector {
     private final List<OperationConstructor> operationTypes = Arrays.asList(
             DynamicInstanceofRedirectOperation::new,
             DupedFactoryRedirectOperation::new,
+            ComparisonOperation::new,
             MethodCallOperation::new,
             FieldAccessOperation::new,
             InstanceofOperation::new,
@@ -269,6 +271,10 @@ class WrapOperationInjector extends Injector {
         AbstractInsnNode originalTarget = node.getOriginalTarget();
         AbstractInsnNode currentTarget = node.getCurrentTarget();
 
+        if (InjectorUtils.getComparisonInfo(node, info) != null) {
+            return Type.BOOLEAN_TYPE;
+        }
+
         if (originalTarget.getOpcode() == Opcodes.INSTANCEOF) {
             return Type.BOOLEAN_TYPE;
         }
@@ -295,10 +301,20 @@ class WrapOperationInjector extends Injector {
         if (node.hasDecoration(Decorations.NEW_ARG_TYPES)) {
             return node.getDecoration(Decorations.NEW_ARG_TYPES);
         }
+        ComparisonInfo comparison = InjectorUtils.getComparisonInfo(node, info);
+        if (comparison != null) {
+            return new Type[]{comparison.input, comparison.input};
+        }
         return getEffectiveArgTypes(node.getOriginalTarget());
     }
 
     private Type[] getCurrentArgTypes(InjectionNode node) {
+        if (!node.isReplaced()) {
+            ComparisonInfo comparison = InjectorUtils.getComparisonInfo(node, info);
+            if (comparison != null) {
+                return new Type[]{comparison.input, comparison.input};
+            }
+        }
         return getEffectiveArgTypes(node.getCurrentTarget());
     }
 
@@ -581,6 +597,77 @@ class WrapOperationInjector extends Injector {
                     it -> it.getOpcode() == Opcodes.ATHROW,
                     it -> it instanceof LabelNode
             );
+        }
+    }
+
+    private class ComparisonOperation extends MethodCallOperation {
+        private final boolean isWrapped;
+        private ComparisonInfo comparison;
+
+        ComparisonOperation(Target target, InjectionNode node, StackExtension stack) {
+            super(target, node, stack);
+            isWrapped = node.hasDecoration(Decorations.WRAPPED);
+        }
+
+        @Override
+        boolean validate() {
+            super.validate();
+            comparison = InjectorUtils.getComparisonInfo(node, info);
+            return comparison != null;
+        }
+
+        @Override
+        String getName() {
+            return isWrapped ? super.getName() : "comparison";
+        }
+
+        @Override
+        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
+            if (isWrapped) {
+                super.copyNode(insns, paramArrayIndex, loadArgs);
+                // Encompass the extra branching we added ourselves
+                Predicate<AbstractInsnNode> is0Or1 = it -> it.getOpcode() == Opcodes.ICONST_0 || it.getOpcode() == Opcodes.ICONST_1;
+                checkAndMoveNodes(
+                        target.insns,
+                        insns,
+                        currentTarget,
+                        it -> it.getOpcode() == Opcodes.IFNE,
+                        is0Or1,
+                        it -> it.getOpcode() == Opcodes.GOTO,
+                        it -> it instanceof LabelNode,
+                        is0Or1,
+                        it -> it instanceof LabelNode
+                );
+                if (!comparison.jumpOnTrue) {
+                    ASMUtils.ifElse(
+                            insns,
+                            Opcodes.IFNE,
+                            () -> insns.add(new InsnNode(Opcodes.ICONST_1)),
+                            () -> insns.add(new InsnNode(Opcodes.ICONST_0))
+                    );
+                }
+                return;
+            }
+            loadArgs.accept(insns);
+            ASMUtils.ifElse(
+                    insns,
+                    currentTarget.getOpcode(),
+                    () -> insns.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_0 : Opcodes.ICONST_1)),
+                    () -> insns.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_1 : Opcodes.ICONST_0))
+            );
+        }
+
+        @Override
+        void afterHandlerCall(InsnList insns, AbstractInsnNode champion) {
+            ASMUtils.ifElse(
+                    insns,
+                    Opcodes.IFNE,
+                    () -> insns.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_0 : Opcodes.ICONST_1)),
+                    () -> insns.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_1 : Opcodes.ICONST_0))
+            );
+            if (!isWrapped) {
+                insns.add(new JumpInsnNode(Opcodes.IFNE, ((JumpInsnNode) currentTarget).label));
+            }
         }
     }
 

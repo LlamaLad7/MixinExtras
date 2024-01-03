@@ -60,17 +60,29 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         Set<AbstractInsnNode> result = new HashSet<>();
         for (Expression expr : parseExpressions()) {
             for (AbstractInsnNode candidate : target) {
-                Map<AbstractInsnNode, Map<String, Object>> allDecorations = new IdentityHashMap<>();
+                Map<AbstractInsnNode, Map<String, Object>> genericDecorations = new IdentityHashMap<>();
+                Map<AbstractInsnNode, Map<String, Object>> injectorSpecificDecorations = new IdentityHashMap<>();
                 List<AbstractInsnNode> captured = new ArrayList<>();
 
                 Expression.OutputSink sink = new Expression.OutputSink() {
                     @Override
                     public void capture(AbstractInsnNode insn) {
-                        Map<String, Object> decorations = allDecorations.get(insn);
+                        Map<String, Object> decorations = genericDecorations.get(insn);
                         if (decorations != null) {
                             InjectionNode injectionNode = target.addInjectionNode(insn);
                             for (Map.Entry<String, Object> decoration : decorations.entrySet()) {
                                 injectionNode.decorate(decoration.getKey(), decoration.getValue());
+                            }
+                        }
+                        Map<String, Object> injectorSpecific = injectorSpecificDecorations.get(insn);
+                        if (injectorSpecific != null) {
+                            InjectionNode injectionNode = target.addInjectionNode(insn);
+                            for (Map.Entry<String, Object> decoration : injectorSpecific.entrySet()) {
+                                if (!injectionNode.hasDecoration(decoration.getKey())) {
+                                    injectionNode.decorate(decoration.getKey(), new HashMap<>());
+                                }
+                                Map<InjectionInfo, Object> inner = injectionNode.getDecoration(decoration.getKey());
+                                inner.put(CURRENT_INFO, decoration.getValue());
                             }
                         }
                         captured.add(insn);
@@ -78,15 +90,12 @@ public class ExpressionInjectionPoint extends InjectionPoint {
 
                     @Override
                     public void decorate(AbstractInsnNode insn, String key, Object value) {
-                        allDecorations.computeIfAbsent(insn, k -> new HashMap<>()).put(key, value);
+                        genericDecorations.computeIfAbsent(insn, k -> new HashMap<>()).put(key, value);
                     }
 
-                    @SuppressWarnings("unchecked")
                     @Override
                     public void decorateInjectorSpecific(AbstractInsnNode insn, String key, Object value) {
-                        Map<InjectionInfo, Object> map = (Map<InjectionInfo, Object>)
-                                allDecorations.computeIfAbsent(insn, k -> new HashMap<>()).computeIfAbsent(key, k -> new HashMap<>());
-                        map.put(CURRENT_INFO, value);
+                        injectorSpecificDecorations.computeIfAbsent(insn, k -> new HashMap<>()).put(key, value);
                     }
                 };
 

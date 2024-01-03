@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.utils;
 
+import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -136,5 +137,13 @@ public class InjectorUtils {
 
     private static boolean isImplicit(LocalVariableDiscriminator discriminator, int baseArgIndex) {
         return discriminator.getOrdinal() < 0 && discriminator.getIndex() < baseArgIndex && discriminator.getNames().isEmpty();
+    }
+
+    public static ComparisonInfo getComparisonInfo(InjectionNode node, InjectionInfo info) {
+        Map<InjectionInfo, ComparisonInfo> map = node.getDecoration(Decorations.COMPARISON_INFO);
+        if (map == null) {
+            return null;
+        }
+        return map.get(info);
     }
 }
