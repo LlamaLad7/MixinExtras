@@ -32,12 +32,9 @@ public class ComparisonExpression implements Expression {
 
     @Override
     public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
-        boolean matches = matchesImpl(node, pool, sink, isWithZero, isWithNull);
-        if (isWildcard) {
-            matches = matches || matchesImpl(node, pool, sink, true, false);
-            matches = matches || matchesImpl(node, pool, sink, false, true);
-        }
-        return matches;
+        return matchesImpl(node, pool, sink, false, false)
+                || matchesImpl(node, pool, sink, true, false)
+                || matchesImpl(node, pool, sink, false, true);
     }
 
     private boolean matchesImpl(FlowValue node, IdentifierPool pool, OutputSink sink, boolean isWithZero, boolean isWithNull) {
@@ -89,6 +86,11 @@ public class ComparisonExpression implements Expression {
                 } else {
                     return false;
                 }
+                if (isComplexComparison(node.getInput(0).getInsn())) {
+                    // Complex comparisons are similar to `lcmp(a, b) == 0`, for example, but the comparison with zero
+                    // should not be considered.
+                    return false;
+                }
             } else if (node.inputCount() != 2) {
                 return false;
             }
@@ -131,6 +133,18 @@ public class ComparisonExpression implements Expression {
             }
             sink.decorateInjectorSpecific(node.getInsn(), Decorations.COMPARISON_INFO, info);
             return true;
+        }
+
+        private boolean isComplexComparison(AbstractInsnNode insn) {
+            switch (insn.getOpcode()) {
+                case LCMP:
+                case FCMPL:
+                case FCMPG:
+                case DCMPL:
+                case DCMPG:
+                    return true;
+            }
+            return false;
         }
     }
 }
