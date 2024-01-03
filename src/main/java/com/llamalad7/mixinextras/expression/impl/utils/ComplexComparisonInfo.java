@@ -1,13 +1,31 @@
 package com.llamalad7.mixinextras.expression.impl.utils;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.*;
+import org.spongepowered.asm.mixin.injection.struct.Target;
 
 public class ComplexComparisonInfo extends ComparisonInfo {
     private final AbstractInsnNode jumpInsn;
 
-    public ComplexComparisonInfo(int opcode, Type input, AbstractInsnNode jumpInsn, boolean jumpOnTrue) {
-        super(opcode, input, jumpOnTrue, false);
-        this.jumpInsn = jumpInsn;
+    public ComplexComparisonInfo(int comparison, AbstractInsnNode node, Type input, JumpInsnNode jump, boolean jumpOnTrue) {
+        super(comparison, node, input, false, jumpOnTrue);
+        this.jumpInsn = jump;
+    }
+
+    @Override
+    public int copyJump(InsnList insns) {
+        insns.add(new InsnNode(node.getOpcode()));
+        return jumpInsn.getOpcode();
+    }
+
+    @Override
+    public LabelNode getJumpTarget() {
+        return ((JumpInsnNode) jumpInsn).label;
+    }
+
+    @Override
+    public void cleanup(Target target) {
+        target.replaceNode(jumpInsn, new InsnNode(Opcodes.NOP));
     }
 }

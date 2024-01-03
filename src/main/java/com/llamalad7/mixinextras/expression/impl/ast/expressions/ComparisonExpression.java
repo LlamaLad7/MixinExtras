@@ -32,9 +32,14 @@ public class ComparisonExpression implements Expression {
 
     @Override
     public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
-        return matchesImpl(node, pool, sink, false, false)
-                || matchesImpl(node, pool, sink, true, false)
-                || matchesImpl(node, pool, sink, false, true);
+        boolean matches = matchesImpl(node, pool, sink, false, false);
+        if (isWithZero || isWildcard) {
+            matches = matches || matchesImpl(node, pool, sink, true, false);
+        }
+        if (isWithNull || isWildcard) {
+            matches = matches || matchesImpl(node, pool, sink, false, true);
+        }
+        return matches;
     }
 
     private boolean matchesImpl(FlowValue node, IdentifierPool pool, OutputSink sink, boolean isWithZero, boolean isWithNull) {
@@ -127,9 +132,9 @@ public class ComparisonExpression implements Expression {
                     return false;
                 }
                 JumpInsnNode jump = (JumpInsnNode) next;
-                info = new ComplexComparisonInfo(opcode, input, jump, jump.getOpcode() == zeroDirect);
+                info = new ComplexComparisonInfo(opcode, node.getInsn(), input, jump, jump.getOpcode() == zeroDirect);
             } else {
-                info = new ComparisonInfo(opcode, input, opcode == directObject || opcode == directInt, needsExpanding);
+                info = new ComparisonInfo(opcode, node.getInsn(), input, needsExpanding, opcode == directObject || opcode == directInt);
             }
             sink.decorateInjectorSpecific(node.getInsn(), Decorations.COMPARISON_INFO, info);
             return true;

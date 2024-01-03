@@ -96,6 +96,7 @@ class WrapOperationInjector extends Injector {
         }
         Type[] originalArgs = getOriginalArgTypes(node);
         this.validateParams(handler, returnType, ArrayUtils.add(originalArgs, operationType));
+        operation.prepare();
 
         // Store *all* the args, including ones added by redirectors and previous operation wrappers.
         // Excess ones will be bound to the lambda.
@@ -374,6 +375,8 @@ class WrapOperationInjector extends Injector {
 
         abstract boolean validate();
         abstract String getName();
+        void prepare() {
+        }
         void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
             loadArgs.accept(insns);
             insns.add(currentTarget.clone(Collections.emptyMap()));
@@ -602,23 +605,28 @@ class WrapOperationInjector extends Injector {
 
     private class ComparisonOperation extends MethodCallOperation {
         private final boolean isWrapped;
-        private ComparisonInfo comparison;
+        private final ComparisonInfo comparison;
 
         ComparisonOperation(Target target, InjectionNode node, StackExtension stack) {
             super(target, node, stack);
             isWrapped = node.hasDecoration(Decorations.WRAPPED);
+            comparison = InjectorUtils.getComparisonInfo(node, info);
         }
 
         @Override
         boolean validate() {
             super.validate();
-            comparison = InjectorUtils.getComparisonInfo(node, info);
             return comparison != null;
         }
 
         @Override
         String getName() {
             return isWrapped ? super.getName() : "comparison";
+        }
+
+        @Override
+        void prepare() {
+            comparison.prepare(target, node);
         }
 
         @Override
@@ -651,7 +659,7 @@ class WrapOperationInjector extends Injector {
             loadArgs.accept(insns);
             ASMUtils.ifElse(
                     insns,
-                    currentTarget.getOpcode(),
+                    comparison.copyJump(insns),
                     () -> insns.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_0 : Opcodes.ICONST_1)),
                     () -> insns.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_1 : Opcodes.ICONST_0))
             );
@@ -666,8 +674,9 @@ class WrapOperationInjector extends Injector {
                     () -> insns.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_1 : Opcodes.ICONST_0))
             );
             if (!isWrapped) {
-                insns.add(new JumpInsnNode(Opcodes.IFNE, ((JumpInsnNode) currentTarget).label));
+                insns.add(new JumpInsnNode(Opcodes.IFNE, comparison.getJumpTarget()));
             }
+            comparison.cleanup(target);
         }
     }
 
