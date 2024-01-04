@@ -3,7 +3,9 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.utils.Decorations;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 public class MemberAccessExpression implements SimpleExpression {
@@ -20,6 +22,20 @@ public class MemberAccessExpression implements SimpleExpression {
     @Override
     public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         AbstractInsnNode insn = node.getInsn();
-        return insn.getOpcode() == Opcodes.GETFIELD && name.matches(pool, insn) && inputsMatch(node, pool, sink, receiver);
+        switch (insn.getOpcode()) {
+            case Opcodes.GETFIELD:
+            case Opcodes.ARRAYLENGTH:
+                return name.matches(pool, insn) && inputsMatch(node, pool, sink, receiver);
+        }
+        return false;
+    }
+
+    @Override
+    public void capture(FlowValue node, OutputSink sink) {
+        if (node.getInsn().getOpcode() == Opcodes.ARRAYLENGTH) {
+            sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{node.getInput(0).getType()});
+            sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.INT_TYPE);
+        }
+        SimpleExpression.super.capture(node, sink);
     }
 }

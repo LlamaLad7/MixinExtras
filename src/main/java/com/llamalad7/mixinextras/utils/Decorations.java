@@ -46,12 +46,12 @@ public class Decorations {
     public static final String COMPARISON_INFO = "mixinextras_comparisonInfo";
 
     /**
-     * Stores whether this comparison wrapper returning true means the jump will go ahead.
+     * Stores the arguments of this operation if they have been offered by an Expression.
      */
-    public static final String JUMPS_ON_TRUE = "mixinextras_jumpsOnTrue";
+    public static final String SIMPLE_OPERATION_ARGS = "mixinextras_simpleOperationArgs";
 
     /**
-     * Stores the outermost wrapping InjectionInfo for this node.
+     * Stores the return type of this operation if it has been offered by an Expression.
      */
-    public static final String OUTERMOST_WRAPPER = "mixinextras_outermostWrapper";
+    public static final String SIMPLE_OPERATION_RETURN_TYPE = "mixinextras_simpleOperationReturnType";
 }

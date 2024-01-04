@@ -2,7 +2,9 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.utils.Decorations;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 public class ArrayAccessExpression implements SimpleExpression {
     private static final long serialVersionUID = -2463724143455495283L;
@@ -29,5 +31,12 @@ public class ArrayAccessExpression implements SimpleExpression {
                 return inputsMatch(node, pool, sink, arr, index);
         }
         return false;
+    }
+
+    @Override
+    public void capture(FlowValue node, OutputSink sink) {
+        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{node.getInput(0).getType(), Type.INT_TYPE});
+        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, node.getType());
+        SimpleExpression.super.capture(node, sink);
     }
 }

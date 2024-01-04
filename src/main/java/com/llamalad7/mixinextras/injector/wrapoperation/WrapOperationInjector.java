@@ -44,7 +44,8 @@ class WrapOperationInjector extends Injector {
             MethodCallOperation::new,
             FieldAccessOperation::new,
             InstanceofOperation::new,
-            this::newInstantiationOperation
+            this::newInstantiationOperation,
+            SimpleOperation::new
     );
 
     public WrapOperationInjector(InjectionInfo info) {
@@ -272,8 +273,8 @@ class WrapOperationInjector extends Injector {
         AbstractInsnNode originalTarget = node.getOriginalTarget();
         AbstractInsnNode currentTarget = node.getCurrentTarget();
 
-        if (InjectorUtils.getComparisonInfo(node, info) != null) {
-            return Type.BOOLEAN_TYPE;
+        if (node.hasDecoration(Decorations.SIMPLE_OPERATION_RETURN_TYPE)) {
+            return node.getDecoration(Decorations.SIMPLE_OPERATION_RETURN_TYPE);
         }
 
         if (originalTarget.getOpcode() == Opcodes.INSTANCEOF) {
@@ -302,19 +303,15 @@ class WrapOperationInjector extends Injector {
         if (node.hasDecoration(Decorations.NEW_ARG_TYPES)) {
             return node.getDecoration(Decorations.NEW_ARG_TYPES);
         }
-        ComparisonInfo comparison = InjectorUtils.getComparisonInfo(node, info);
-        if (comparison != null) {
-            return new Type[]{comparison.input, comparison.input};
+        if (node.hasDecoration(Decorations.SIMPLE_OPERATION_ARGS)) {
+            return node.getDecoration(Decorations.SIMPLE_OPERATION_ARGS);
         }
         return getEffectiveArgTypes(node.getOriginalTarget());
     }
 
     private Type[] getCurrentArgTypes(InjectionNode node) {
-        if (!node.isReplaced()) {
-            ComparisonInfo comparison = InjectorUtils.getComparisonInfo(node, info);
-            if (comparison != null) {
-                return new Type[]{comparison.input, comparison.input};
-            }
+        if (!node.isReplaced() && node.hasDecoration(Decorations.SIMPLE_OPERATION_ARGS)) {
+            return node.getDecoration(Decorations.SIMPLE_OPERATION_ARGS);
         }
         return getEffectiveArgTypes(node.getCurrentTarget());
     }
@@ -680,6 +677,24 @@ class WrapOperationInjector extends Injector {
         }
     }
 
+    private static class SimpleOperation extends OperationType {
+        SimpleOperation(Target target, InjectionNode node, StackExtension stack) {
+            super(target, node, stack);
+        }
+
+        @Override
+        boolean validate() {
+            return !node.isReplaced() &&
+                    node.hasDecoration(Decorations.SIMPLE_OPERATION_ARGS) &&
+                    node.hasDecoration(Decorations.SIMPLE_OPERATION_RETURN_TYPE);
+        }
+
+        @Override
+        String getName() {
+            return Bytecode.getOpcodeName(currentTarget).toLowerCase(Locale.ROOT);
+        }
+    }
+
     private OperationType newComparisonExpression(Target target, InjectionNode node, StackExtension stack) {
         ComparisonInfo comparison = InjectorUtils.getComparisonInfo(node, info);
         if (comparison == null) {
@@ -701,11 +716,9 @@ class WrapOperationInjector extends Injector {
                     false,
                     comparison.jumpOnTrue
             );
-            InjectorUtils.decorateInjectorSpecific(
-                    jumpNode,
-                    info,
-                    Decorations.COMPARISON_INFO,
-                    newComparison
+            newComparison.attach(
+                    jumpNode::decorate,
+                    (k, v) -> InjectorUtils.decorateInjectorSpecific(jumpNode, info, k, v)
             );
             return new ComparisonOperation(
                     target,

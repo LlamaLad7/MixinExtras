@@ -80,7 +80,8 @@ public class ComparisonExpression implements Expression {
         }
 
         public boolean matches(FlowValue node, OutputSink sink, boolean isWithZero, boolean isWithNull) {
-            int opcode = node.getInsn().getOpcode();
+            AbstractInsnNode insn = node.getInsn();
+            int opcode = insn.getOpcode();
             boolean needsExpanding = false;
             if (node.inputCount() == 1) {
                 needsExpanding = true;
@@ -132,11 +133,14 @@ public class ComparisonExpression implements Expression {
                     return false;
                 }
                 JumpInsnNode jump = (JumpInsnNode) next;
-                info = new ComplexComparisonInfo(opcode, node.getInsn(), input, jump, jump.getOpcode() == zeroDirect);
+                info = new ComplexComparisonInfo(opcode, insn, input, jump, jump.getOpcode() == zeroDirect);
             } else {
-                info = new ComparisonInfo(opcode, node.getInsn(), input, needsExpanding, opcode == directObject || opcode == directInt);
+                info = new ComparisonInfo(opcode, insn, input, needsExpanding, opcode == directObject || opcode == directInt);
             }
-            sink.decorateInjectorSpecific(node.getInsn(), Decorations.COMPARISON_INFO, info);
+            info.attach(
+                    (k, v) -> sink.decorate(insn, k, v),
+                    (k, v) -> sink.decorateInjectorSpecific(insn, k, v)
+            );
             return true;
         }
 

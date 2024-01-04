@@ -2,7 +2,9 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.utils.Decorations;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 public class ArrayStoreExpression implements Expression {
     private static final long serialVersionUID = -3433941561737164358L;
@@ -31,5 +33,13 @@ public class ArrayStoreExpression implements Expression {
                 return inputsMatch(node, pool, sink, arr, index, value);
         }
         return false;
+    }
+
+    @Override
+    public void capture(FlowValue node, OutputSink sink) {
+        Type arrayType = node.getInput(0).getType();
+        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, arrayType.getElementType()});
+        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.VOID_TYPE);
+        Expression.super.capture(node, sink);
     }
 }
