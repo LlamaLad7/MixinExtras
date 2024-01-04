@@ -40,7 +40,7 @@ class WrapOperationInjector extends Injector {
     private final List<OperationConstructor> operationTypes = Arrays.asList(
             DynamicInstanceofRedirectOperation::new,
             DupedFactoryRedirectOperation::new,
-            ComparisonOperation::new,
+            this::newComparisonExpression,
             MethodCallOperation::new,
             FieldAccessOperation::new,
             InstanceofOperation::new,
@@ -607,10 +607,10 @@ class WrapOperationInjector extends Injector {
         private final boolean isWrapped;
         private final ComparisonInfo comparison;
 
-        ComparisonOperation(Target target, InjectionNode node, StackExtension stack) {
+        ComparisonOperation(Target target, InjectionNode node, StackExtension stack, boolean isWrapped, ComparisonInfo comparison) {
             super(target, node, stack);
-            isWrapped = node.hasDecoration(Decorations.WRAPPED);
-            comparison = InjectorUtils.getComparisonInfo(node, info);
+            this.isWrapped = isWrapped;
+            this.comparison = comparison;
         }
 
         @Override
@@ -678,6 +678,50 @@ class WrapOperationInjector extends Injector {
             }
             comparison.cleanup(target);
         }
+    }
+
+    private OperationType newComparisonExpression(Target target, InjectionNode node, StackExtension stack) {
+        ComparisonInfo comparison = InjectorUtils.getComparisonInfo(node, info);
+        if (comparison == null) {
+            return null;
+        }
+        boolean isWrapped = node.hasDecoration(Decorations.WRAPPED);
+        if (comparison.needsExpanding && node.isReplaced() && !isWrapped) {
+            // The comparison has already been expanded by a @ModifyConstant
+            AbstractInsnNode next = node.getCurrentTarget().getNext();
+            if (!(next instanceof JumpInsnNode)) {
+                throw new IllegalStateException("Could not find jump for expanded @ModifyConstant comparison! Please inform LlamaLad7!");
+            }
+            JumpInsnNode jump = (JumpInsnNode) next;
+            InjectionNode jumpNode = target.addInjectionNode(jump);
+            ComparisonInfo newComparison = new ComparisonInfo(
+                    jump.getOpcode(),
+                    jump,
+                    Type.INT_TYPE,
+                    false,
+                    comparison.jumpOnTrue
+            );
+            InjectorUtils.decorateInjectorSpecific(
+                    jumpNode,
+                    info,
+                    Decorations.COMPARISON_INFO,
+                    newComparison
+            );
+            return new ComparisonOperation(
+                    target,
+                    jumpNode,
+                    stack,
+                    false,
+                    newComparison
+            );
+        }
+        return new ComparisonOperation(
+                target,
+                node,
+                stack,
+                isWrapped,
+                comparison
+        );
     }
 
     @FunctionalInterface

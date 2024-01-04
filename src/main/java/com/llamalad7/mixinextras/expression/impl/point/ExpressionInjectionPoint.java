@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
+import com.llamalad7.mixinextras.utils.InjectorUtils;
 import com.llamalad7.mixinextras.utils.TargetDecorations;
 import com.llamalad7.mixinextras.utils.info.ExtraMixinInfo;
 import com.llamalad7.mixinextras.utils.info.ExtraMixinInfoManager;
@@ -78,11 +79,12 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                         if (injectorSpecific != null) {
                             InjectionNode injectionNode = target.addInjectionNode(insn);
                             for (Map.Entry<String, Object> decoration : injectorSpecific.entrySet()) {
-                                if (!injectionNode.hasDecoration(decoration.getKey())) {
-                                    injectionNode.decorate(decoration.getKey(), new HashMap<>());
-                                }
-                                Map<InjectionInfo, Object> inner = injectionNode.getDecoration(decoration.getKey());
-                                inner.put(CURRENT_INFO, decoration.getValue());
+                                InjectorUtils.decorateInjectorSpecific(
+                                        injectionNode,
+                                        CURRENT_INFO,
+                                        decoration.getKey(),
+                                        decoration.getValue()
+                                );
                             }
                         }
                         captured.add(insn);

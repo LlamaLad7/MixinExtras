@@ -16,6 +16,7 @@ import org.spongepowered.asm.util.Bytecode;
 import org.spongepowered.asm.util.PrettyPrinter;
 import org.spongepowered.asm.util.SignaturePrinter;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -137,6 +138,14 @@ public class InjectorUtils {
 
     private static boolean isImplicit(LocalVariableDiscriminator discriminator, int baseArgIndex) {
         return discriminator.getOrdinal() < 0 && discriminator.getIndex() < baseArgIndex && discriminator.getNames().isEmpty();
+    }
+
+    public static void decorateInjectorSpecific(InjectionNode node, InjectionInfo info, String key, Object value) {
+        if (!node.hasDecoration(key)) {
+            node.decorate(key, new HashMap<>());
+        }
+        Map<InjectionInfo, Object> inner = node.getDecoration(key);
+        inner.put(info, value);
     }
 
     public static ComparisonInfo getComparisonInfo(InjectionNode node, InjectionInfo info) {

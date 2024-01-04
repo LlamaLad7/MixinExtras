@@ -11,7 +11,7 @@ public class ComparisonInfo {
     protected final AbstractInsnNode node;
     public final Type input;
     public final boolean jumpOnTrue;
-    private final boolean needsExpanding;
+    public final boolean needsExpanding;
 
     public ComparisonInfo(int comparison, AbstractInsnNode node, Type input, boolean needsExpanding, boolean jumpOnTrue) {
         this.comparison = comparison;
