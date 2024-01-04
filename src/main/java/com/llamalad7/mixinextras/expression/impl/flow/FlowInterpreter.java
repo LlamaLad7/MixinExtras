@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.flow;
 
 import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Interpreter;
@@ -275,6 +276,15 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             Type type;
             switch (insn.getOpcode()) {
                 case IALOAD:
+                case LALOAD:
+                case FALOAD:
+                case DALOAD:
+                case AALOAD:
+                case BALOAD:
+                case CALOAD:
+                case SALOAD:
+                    type = value1.getType().getElementType();
+                    break;
                 case IADD:
                 case ISUB:
                 case IMUL:
@@ -293,16 +303,6 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 case DCMPG:
                     type = Type.INT_TYPE;
                     break;
-                case BALOAD:
-                    type = Type.BYTE_TYPE;
-                    break;
-                case CALOAD:
-                    type = Type.CHAR_TYPE;
-                    break;
-                case SALOAD:
-                    type = Type.SHORT_TYPE;
-                    break;
-                case FALOAD:
                 case FADD:
                 case FSUB:
                 case FMUL:
@@ -310,7 +310,6 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 case FREM:
                     type = Type.FLOAT_TYPE;
                     break;
-                case LALOAD:
                 case LADD:
                 case LSUB:
                 case LMUL:
@@ -324,16 +323,12 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 case LXOR:
                     type = Type.LONG_TYPE;
                     break;
-                case DALOAD:
                 case DADD:
                 case DSUB:
                 case DMUL:
                 case DDIV:
                 case DREM:
                     type = Type.DOUBLE_TYPE;
-                    break;
-                case AALOAD:
-                    type = value1.getType().getElementType();
                     break;
                 case IF_ICMPEQ:
                 case IF_ICMPNE:
