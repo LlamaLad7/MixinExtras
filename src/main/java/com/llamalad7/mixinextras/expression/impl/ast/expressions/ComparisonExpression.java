@@ -141,6 +141,9 @@ public class ComparisonExpression implements Expression {
         }
 
         private boolean isComplexComparison(AbstractInsnNode insn) {
+            if (insn == null) {
+                return false;
+            }
             switch (insn.getOpcode()) {
                 case LCMP:
                 case FCMPL:
