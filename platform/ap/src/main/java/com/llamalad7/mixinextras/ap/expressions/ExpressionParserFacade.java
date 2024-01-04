@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.ap.expressions;
 
 import com.llamalad7.mixinextras.ap.grammar.ExpressionLexer;
 import com.llamalad7.mixinextras.ap.grammar.ExpressionParser;
+import com.llamalad7.mixinextras.ap.grammar.ExpressionParser.*;
 import com.llamalad7.mixinextras.expression.impl.ast.expressions.*;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.PoolIdentifier;
@@ -30,143 +31,157 @@ public class ExpressionParserFacade {
         return new CapturingExpression(parsed);
     }
 
-    private Expression parse(ExpressionParser.StatementContext statement) {
-        if (statement instanceof ExpressionParser.MemberAssignmentStatementContext) {
-            return parse((ExpressionParser.MemberAssignmentStatementContext) statement);
+    private Expression parse(StatementContext statement) {
+        if (statement instanceof MemberAssignmentStatementContext) {
+            return parse((MemberAssignmentStatementContext) statement);
         }
-        if (statement instanceof ExpressionParser.ArrayStoreStatementContext) {
-            return parse((ExpressionParser.ArrayStoreStatementContext) statement);
+        if (statement instanceof ArrayStoreStatementContext) {
+            return parse((ArrayStoreStatementContext) statement);
         }
-        if (statement instanceof ExpressionParser.IdentifierAssignmentContext) {
-            return parse((ExpressionParser.IdentifierAssignmentContext) statement);
+        if (statement instanceof IdentifierAssignmentStatementContext) {
+            return parse((IdentifierAssignmentStatementContext) statement);
         }
-        if (statement instanceof ExpressionParser.ExpressionStatementContext) {
-            return parse(((ExpressionParser.ExpressionStatementContext) statement));
+        if (statement instanceof ReturnStatementContext) {
+            return parse((ReturnStatementContext) statement);
+        }
+        if (statement instanceof ThrowStatementContext) {
+            return parse((ThrowStatementContext) statement);
+        }
+        if (statement instanceof ExpressionStatementContext) {
+            return parse((ExpressionStatementContext) statement);
         }
         throw unimplemented();
     }
 
-    private MemberAssignmentExpression parse(ExpressionParser.MemberAssignmentStatementContext statement) {
+    private MemberAssignmentExpression parse(MemberAssignmentStatementContext statement) {
         return new MemberAssignmentExpression(parse(statement.receiver), parse(statement.memberName), parse(statement.value));
     }
 
-    private ArrayStoreExpression parse(ExpressionParser.ArrayStoreStatementContext statement) {
+    private ArrayStoreExpression parse(ArrayStoreStatementContext statement) {
         return new ArrayStoreExpression(parse(statement.arr), parse(statement.index), parse(statement.value));
     }
 
-    private IdentifierAssignmentExpression parse(ExpressionParser.IdentifierAssignmentContext statement) {
+    private IdentifierAssignmentExpression parse(IdentifierAssignmentStatementContext statement) {
         return new IdentifierAssignmentExpression(parse(statement.identifier), parse(statement.value));
     }
 
-    private Expression parse(ExpressionParser.ExpressionStatementContext statement) {
+    private ReturnExpression parse(ReturnStatementContext statement) {
+        return new ReturnExpression(parse(statement.value));
+    }
+
+    private ThrowExpression parse(ThrowStatementContext statement) {
+        return new ThrowExpression(parse(statement.value));
+    }
+
+    private Expression parse(ExpressionStatementContext statement) {
         return parse(statement.expression());
     }
 
-    private Expression parse(ExpressionParser.ExpressionContext expression) {
-        if (expression instanceof ExpressionParser.CapturingExpressionContext) {
-            return parse((ExpressionParser.CapturingExpressionContext) expression);
+    private Expression parse(ExpressionContext expression) {
+        if (expression instanceof CapturingExpressionContext) {
+            return parse((CapturingExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.ParenthesizedExpressionContext) {
-            return parse((ExpressionParser.ParenthesizedExpressionContext) expression);
+        if (expression instanceof ParenthesizedExpressionContext) {
+            return parse((ParenthesizedExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.MethodCallExpressionContext) {
-            return parse((ExpressionParser.MethodCallExpressionContext) expression);
+        if (expression instanceof MethodCallExpressionContext) {
+            return parse((MethodCallExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.StaticMethodCallExpressionContext) {
-            return parse((ExpressionParser.StaticMethodCallExpressionContext) expression);
+        if (expression instanceof StaticMethodCallExpressionContext) {
+            return parse((StaticMethodCallExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.ArrayAccessExpressionContext) {
-            return parse((ExpressionParser.ArrayAccessExpressionContext) expression);
+        if (expression instanceof ArrayAccessExpressionContext) {
+            return parse((ArrayAccessExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.MemberAccessExpressionContext) {
-            return parse((ExpressionParser.MemberAccessExpressionContext) expression);
+        if (expression instanceof MemberAccessExpressionContext) {
+            return parse((MemberAccessExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.UnaryExpressionContext) {
-            return parse((ExpressionParser.UnaryExpressionContext) expression);
+        if (expression instanceof UnaryExpressionContext) {
+            return parse((UnaryExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.CastExpressionContext) {
-            return parse((ExpressionParser.CastExpressionContext) expression);
+        if (expression instanceof CastExpressionContext) {
+            return parse((CastExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.InstantiationExpressionContext) {
-            return parse((ExpressionParser.InstantiationExpressionContext) expression);
+        if (expression instanceof InstantiationExpressionContext) {
+            return parse((InstantiationExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.MultiplicativeExpressionContext) {
-            return parse((ExpressionParser.MultiplicativeExpressionContext) expression);
+        if (expression instanceof MultiplicativeExpressionContext) {
+            return parse((MultiplicativeExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.AdditiveExpressionContext) {
-            return parse((ExpressionParser.AdditiveExpressionContext) expression);
+        if (expression instanceof AdditiveExpressionContext) {
+            return parse((AdditiveExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.ShiftExpressionContext) {
-            return parse((ExpressionParser.ShiftExpressionContext) expression);
+        if (expression instanceof ShiftExpressionContext) {
+            return parse((ShiftExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.ComparisonExpressionContext) {
-            return parse((ExpressionParser.ComparisonExpressionContext) expression);
+        if (expression instanceof ComparisonExpressionContext) {
+            return parse((ComparisonExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.InstanceofExpressionContext) {
-            return parse((ExpressionParser.InstanceofExpressionContext) expression);
+        if (expression instanceof InstanceofExpressionContext) {
+            return parse((InstanceofExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.EqualityExpressionContext) {
-            return parse((ExpressionParser.EqualityExpressionContext) expression);
+        if (expression instanceof EqualityExpressionContext) {
+            return parse((EqualityExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.BitwiseAndExpressionContext) {
-            return parse((ExpressionParser.BitwiseAndExpressionContext) expression);
+        if (expression instanceof BitwiseAndExpressionContext) {
+            return parse((BitwiseAndExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.BitwiseXorExpressionContext) {
-            return parse((ExpressionParser.BitwiseXorExpressionContext) expression);
+        if (expression instanceof BitwiseXorExpressionContext) {
+            return parse((BitwiseXorExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.BitwiseOrExpressionContext) {
-            return parse((ExpressionParser.BitwiseOrExpressionContext) expression);
+        if (expression instanceof BitwiseOrExpressionContext) {
+            return parse((BitwiseOrExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.DecimalLitExpressionContext) {
-            return parse((ExpressionParser.DecimalLitExpressionContext) expression);
+        if (expression instanceof DecimalLitExpressionContext) {
+            return parse((DecimalLitExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.IntLitExpressionContext) {
-            return parse((ExpressionParser.IntLitExpressionContext) expression);
+        if (expression instanceof IntLitExpressionContext) {
+            return parse((IntLitExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.StringLitExpressionContext) {
-            return parse((ExpressionParser.StringLitExpressionContext) expression);
+        if (expression instanceof StringLitExpressionContext) {
+            return parse((StringLitExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.BoolLitExpressionContext) {
-            return parse((ExpressionParser.BoolLitExpressionContext) expression);
+        if (expression instanceof BoolLitExpressionContext) {
+            return parse((BoolLitExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.NullExpressionContext) {
-            return parse((ExpressionParser.NullExpressionContext) expression);
+        if (expression instanceof NullExpressionContext) {
+            return parse((NullExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.WildcardExpressionContext) {
-            return parse((ExpressionParser.WildcardExpressionContext) expression);
+        if (expression instanceof WildcardExpressionContext) {
+            return parse((WildcardExpressionContext) expression);
         }
-        if (expression instanceof ExpressionParser.IdentifierExpressionContext) {
-            return parse((ExpressionParser.IdentifierExpressionContext) expression);
+        if (expression instanceof IdentifierExpressionContext) {
+            return parse((IdentifierExpressionContext) expression);
         }
         throw unimplemented();
     }
 
-    private CapturingExpression parse(ExpressionParser.CapturingExpressionContext expression) {
+    private CapturingExpression parse(CapturingExpressionContext expression) {
         this.hasExplicitCapture = true;
         return new CapturingExpression(parse(expression.expr));
     }
 
-    private Expression parse(ExpressionParser.ParenthesizedExpressionContext expression) {
+    private Expression parse(ParenthesizedExpressionContext expression) {
         return parse(expression.expr);
     }
 
-    private MethodCallExpression parse(ExpressionParser.MethodCallExpressionContext expression) {
+    private MethodCallExpression parse(MethodCallExpressionContext expression) {
         return new MethodCallExpression(parse(expression.receiver), parse(expression.memberName), parse(expression.args));
     }
 
-    private StaticMethodCallExpression parse(ExpressionParser.StaticMethodCallExpressionContext expression) {
+    private StaticMethodCallExpression parse(StaticMethodCallExpressionContext expression) {
         return new StaticMethodCallExpression(parse(expression.memberName), parse(expression.args));
     }
 
-    private ArrayAccessExpression parse(ExpressionParser.ArrayAccessExpressionContext expression) {
+    private ArrayAccessExpression parse(ArrayAccessExpressionContext expression) {
         return new ArrayAccessExpression(parse(expression.arr), parse(expression.index));
     }
 
-    private MemberAccessExpression parse(ExpressionParser.MemberAccessExpressionContext expression) {
+    private MemberAccessExpression parse(MemberAccessExpressionContext expression) {
         return new MemberAccessExpression(parse(expression.receiver), parse(expression.memberName));
     }
 
-    private UnaryExpression parse(ExpressionParser.UnaryExpressionContext expression) {
+    private UnaryExpression parse(UnaryExpressionContext expression) {
         UnaryExpression.Operator op;
         switch (expression.op.getType()) {
             case ExpressionLexer.Minus:
@@ -181,15 +196,15 @@ public class ExpressionParserFacade {
         return new UnaryExpression(op, parse(expression.expr));
     }
 
-    private CastExpression parse(ExpressionParser.CastExpressionContext expression) {
+    private CastExpression parse(CastExpressionContext expression) {
         return new CastExpression(parse(expression.type), parse(expression.expr));
     }
 
-    private InstantiationExpression parse(ExpressionParser.InstantiationExpressionContext expression) {
+    private InstantiationExpression parse(InstantiationExpressionContext expression) {
         return new InstantiationExpression(parse(expression.type), parse(expression.args));
     }
 
-    private BinaryExpression parse(ExpressionParser.MultiplicativeExpressionContext expression) {
+    private BinaryExpression parse(MultiplicativeExpressionContext expression) {
         BinaryExpression.Operator op;
         switch (expression.op.getType()) {
             case ExpressionLexer.Mult:
@@ -207,7 +222,7 @@ public class ExpressionParserFacade {
         return new BinaryExpression(parse(expression.left), op, parse(expression.right));
     }
 
-    private BinaryExpression parse(ExpressionParser.AdditiveExpressionContext expression) {
+    private BinaryExpression parse(AdditiveExpressionContext expression) {
         BinaryExpression.Operator op;
         switch (expression.op.getType()) {
             case ExpressionLexer.Plus:
@@ -222,7 +237,7 @@ public class ExpressionParserFacade {
         return new BinaryExpression(parse(expression.left), op, parse(expression.right));
     }
 
-    private BinaryExpression parse(ExpressionParser.ShiftExpressionContext expression) {
+    private BinaryExpression parse(ShiftExpressionContext expression) {
         BinaryExpression.Operator op;
         switch (expression.op.getType()) {
             case ExpressionLexer.Shl:
@@ -240,7 +255,7 @@ public class ExpressionParserFacade {
         return new BinaryExpression(parse(expression.left), op, parse(expression.right));
     }
 
-    private ComparisonExpression parse(ExpressionParser.ComparisonExpressionContext expression) {
+    private ComparisonExpression parse(ComparisonExpressionContext expression) {
         ComparisonExpression.Operator op;
         switch (expression.op.getType()) {
             case ExpressionLexer.Lt:
@@ -261,11 +276,11 @@ public class ExpressionParserFacade {
         return new ComparisonExpression(parse(expression.left), op, parse(expression.right));
     }
 
-    private InstanceofExpression parse(ExpressionParser.InstanceofExpressionContext expression) {
+    private InstanceofExpression parse(InstanceofExpressionContext expression) {
         return new InstanceofExpression(parse(expression.expr), parse(expression.type));
     }
 
-    private ComparisonExpression parse(ExpressionParser.EqualityExpressionContext expression) {
+    private ComparisonExpression parse(EqualityExpressionContext expression) {
         ComparisonExpression.Operator op;
         switch (expression.op.getType()) {
             case ExpressionLexer.Eq:
@@ -280,58 +295,58 @@ public class ExpressionParserFacade {
         return new ComparisonExpression(parse(expression.left), op, parse(expression.right));
     }
 
-    private BinaryExpression parse(ExpressionParser.BitwiseAndExpressionContext expression) {
+    private BinaryExpression parse(BitwiseAndExpressionContext expression) {
         return new BinaryExpression(parse(expression.left), BinaryExpression.Operator.BITWISE_AND, parse(expression.right));
     }
 
-    private BinaryExpression parse(ExpressionParser.BitwiseXorExpressionContext expression) {
+    private BinaryExpression parse(BitwiseXorExpressionContext expression) {
         return new BinaryExpression(parse(expression.left), BinaryExpression.Operator.BITWISE_XOR, parse(expression.right));
     }
 
-    private BinaryExpression parse(ExpressionParser.BitwiseOrExpressionContext expression) {
+    private BinaryExpression parse(BitwiseOrExpressionContext expression) {
         return new BinaryExpression(parse(expression.left), BinaryExpression.Operator.BITWISE_OR, parse(expression.right));
     }
 
-    private DecimalLiteralExpression parse(ExpressionParser.DecimalLitExpressionContext expression) {
+    private DecimalLiteralExpression parse(DecimalLitExpressionContext expression) {
         return new DecimalLiteralExpression(Double.parseDouble(expression.getText()));
     }
 
-    private IntLiteralExpression parse(ExpressionParser.IntLitExpressionContext expression) {
+    private IntLiteralExpression parse(IntLitExpressionContext expression) {
         return new IntLiteralExpression(Long.parseLong(expression.getText()));
     }
 
-    private StringLiteralExpression parse(ExpressionParser.StringLitExpressionContext expression) {
+    private StringLiteralExpression parse(StringLitExpressionContext expression) {
         String text = expression.getText();
         return new StringLiteralExpression(text.substring(1, text.length() - 1));
     }
 
-    private BooleanLiteralExpression parse(ExpressionParser.BoolLitExpressionContext expression) {
+    private BooleanLiteralExpression parse(BoolLitExpressionContext expression) {
         return new BooleanLiteralExpression(Boolean.parseBoolean(expression.getText()));
     }
 
-    private NullLiteralExpression parse(ExpressionParser.NullExpressionContext expression) {
+    private NullLiteralExpression parse(NullExpressionContext expression) {
         return new NullLiteralExpression();
     }
 
-    private WildcardExpression parse(ExpressionParser.WildcardExpressionContext expression) {
+    private WildcardExpression parse(WildcardExpressionContext expression) {
         return new WildcardExpression();
     }
 
-    private IdentifierExpression parse(ExpressionParser.IdentifierExpressionContext expression) {
+    private IdentifierExpression parse(IdentifierExpressionContext expression) {
         return new IdentifierExpression(expression.getText());
     }
 
-    private Identifier parse(ExpressionParser.NameContext name) {
-        if (name instanceof ExpressionParser.IdentifierNameContext) {
+    private Identifier parse(NameContext name) {
+        if (name instanceof IdentifierNameContext) {
             return new PoolIdentifier(name.getText());
         }
-        if (name instanceof ExpressionParser.WildcardNameContext) {
+        if (name instanceof WildcardNameContext) {
             return new WildcardIdentifier();
         }
         throw unimplemented();
     }
 
-    private List<Expression> parse(ExpressionParser.ArgumentsContext args) {
+    private List<Expression> parse(ArgumentsContext args) {
         return args.expression().stream().map(this::parse).collect(Collectors.toList());
     }
 

@@ -35,6 +35,14 @@ NullLit
    : 'null'
    ;
 
+Return
+   : 'return'
+   ;
+
+Throw
+   : 'throw'
+   ;
+
 Identifier
    : [A-Za-z_] [A-Za-z0-9_]*
    ;

@@ -9,7 +9,9 @@ root
 statement
    : receiver = expression Dot memberName = name Assign value = expression # MemberAssignmentStatement
    | arr = expression LeftBracket index = expression RightBracket Assign value = expression # ArrayStoreStatement
-   | identifier = name Assign value = expression # IdentifierAssignment
+   | identifier = name Assign value = expression # IdentifierAssignmentStatement
+   | Return value = expression # ReturnStatement
+   | Throw value = expression # ThrowStatement
    | expression # ExpressionStatement
    ;
 
