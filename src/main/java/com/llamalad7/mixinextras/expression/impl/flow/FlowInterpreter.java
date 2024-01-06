@@ -147,7 +147,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case ASTORE:
                 return cache.computeIfAbsent(insn, k -> new FlowValue(Collections.singletonList(value), Type.VOID_TYPE, insn));
         }
-        VarInsnNode varNode = ((VarInsnNode) insn);
+        VarInsnNode varNode = (VarInsnNode) insn;
         LocalVariableNode local = Locals.getLocalVariableAt(classNode, methodNode, insn, varNode.var);
         Type type = local != null ? Type.getType(local.desc) : Type.VOID_TYPE;
         return cache.computeIfAbsent(insn, k -> new FlowValue(Collections.emptyList(), type, insn));
@@ -156,10 +156,10 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
     @Override
     public FlowValue unaryOperation(final AbstractInsnNode insn, final FlowValue value) {
         FlowValue result = cache.computeIfAbsent(insn, k -> {
+            FlowValue source = value;
             Type type;
             switch (insn.getOpcode()) {
                 case INEG:
-                case IINC:
                 case L2I:
                 case F2I:
                 case D2I:
@@ -258,10 +258,14 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 case INSTANCEOF:
                     type = Type.BOOLEAN_TYPE;
                     break;
+                case IINC:
+                    type = Type.INT_TYPE;
+                    source = new FlowValue(Collections.emptyList(), Type.INT_TYPE, insn);
+                    break;
                 default:
                     throw new Error("Internal error.");
             }
-            return new FlowValue(value, type, insn);
+            return new FlowValue(source, type, insn);
         });
         if (result.getType() == Type.VOID_TYPE) {
             return null;
