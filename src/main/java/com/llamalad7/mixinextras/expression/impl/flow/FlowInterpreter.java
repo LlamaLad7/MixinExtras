@@ -2,7 +2,6 @@ package com.llamalad7.mixinextras.expression.impl.flow;
 
 import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.objectweb.asm.Handle;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Interpreter;
@@ -24,113 +23,113 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         super(ASM.API_VERSION);
         this.classNode = classNode;
         this.methodNode = methodNode;
+        // Computing this during the analysis causes mixin to add labels and screw up the instruction indices.
+        // Do it ahead of time and let mixin cache it.
+        Locals.getGeneratedLocalVariableTable(classNode, methodNode);
     }
 
     public Map<AbstractInsnNode, FlowValue> finish() {
         for (Map.Entry<AbstractInsnNode, FlowValue> entry : cache.entrySet()) {
             entry.getValue().finish();
         }
-        cache.entrySet().removeIf(it -> it.getValue() == FlowValue.NULL);
         return Collections.unmodifiableMap(cache);
     }
 
     @Override
     public FlowValue newValue(final Type type) {
         if (type == null) {
-            return FlowValue.NULL;
+            return DummyFlowValue.UNINITIALIZED;
         }
         if (type == Type.VOID_TYPE) {
             return null;
         }
-        return new FlowValue(Collections.emptyList(), type, null);
+        return new DummyFlowValue(type);
     }
 
     @Override
     public FlowValue newOperation(final AbstractInsnNode insn) {
-        return cache.computeIfAbsent(insn, k -> {
-            Type type;
-            switch (insn.getOpcode()) {
-                case ACONST_NULL:
-                    type = ASMUtils.OBJECT_TYPE;
-                    break;
-                case ICONST_M1:
-                case ICONST_0:
-                case ICONST_1:
-                case ICONST_2:
-                case ICONST_3:
-                case ICONST_4:
-                case ICONST_5:
-                case BIPUSH:
-                case SIPUSH:
+        Type type;
+        switch (insn.getOpcode()) {
+            case ACONST_NULL:
+                type = ASMUtils.NULL_TYPE;
+                break;
+            case ICONST_M1:
+            case ICONST_0:
+            case ICONST_1:
+            case ICONST_2:
+            case ICONST_3:
+            case ICONST_4:
+            case ICONST_5:
+            case BIPUSH:
+            case SIPUSH:
+                type = Type.INT_TYPE;
+                break;
+            case LCONST_0:
+            case LCONST_1:
+                type = Type.LONG_TYPE;
+                break;
+            case FCONST_0:
+            case FCONST_1:
+            case FCONST_2:
+                type = Type.FLOAT_TYPE;
+                break;
+            case DCONST_0:
+            case DCONST_1:
+                type = Type.DOUBLE_TYPE;
+                break;
+            case LDC:
+                Object cst = ((LdcInsnNode) insn).cst;
+                if (cst instanceof Integer) {
                     type = Type.INT_TYPE;
                     break;
-                case LCONST_0:
-                case LCONST_1:
-                    type = Type.LONG_TYPE;
-                    break;
-                case FCONST_0:
-                case FCONST_1:
-                case FCONST_2:
+                }
+                if (cst instanceof Float) {
                     type = Type.FLOAT_TYPE;
                     break;
-                case DCONST_0:
-                case DCONST_1:
+                }
+                if (cst instanceof Long) {
+                    type = Type.LONG_TYPE;
+                    break;
+                }
+                if (cst instanceof Double) {
                     type = Type.DOUBLE_TYPE;
                     break;
-                case LDC:
-                    Object cst = ((LdcInsnNode) insn).cst;
-                    if (cst instanceof Integer) {
-                        type = Type.INT_TYPE;
-                        break;
-                    }
-                    if (cst instanceof Float) {
-                        type = Type.FLOAT_TYPE;
-                        break;
-                    }
-                    if (cst instanceof Long) {
-                        type = Type.LONG_TYPE;
-                        break;
-                    }
-                    if (cst instanceof Double) {
-                        type = Type.DOUBLE_TYPE;
-                        break;
-                    }
-                    if (cst instanceof String) {
-                        type = Type.getType(String.class);
-                        break;
-                    }
-                    if (cst instanceof Type) {
-                        int sort = ((Type) cst).getSort();
-                        if (sort == Type.OBJECT || sort == Type.ARRAY) {
-                            type = Type.getType(Class.class);
-                            break;
-                        }
-                        if (sort == Type.METHOD) {
-                            type = Type.getType(MethodType.class);
-                            break;
-                        }
-                    }
-                    if (cst instanceof Handle) {
-                        type = Type.getType(MethodHandle.class);
-                        break;
-                    }
-                    throw new IllegalArgumentException("Illegal LDC constant "
-                            + cst);
-                case GETSTATIC:
-                    type = Type.getType(((FieldInsnNode) insn).desc);
+                }
+                if (cst instanceof String) {
+                    type = Type.getType(String.class);
                     break;
-                case NEW:
-                    type = Type.getObjectType(((TypeInsnNode) insn).desc);
+                }
+                if (cst instanceof Type) {
+                    int sort = ((Type) cst).getSort();
+                    if (sort == Type.OBJECT || sort == Type.ARRAY) {
+                        type = Type.getType(Class.class);
+                        break;
+                    }
+                    if (sort == Type.METHOD) {
+                        type = Type.getType(MethodType.class);
+                        break;
+                    }
+                }
+                if (cst instanceof Handle) {
+                    type = Type.getType(MethodHandle.class);
                     break;
-                default:
-                    throw new Error("Internal error.");
-            }
-            return new FlowValue(Collections.emptyList(), type, insn);
-        });
+                }
+                throw new IllegalArgumentException("Illegal LDC constant "
+                        + cst);
+            case GETSTATIC:
+                type = Type.getType(((FieldInsnNode) insn).desc);
+                break;
+            case NEW:
+                type = Type.getObjectType(((TypeInsnNode) insn).desc);
+                break;
+            default:
+                throw new Error("Internal error.");
+        }
+        return recordFlow(type.getSize(), inputs -> type, insn);
     }
 
     @Override
-    public FlowValue copyOperation(final AbstractInsnNode insn, final FlowValue value) {
+    public FlowValue copyOperation(final AbstractInsnNode insn, FlowValue value) {
         switch (insn.getOpcode()) {
             case DUP:
             case DUP_X1:
@@ -145,215 +144,216 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case FSTORE:
             case DSTORE:
             case ASTORE:
-                return cache.computeIfAbsent(insn, k -> new FlowValue(Collections.singletonList(value), Type.VOID_TYPE, insn));
+                if (value instanceof DummyFlowValue) {
+                    // Exception variable
+                    value = new ComplexFlowValue(1, Collections.singleton(value));
+                }
+                recordFlow(1, inputs -> Type.VOID_TYPE, insn, value);
+                return new DummyFlowValue(value.getCurrentType());
         }
         VarInsnNode varNode = (VarInsnNode) insn;
         LocalVariableNode local = Locals.getLocalVariableAt(classNode, methodNode, insn, varNode.var);
-        Type type = local != null ? Type.getType(local.desc) : Type.VOID_TYPE;
-        return cache.computeIfAbsent(insn, k -> new FlowValue(Collections.emptyList(), type, insn));
+        Type type;
+        if (local == null || local.desc == null) {
+            System.err.println("Failed to find local variable type");
+            type = value.getCurrentType();
+        } else {
+            type = Type.getType(local.desc);
+        }
+        return recordFlow(type.getSize(), inputs -> type, insn);
     }
 
     @Override
     public FlowValue unaryOperation(final AbstractInsnNode insn, final FlowValue value) {
-        FlowValue result = cache.computeIfAbsent(insn, k -> {
-            FlowValue source = value;
-            Type type;
-            switch (insn.getOpcode()) {
-                case INEG:
-                case L2I:
-                case F2I:
-                case D2I:
-                case ARRAYLENGTH:
-                    type = Type.INT_TYPE;
-                    break;
-                case I2B:
-                    type = Type.BYTE_TYPE;
-                    break;
-                case I2C:
-                    type = Type.CHAR_TYPE;
-                    break;
-                case I2S:
-                    type = Type.SHORT_TYPE;
-                    break;
-                case FNEG:
-                case I2F:
-                case L2F:
-                case D2F:
-                    type = Type.FLOAT_TYPE;
-                    break;
-                case LNEG:
-                case I2L:
-                case F2L:
-                case D2L:
-                    type = Type.LONG_TYPE;
-                    break;
-                case DNEG:
-                case I2D:
-                case L2D:
-                case F2D:
-                    type = Type.DOUBLE_TYPE;
-                    break;
-                case IFEQ:
-                case IFNE:
-                case IFLT:
-                case IFGE:
-                case IFGT:
-                case IFLE:
-                case TABLESWITCH:
-                case LOOKUPSWITCH:
-                case IRETURN:
-                case LRETURN:
-                case FRETURN:
-                case DRETURN:
-                case ARETURN:
-                case PUTSTATIC:
-                case ATHROW:
-                case MONITORENTER:
-                case MONITOREXIT:
-                case IFNULL:
-                case IFNONNULL:
-                    type = Type.VOID_TYPE;
-                    break;
-                case GETFIELD:
-                    type = Type.getType(((FieldInsnNode) insn).desc);
-                    break;
-                case NEWARRAY:
-                    switch (((IntInsnNode) insn).operand) {
-                        case T_BOOLEAN:
-                            type = Type.getType("[Z");
-                            break;
-                        case T_CHAR:
-                            type = Type.getType("[C");
-                            break;
-                        case T_BYTE:
-                            type = Type.getType("[B");
-                            break;
-                        case T_SHORT:
-                            type = Type.getType("[S");
-                            break;
-                        case T_INT:
-                            type = Type.getType("[I");
-                            break;
-                        case T_FLOAT:
-                            type = Type.getType("[F");
-                            break;
-                        case T_DOUBLE:
-                            type = Type.getType("[D");
-                            break;
-                        case T_LONG:
-                            type = Type.getType("[J");
-                            break;
-                        default:
-                            throw new Error("Invalid array type " + ((IntInsnNode) insn).operand);
-                    }
-                    break;
-                case ANEWARRAY:
-                    String desc = ((TypeInsnNode) insn).desc;
-                    type = Type.getType("[" + Type.getObjectType(desc));
-                    break;
-                case CHECKCAST:
-                    desc = ((TypeInsnNode) insn).desc;
-                    type = Type.getObjectType(desc);
-                    break;
-                case INSTANCEOF:
-                    type = Type.BOOLEAN_TYPE;
-                    break;
-                case IINC:
-                    type = Type.INT_TYPE;
-                    source = new FlowValue(Collections.emptyList(), Type.INT_TYPE, insn);
-                    break;
-                default:
-                    throw new Error("Internal error.");
-            }
-            return new FlowValue(source, type, insn);
-        });
-        if (result.getType() == Type.VOID_TYPE) {
-            return null;
+        Type type;
+        switch (insn.getOpcode()) {
+            case INEG:
+            case L2I:
+            case F2I:
+            case D2I:
+            case ARRAYLENGTH:
+                type = Type.INT_TYPE;
+                break;
+            case I2B:
+                type = Type.BYTE_TYPE;
+                break;
+            case I2C:
+                type = Type.CHAR_TYPE;
+                break;
+            case I2S:
+                type = Type.SHORT_TYPE;
+                break;
+            case FNEG:
+            case I2F:
+            case L2F:
+            case D2F:
+                type = Type.FLOAT_TYPE;
+                break;
+            case LNEG:
+            case I2L:
+            case F2L:
+            case D2L:
+                type = Type.LONG_TYPE;
+                break;
+            case DNEG:
+            case I2D:
+            case L2D:
+            case F2D:
+                type = Type.DOUBLE_TYPE;
+                break;
+            case IFEQ:
+            case IFNE:
+            case IFLT:
+            case IFGE:
+            case IFGT:
+            case IFLE:
+            case TABLESWITCH:
+            case LOOKUPSWITCH:
+            case IRETURN:
+            case LRETURN:
+            case FRETURN:
+            case DRETURN:
+            case ARETURN:
+            case PUTSTATIC:
+            case ATHROW:
+            case MONITORENTER:
+            case MONITOREXIT:
+            case IFNULL:
+            case IFNONNULL:
+                type = Type.VOID_TYPE;
+                break;
+            case GETFIELD:
+                type = Type.getType(((FieldInsnNode) insn).desc);
+                break;
+            case NEWARRAY:
+                switch (((IntInsnNode) insn).operand) {
+                    case T_BOOLEAN:
+                        type = Type.getType("[Z");
+                        break;
+                    case T_CHAR:
+                        type = Type.getType("[C");
+                        break;
+                    case T_BYTE:
+                        type = Type.getType("[B");
+                        break;
+                    case T_SHORT:
+                        type = Type.getType("[S");
+                        break;
+                    case T_INT:
+                        type = Type.getType("[I");
+                        break;
+                    case T_FLOAT:
+                        type = Type.getType("[F");
+                        break;
+                    case T_DOUBLE:
+                        type = Type.getType("[D");
+                        break;
+                    case T_LONG:
+                        type = Type.getType("[J");
+                        break;
+                    default:
+                        throw new Error("Invalid array type " + ((IntInsnNode) insn).operand);
+                }
+                break;
+            case ANEWARRAY:
+                String desc = ((TypeInsnNode) insn).desc;
+                type = Type.getType("[" + Type.getObjectType(desc));
+                break;
+            case CHECKCAST:
+                desc = ((TypeInsnNode) insn).desc;
+                type = Type.getObjectType(desc);
+                break;
+            case INSTANCEOF:
+                type = Type.BOOLEAN_TYPE;
+                break;
+            case IINC:
+                recordFlow(1, inputs -> Type.VOID_TYPE, insn);
+                return new DummyFlowValue(Type.INT_TYPE);
+            default:
+                throw new Error("Internal error.");
         }
-        return result;
+        return recordFlow(type.getSize(), inputs -> type, insn, value);
     }
 
     @Override
     public FlowValue binaryOperation(
             final AbstractInsnNode insn, final FlowValue value1, final FlowValue value2) {
-        FlowValue result = cache.computeIfAbsent(insn, k -> {
-            Type type;
-            switch (insn.getOpcode()) {
-                case IALOAD:
-                case LALOAD:
-                case FALOAD:
-                case DALOAD:
-                case AALOAD:
-                case BALOAD:
-                case CALOAD:
-                case SALOAD:
-                    type = value1.getType().getElementType();
-                    break;
-                case IADD:
-                case ISUB:
-                case IMUL:
-                case IDIV:
-                case IREM:
-                case ISHL:
-                case ISHR:
-                case IUSHR:
-                case IAND:
-                case IOR:
-                case IXOR:
-                case LCMP:
-                case FCMPL:
-                case FCMPG:
-                case DCMPL:
-                case DCMPG:
-                    type = Type.INT_TYPE;
-                    break;
-                case FADD:
-                case FSUB:
-                case FMUL:
-                case FDIV:
-                case FREM:
-                    type = Type.FLOAT_TYPE;
-                    break;
-                case LADD:
-                case LSUB:
-                case LMUL:
-                case LDIV:
-                case LREM:
-                case LSHL:
-                case LSHR:
-                case LUSHR:
-                case LAND:
-                case LOR:
-                case LXOR:
-                    type = Type.LONG_TYPE;
-                    break;
-                case DADD:
-                case DSUB:
-                case DMUL:
-                case DDIV:
-                case DREM:
-                    type = Type.DOUBLE_TYPE;
-                    break;
-                case IF_ICMPEQ:
-                case IF_ICMPNE:
-                case IF_ICMPLT:
-                case IF_ICMPGE:
-                case IF_ICMPGT:
-                case IF_ICMPLE:
-                case IF_ACMPEQ:
-                case IF_ACMPNE:
-                case PUTFIELD:
-                    type = Type.VOID_TYPE;
-                    break;
-                default:
-                    throw new Error("Internal error.");
-            }
-            return new FlowValue(Arrays.asList(value1, value2), type, insn);
-        });
-        if (result.getType() == Type.VOID_TYPE) {
-            return null;
+        int size = 1;
+        TypeSupplier type;
+        switch (insn.getOpcode()) {
+            case LALOAD:
+            case DALOAD:
+                size = 2;
+            case IALOAD:
+            case FALOAD:
+            case AALOAD:
+            case BALOAD:
+            case CALOAD:
+            case SALOAD:
+                type = inputs -> inputs[0].getCurrentType().getElementType();
+                break;
+            case IADD:
+            case ISUB:
+            case IMUL:
+            case IDIV:
+            case IREM:
+            case ISHL:
+            case ISHR:
+            case IUSHR:
+            case IAND:
+            case IOR:
+            case IXOR:
+            case LCMP:
+            case FCMPL:
+            case FCMPG:
+            case DCMPL:
+            case DCMPG:
+                type = inputs -> Type.INT_TYPE;
+                break;
+            case FADD:
+            case FSUB:
+            case FMUL:
+            case FDIV:
+            case FREM:
+                type = inputs -> Type.FLOAT_TYPE;
+                break;
+            case LADD:
+            case LSUB:
+            case LMUL:
+            case LDIV:
+            case LREM:
+            case LSHL:
+            case LSHR:
+            case LUSHR:
+            case LAND:
+            case LOR:
+            case LXOR:
+                size = 2;
+                type = inputs -> Type.LONG_TYPE;
+                break;
+            case DADD:
+            case DSUB:
+            case DMUL:
+            case DDIV:
+            case DREM:
+                size = 2;
+                type = inputs -> Type.DOUBLE_TYPE;
+                break;
+            case IF_ICMPEQ:
+            case IF_ICMPNE:
+            case IF_ICMPLT:
+            case IF_ICMPGE:
+            case IF_ICMPGT:
+            case IF_ICMPLE:
+            case IF_ACMPEQ:
+            case IF_ACMPNE:
+            case PUTFIELD:
+                type = inputs -> Type.VOID_TYPE;
+                break;
+            default:
+                throw new Error("Internal error.");
         }
-        return result;
+        return recordFlow(size, type, insn, value1, value2);
     }
 
     @Override
@@ -362,30 +362,26 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             final FlowValue value1,
             final FlowValue value2,
             final FlowValue value3) {
-        cache.computeIfAbsent(insn, k -> new FlowValue(Arrays.asList(value1, value2, value3), Type.VOID_TYPE, insn));
-        return null;
+        return recordFlow(1, inputs -> Type.VOID_TYPE, insn, value1, value2, value3);
     }
 
     @Override
     public FlowValue naryOperation(
             final AbstractInsnNode insn, final List<? extends FlowValue> values) {
-        FlowValue result = cache.computeIfAbsent(insn, k -> {
-            int opcode = insn.getOpcode();
-            Type type;
-            if (opcode == MULTIANEWARRAY) {
+        int opcode = insn.getOpcode();
+        Type type;
+        switch (opcode) {
+            case MULTIANEWARRAY:
                 type = Type.getType(((MultiANewArrayInsnNode) insn).desc);
-            } else if (opcode == INVOKEDYNAMIC) {
+                break;
+            case INVOKEDYNAMIC:
                 type = Type.getReturnType(((InvokeDynamicInsnNode) insn).desc);
-            } else {
+                break;
+            default:
                 type = Type.getReturnType(((MethodInsnNode) insn).desc);
-            }
-            //noinspection unchecked
-            return new FlowValue((List<FlowValue>) values, type, insn);
-        });
-        if (result.getType() == Type.VOID_TYPE) {
-            return null;
+                break;
         }
-        return result;
+        return recordFlow(type.getSize(), inputs -> type, insn, values.toArray(new FlowValue[0]));
     }
 
     @Override
@@ -396,7 +392,17 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
 
     @Override
     public FlowValue merge(final FlowValue value1, final FlowValue value2) {
-        if (value1 == value2) return value1;
-        return FlowValue.NULL;
+        return value1.mergeWith(value2);
+    }
+
+    private FlowValue recordFlow(int size, TypeSupplier type, AbstractInsnNode insn, FlowValue... inputs) {
+        FlowValue cached = cache.get(insn);
+        if (cached == null) {
+            cached = new FlowValue(size, type, insn, inputs);
+            cache.put(insn, cached);
+        } else {
+            cached.mergeInputs(inputs);
+        }
+        return cached;
     }
 }

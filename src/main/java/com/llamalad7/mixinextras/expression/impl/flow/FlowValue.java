@@ -8,20 +8,27 @@ import org.objectweb.asm.tree.analysis.Value;
 import java.util.*;
 
 public class FlowValue implements Value {
-    public static final FlowValue NULL = new FlowValue(Collections.emptyList(), Type.VOID_TYPE, null);
-    private final List<FlowValue> parents;
-    private final Set<Pair<FlowValue, Integer>> next = new HashSet<>();
-    private final Type type;
+    private final int size;
+    private final TypeSupplier typeComputer;
+    private final TypeSupplier type;
     private final AbstractInsnNode insn;
+    private final FlowValue[] parents;
+    private final Set<Pair<FlowValue, Integer>> next = new HashSet<>(1);
 
-    public FlowValue(FlowValue parent, Type type, AbstractInsnNode insn) {
-        this(Collections.singletonList(parent), type, insn);
+    public FlowValue(int size, TypeSupplier typeComputer, AbstractInsnNode insn, FlowValue... parents) {
+        this.size = size;
+        this.typeComputer = typeComputer;
+        this.type = typeComputer.memoize();
+        this.insn = insn;
+        this.parents = parents;
     }
 
-    public FlowValue(List<FlowValue> parents, Type type, AbstractInsnNode insn) {
-        this.parents = parents;
-        this.type = type;
+    protected FlowValue(int size, AbstractInsnNode insn, FlowValue... parents) {
+        this.size = size;
+        this.typeComputer = this::computeType;
+        this.type = typeComputer.memoize();
         this.insn = insn;
+        this.parents = parents;
     }
 
     public void addChild(FlowValue value, int index) {
@@ -29,18 +36,26 @@ public class FlowValue implements Value {
     }
 
     public void finish() {
-        for (int i = 0; i < parents.size(); i++) {
-            parents.get(i).addChild(this, i);
+        for (int i = 0; i < parents.length; i++) {
+            parents[i].addChild(this, i);
         }
     }
 
     @Override
-    public int getSize() {
-        return type.getSize();
+    public final int getSize() {
+        return size;
     }
 
-    public Type getType() {
-        return type;
+    protected Type computeType(FlowValue... inputs) {
+        return typeComputer.get(inputs);
+    }
+
+    public final Type getType() {
+        return type.get(parents);
+    }
+
+    public final Type getCurrentType() {
+        return computeType(parents);
     }
 
     public AbstractInsnNode getInsn() {
@@ -52,10 +67,29 @@ public class FlowValue implements Value {
     }
 
     public FlowValue getInput(int index) {
-        return parents.get(index);
+        return parents[index];
     }
 
     public int inputCount() {
-        return parents.size();
+        return parents.length;
+    }
+
+    public Set<FlowValue> getComponents() {
+        return Collections.singleton(this);
+    }
+
+    public FlowValue mergeWith(FlowValue other) {
+        if (this == other) {
+            return this;
+        }
+        Set<FlowValue> newComponents = new HashSet<>(getComponents());
+        newComponents.addAll(other.getComponents());
+        return new ComplexFlowValue(size, newComponents);
+    }
+
+    public void mergeInputs(FlowValue[] newInputs) {
+        for (int i = 0; i < parents.length; i++) {
+            parents[i] = parents[i].mergeWith(newInputs[i]);
+        }
     }
 }

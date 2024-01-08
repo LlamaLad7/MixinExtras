@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.point;
 
 import com.llamalad7.mixinextras.expression.Pool;
 import com.llamalad7.mixinextras.expression.impl.ast.expressions.Expression;
+import com.llamalad7.mixinextras.expression.impl.flow.ComplexDataException;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
@@ -105,8 +106,11 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                 if (flow == null) {
                     continue;
                 }
-                if (expr.matches(flow, pool, sink)) {
-                    result.addAll(captured);
+                try {
+                    if (expr.matches(flow, pool, sink)) {
+                        result.addAll(captured);
+                    }
+                } catch (ComplexDataException ignored) {
                 }
             }
         }
