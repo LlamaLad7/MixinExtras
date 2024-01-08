@@ -10,7 +10,10 @@ import org.spongepowered.asm.util.asm.ASM;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.*;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -38,12 +41,12 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
     @Override
     public FlowValue newValue(final Type type) {
         if (type == null) {
-            return DummyFlowValue.UNINITIALIZED;
+            return ComplexFlowValue.UNINITIALIZED;
         }
         if (type == Type.VOID_TYPE) {
             return null;
         }
-        return new DummyFlowValue(type);
+        return new ComplexFlowValue(type);
     }
 
     @Override
@@ -125,7 +128,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             default:
                 throw new Error("Internal error.");
         }
-        return recordFlow(type.getSize(), inputs -> type, insn);
+        return recordFlow(type, insn);
     }
 
     @Override
@@ -144,23 +147,19 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case FSTORE:
             case DSTORE:
             case ASTORE:
-                if (value instanceof DummyFlowValue) {
-                    // Exception variable
-                    value = new ComplexFlowValue(1, Collections.singleton(value));
-                }
-                recordFlow(1, inputs -> Type.VOID_TYPE, insn, value);
-                return new DummyFlowValue(value.getCurrentType());
+                recordFlow(Type.VOID_TYPE, insn, value);
+                return new ComplexFlowValue(value.getType());
         }
         VarInsnNode varNode = (VarInsnNode) insn;
         LocalVariableNode local = Locals.getLocalVariableAt(classNode, methodNode, insn, varNode.var);
         Type type;
         if (local == null || local.desc == null) {
             System.err.println("Failed to find local variable type");
-            type = value.getCurrentType();
+            type = value.getType();
         } else {
             type = Type.getType(local.desc);
         }
-        return recordFlow(type.getSize(), inputs -> type, insn);
+        return recordFlow(type, insn);
     }
 
     @Override
@@ -267,30 +266,28 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 type = Type.BOOLEAN_TYPE;
                 break;
             case IINC:
-                recordFlow(1, inputs -> Type.VOID_TYPE, insn);
-                return new DummyFlowValue(Type.INT_TYPE);
+                recordFlow(Type.VOID_TYPE, insn);
+                return new ComplexFlowValue(Type.INT_TYPE);
             default:
                 throw new Error("Internal error.");
         }
-        return recordFlow(type.getSize(), inputs -> type, insn, value);
+        return recordFlow(type, insn, value);
     }
 
     @Override
     public FlowValue binaryOperation(
             final AbstractInsnNode insn, final FlowValue value1, final FlowValue value2) {
-        int size = 1;
-        TypeSupplier type;
+        Type type;
         switch (insn.getOpcode()) {
             case LALOAD:
             case DALOAD:
-                size = 2;
             case IALOAD:
             case FALOAD:
             case AALOAD:
             case BALOAD:
             case CALOAD:
             case SALOAD:
-                type = inputs -> inputs[0].getCurrentType().getElementType();
+                type = value1.getType().getElementType();
                 break;
             case IADD:
             case ISUB:
@@ -308,14 +305,14 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case FCMPG:
             case DCMPL:
             case DCMPG:
-                type = inputs -> Type.INT_TYPE;
+                type = Type.INT_TYPE;
                 break;
             case FADD:
             case FSUB:
             case FMUL:
             case FDIV:
             case FREM:
-                type = inputs -> Type.FLOAT_TYPE;
+                type = Type.FLOAT_TYPE;
                 break;
             case LADD:
             case LSUB:
@@ -328,16 +325,14 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case LAND:
             case LOR:
             case LXOR:
-                size = 2;
-                type = inputs -> Type.LONG_TYPE;
+                type = Type.LONG_TYPE;
                 break;
             case DADD:
             case DSUB:
             case DMUL:
             case DDIV:
             case DREM:
-                size = 2;
-                type = inputs -> Type.DOUBLE_TYPE;
+                type = Type.DOUBLE_TYPE;
                 break;
             case IF_ICMPEQ:
             case IF_ICMPNE:
@@ -348,12 +343,12 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case IF_ACMPEQ:
             case IF_ACMPNE:
             case PUTFIELD:
-                type = inputs -> Type.VOID_TYPE;
+                type = Type.VOID_TYPE;
                 break;
             default:
                 throw new Error("Internal error.");
         }
-        return recordFlow(size, type, insn, value1, value2);
+        return recordFlow(type, insn, value1, value2);
     }
 
     @Override
@@ -362,7 +357,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             final FlowValue value1,
             final FlowValue value2,
             final FlowValue value3) {
-        return recordFlow(1, inputs -> Type.VOID_TYPE, insn, value1, value2, value3);
+        return recordFlow(Type.VOID_TYPE, insn, value1, value2, value3);
     }
 
     @Override
@@ -381,7 +376,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 type = Type.getReturnType(((MethodInsnNode) insn).desc);
                 break;
         }
-        return recordFlow(type.getSize(), inputs -> type, insn, values.toArray(new FlowValue[0]));
+        return recordFlow(type, insn, values.toArray(new FlowValue[0]));
     }
 
     @Override
@@ -395,10 +390,10 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         return value1.mergeWith(value2);
     }
 
-    private FlowValue recordFlow(int size, TypeSupplier type, AbstractInsnNode insn, FlowValue... inputs) {
+    private FlowValue recordFlow(Type type, AbstractInsnNode insn, FlowValue... inputs) {
         FlowValue cached = cache.get(insn);
         if (cached == null) {
-            cached = new FlowValue(size, type, insn, inputs);
+            cached = new FlowValue(type, insn, inputs);
             cache.put(insn, cached);
         } else {
             cached.mergeInputs(inputs);

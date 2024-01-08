@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
+import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -8,25 +9,13 @@ import org.objectweb.asm.tree.analysis.Value;
 import java.util.*;
 
 public class FlowValue implements Value {
-    private final int size;
-    private final TypeSupplier typeComputer;
-    private final TypeSupplier type;
+    private final Type type;
     private final AbstractInsnNode insn;
     private final FlowValue[] parents;
     private final Set<Pair<FlowValue, Integer>> next = new HashSet<>(1);
 
-    public FlowValue(int size, TypeSupplier typeComputer, AbstractInsnNode insn, FlowValue... parents) {
-        this.size = size;
-        this.typeComputer = typeComputer;
-        this.type = typeComputer.memoize();
-        this.insn = insn;
-        this.parents = parents;
-    }
-
-    protected FlowValue(int size, AbstractInsnNode insn, FlowValue... parents) {
-        this.size = size;
-        this.typeComputer = this::computeType;
-        this.type = typeComputer.memoize();
+    public FlowValue(Type type, AbstractInsnNode insn, FlowValue... parents) {
+        this.type = type;
         this.insn = insn;
         this.parents = parents;
     }
@@ -43,19 +32,11 @@ public class FlowValue implements Value {
 
     @Override
     public final int getSize() {
-        return size;
-    }
-
-    protected Type computeType(FlowValue... inputs) {
-        return typeComputer.get(inputs);
+        return type.getSize();
     }
 
     public final Type getType() {
-        return type.get(parents);
-    }
-
-    public final Type getCurrentType() {
-        return computeType(parents);
+        return type;
     }
 
     public AbstractInsnNode getInsn() {
@@ -74,17 +55,11 @@ public class FlowValue implements Value {
         return parents.length;
     }
 
-    public Set<FlowValue> getComponents() {
-        return Collections.singleton(this);
-    }
-
     public FlowValue mergeWith(FlowValue other) {
-        if (this == other) {
+        if (this.equals(other)) {
             return this;
         }
-        Set<FlowValue> newComponents = new HashSet<>(getComponents());
-        newComponents.addAll(other.getComponents());
-        return new ComplexFlowValue(size, newComponents);
+        return new ComplexFlowValue(ASMUtils.getCommonSupertype(getType(), other.getType()));
     }
 
     public void mergeInputs(FlowValue[] newInputs) {

@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.sugar;
 
-import com.llamalad7.mixinextras.expression.Definitions;
+import com.llamalad7.mixinextras.expression.Definition;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -54,7 +54,7 @@ public @interface Local {
     boolean argsOnly() default false;
 
     /**
-     * Only for use in {@link Definitions}s.
+     * Only for use in {@link Definition}s.
      */
     Class<?> type() default void.class;
 }
