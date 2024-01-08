@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.ap;
 
 import com.llamalad7.mixinextras.expression.Expression;
+import com.llamalad7.mixinextras.expression.Expressions;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValueInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReceiverInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReturnValueInjectionInfo;
@@ -64,8 +65,16 @@ public class MixinExtrasAP extends AbstractProcessor {
     private void processExpressions(RoundEnvironment roundEnv) {
         for (Element elem : roundEnv.getElementsAnnotatedWith(Expression.class)) {
             Expression ann = elem.getAnnotation(Expression.class);
-            for (String expr : ann.value()) {
-                ExtraMixinInfoWriter.offerExpression(elem, expr);
+            for (String str : ann.value()) {
+                ExtraMixinInfoWriter.offerExpression(elem, str);
+            }
+        }
+        for (Element elem : roundEnv.getElementsAnnotatedWith(Expressions.class)) {
+            Expressions ann = elem.getAnnotation(Expressions.class);
+            for (Expression expr : ann.value()) {
+                for (String str : expr.value()) {
+                    ExtraMixinInfoWriter.offerExpression(elem, str);
+                }
             }
         }
     }
@@ -93,7 +102,8 @@ public class MixinExtrasAP extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         List<Class<? extends Annotation>> types = Arrays.asList(
-                Expression.class
+                Expression.class,
+                Expressions.class
         );
         return types.stream().map(Class::getName).collect(Collectors.toSet());
     }

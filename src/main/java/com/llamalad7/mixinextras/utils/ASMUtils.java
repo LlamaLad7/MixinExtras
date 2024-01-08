@@ -1,13 +1,18 @@
 package com.llamalad7.mixinextras.utils;
 
+import com.llamalad7.mixinextras.expression.Definition;
+import com.llamalad7.mixinextras.expression.Definitions;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.ClassInfo;
+import org.spongepowered.asm.util.Annotations;
 import org.spongepowered.asm.util.Constants;
 
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Repeatable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -198,5 +203,20 @@ public class ASMUtils {
         return Type.getType(
                 StringUtils.repeat('[', dimensions) + element.getDescriptor()
         );
+    }
+
+    public static AnnotationNode getRepeatedAnnotation(MethodNode method, Class<? extends Annotation> single) {
+        Class<? extends Annotation> container = single.getAnnotation(Repeatable.class).value();
+        AnnotationNode repeated = Annotations.getInvisible(method, container);
+        if (repeated != null) {
+            return repeated;
+        }
+        AnnotationNode individual = Annotations.getInvisible(method, single);
+        if (individual == null) {
+            return null;
+        }
+        AnnotationNode result = new AnnotationNode(Type.getDescriptor(container));
+        result.visit("value", individual);
+        return result;
     }
 }
