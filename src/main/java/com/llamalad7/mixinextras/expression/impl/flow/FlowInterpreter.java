@@ -287,7 +287,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case BALOAD:
             case CALOAD:
             case SALOAD:
-                type = value1.getType().getElementType();
+                type = Type.getType(value1.getType().getDescriptor().substring(1));
                 break;
             case IADD:
             case ISUB:
