@@ -182,7 +182,7 @@ public class ASMUtils {
             }
             return arrayType(OBJECT_TYPE, shared);
         }
-        return ClassInfo.getCommonSuperClass(type1, type2).getType();
+        return ClassInfo.getCommonSuperClassOrInterface(type1, type2).getType();
     }
 
     private static boolean isIntLike(Type type) {

@@ -92,7 +92,7 @@ public class ComparisonExpression implements Expression {
                 } else {
                     return false;
                 }
-                if (isComplexComparison(node.getInput(0).getInsn())) {
+                if (isComplexComparison(node.getInput(0))) {
                     // Complex comparisons are similar to `lcmp(a, b) == 0`, for example, but the comparison with zero
                     // should not be considered.
                     return false;
@@ -144,8 +144,11 @@ public class ComparisonExpression implements Expression {
             return true;
         }
 
-        private boolean isComplexComparison(AbstractInsnNode insn) {
-            switch (insn.getOpcode()) {
+        private boolean isComplexComparison(FlowValue node) {
+            if (node.isComplex()) {
+                return false;
+            }
+            switch (node.getInsn().getOpcode()) {
                 case LCMP:
                 case FCMPL:
                 case FCMPG:

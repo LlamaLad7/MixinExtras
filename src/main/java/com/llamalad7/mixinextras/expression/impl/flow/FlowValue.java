@@ -80,4 +80,8 @@ public class FlowValue implements Value {
     private boolean isTypeKnown() {
         return type != null;
     }
+
+    public boolean isComplex() {
+        return insn == null;
+    }
 }

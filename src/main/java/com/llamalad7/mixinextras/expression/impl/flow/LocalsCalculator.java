@@ -4,49 +4,62 @@ import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.BasicValue;
 import org.objectweb.asm.tree.analysis.Interpreter;
-import org.spongepowered.asm.util.Locals;
 import org.spongepowered.asm.util.asm.ASM;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
+import java.util.*;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class FlowInterpreter extends Interpreter<FlowValue> {
-    private final Map<AbstractInsnNode, FlowValue> cache = new IdentityHashMap<>();
-    private final Map<VarInsnNode, Type> localTypes;
+@SuppressWarnings("unchecked")
+class LocalsCalculator extends Interpreter<BasicValue> {
+    private final Map<VarInsnNode, Object> results = new IdentityHashMap<>();
+    private final MethodNode methodNode;
 
-    public FlowInterpreter(ClassNode classNode, MethodNode methodNode) {
-        super(ASM.API_VERSION);
-        this.localTypes = LocalsCalculator.getLocalTypes(classNode, methodNode);
+    public static Map<VarInsnNode, Type> getLocalTypes(ClassNode classNode, MethodNode methodNode) {
+        LocalsCalculator calculator = new LocalsCalculator(methodNode);
+        try {
+            new Analyzer<>(calculator).analyze(classNode.name, methodNode);
+        } catch (AnalyzerException e) {
+            throw new RuntimeException(
+                    String.format(
+                            "Failed to calculate locals for %s::%s%s: ",
+                            classNode.name, methodNode.name, methodNode.desc
+                    ),
+                    e
+            );
+        }
+        for (Map.Entry<VarInsnNode, Object> entry : calculator.results.entrySet()) {
+            if (entry.getValue() instanceof Set) {
+                entry.setValue(((Set<Type>) entry.getValue()).stream().reduce(ASMUtils::getCommonSupertype).get());
+            }
+        }
+        return (Map<VarInsnNode, Type>) (Object) calculator.results;
     }
 
-    public Map<AbstractInsnNode, FlowValue> finish() {
-        for (Map.Entry<AbstractInsnNode, FlowValue> entry : cache.entrySet()) {
-            entry.getValue().finish();
-        }
-        return Collections.unmodifiableMap(cache);
+    LocalsCalculator(MethodNode methodNode) {
+        super(ASM.API_VERSION);
+        this.methodNode = methodNode;
     }
 
     @Override
-    public FlowValue newValue(final Type type) {
-        if (type == null) {
-            return DummyFlowValue.UNINITIALIZED;
-        }
+    public BasicValue newValue(Type type) {
         if (type == Type.VOID_TYPE) {
             return null;
         }
-        return new DummyFlowValue(type);
+        if (type == null) {
+            type = ASMUtils.BOTTOM_TYPE;
+        }
+        return new BasicValue(type);
     }
 
     @Override
-    public FlowValue newOperation(final AbstractInsnNode insn) {
+    public BasicValue newOperation(final AbstractInsnNode insn) {
         Type type;
         switch (insn.getOpcode()) {
             case ACONST_NULL:
@@ -124,35 +137,20 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             default:
                 throw new Error("Internal error.");
         }
-        return recordFlow(type, insn);
+        return new BasicValue(type);
     }
 
     @Override
-    public FlowValue copyOperation(final AbstractInsnNode insn, FlowValue value) {
-        switch (insn.getOpcode()) {
-            case DUP:
-            case DUP_X1:
-            case DUP_X2:
-            case DUP2:
-            case DUP2_X1:
-            case DUP2_X2:
-            case SWAP:
-                return value;
-            case ISTORE:
-            case LSTORE:
-            case FSTORE:
-            case DSTORE:
-            case ASTORE:
-                recordFlow(Type.VOID_TYPE, insn, value);
-                return new DummyFlowValue(value.getType());
+    public BasicValue copyOperation(final AbstractInsnNode insn, BasicValue value) {
+        if (insn.getOpcode() >= ILOAD && insn.getOpcode() <= ALOAD) {
+            VarInsnNode varNode = (VarInsnNode) insn;
+            recordType(varNode, value.getType());
         }
-        VarInsnNode varNode = (VarInsnNode) insn;
-        Type type = localTypes.get(varNode);
-        return recordFlow(type, insn);
+        return value;
     }
 
     @Override
-    public FlowValue unaryOperation(final AbstractInsnNode insn, final FlowValue value) {
+    public BasicValue unaryOperation(final AbstractInsnNode insn, final BasicValue value) {
         Type type;
         switch (insn.getOpcode()) {
             case INEG:
@@ -160,6 +158,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case F2I:
             case D2I:
             case ARRAYLENGTH:
+            case IINC:
                 type = Type.INT_TYPE;
                 break;
             case I2B:
@@ -254,18 +253,15 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case INSTANCEOF:
                 type = Type.BOOLEAN_TYPE;
                 break;
-            case IINC:
-                recordFlow(Type.VOID_TYPE, insn);
-                return new DummyFlowValue(Type.INT_TYPE);
             default:
                 throw new Error("Internal error.");
         }
-        return recordFlow(type, insn, value);
+        return new BasicValue(type);
     }
 
     @Override
-    public FlowValue binaryOperation(
-            final AbstractInsnNode insn, final FlowValue value1, final FlowValue value2) {
+    public BasicValue binaryOperation(
+            final AbstractInsnNode insn, final BasicValue value1, final BasicValue value2) {
         Type type;
         switch (insn.getOpcode()) {
             case LALOAD:
@@ -336,25 +332,26 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 break;
             case AALOAD:
             case BALOAD:
-                return recordComputedFlow(1, inputs -> ASMUtils.getInnerType(inputs[0].getType()), insn, value1, value2);
+                type = ASMUtils.getInnerType(value1.getType());
+                break;
             default:
                 throw new Error("Internal error.");
         }
-        return recordFlow(type, insn, value1, value2);
+        return new BasicValue(type);
     }
 
     @Override
-    public FlowValue ternaryOperation(
+    public BasicValue ternaryOperation(
             final AbstractInsnNode insn,
-            final FlowValue value1,
-            final FlowValue value2,
-            final FlowValue value3) {
-        return recordFlow(Type.VOID_TYPE, insn, value1, value2, value3);
+            final BasicValue value1,
+            final BasicValue value2,
+            final BasicValue value3) {
+        return null;
     }
 
     @Override
-    public FlowValue naryOperation(
-            final AbstractInsnNode insn, final List<? extends FlowValue> values) {
+    public BasicValue naryOperation(
+            final AbstractInsnNode insn, final List<? extends BasicValue> values) {
         int opcode = insn.getOpcode();
         Type type;
         switch (opcode) {
@@ -368,39 +365,57 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 type = Type.getReturnType(((MethodInsnNode) insn).desc);
                 break;
         }
-        return recordFlow(type, insn, values.toArray(new FlowValue[0]));
+        return new BasicValue(type);
     }
 
     @Override
     public void returnOperation(
-            final AbstractInsnNode insn, final FlowValue value, final FlowValue expected) {
+            final AbstractInsnNode insn, final BasicValue value, final BasicValue expected) {
         // Nothing to do.
     }
 
     @Override
-    public FlowValue merge(final FlowValue value1, final FlowValue value2) {
-        return value1.mergeWith(value2);
+    public BasicValue merge(final BasicValue value1, final BasicValue value2) {
+        if (value1.equals(value2)) {
+            return value1;
+        }
+        return new BasicValue(ASMUtils.getCommonSupertype(value1.getType(), value2.getType()));
     }
 
-    private FlowValue recordFlow(Type type, AbstractInsnNode insn, FlowValue... inputs) {
-        FlowValue cached = cache.get(insn);
-        if (cached == null) {
-            cached = new FlowValue(type, insn, inputs);
-            cache.put(insn, cached);
-        } else {
-            cached.mergeInputs(inputs);
+    private void recordType(VarInsnNode insn, Type type) {
+        Object cached = results.get(insn);
+        if (cached instanceof Type) {
+            return;
         }
-        return cached;
+        if (cached instanceof Set) {
+            ((Set<Type>) cached).add(type);
+        }
+        LocalVariableNode local = getLocalVariableAt(insn);
+        results.put(insn, local != null ? Type.getType(local.desc) : new HashSet<>(Collections.singleton(type)));
     }
 
-    private FlowValue recordComputedFlow(int size, Function<FlowValue[], Type> type, AbstractInsnNode insn, FlowValue... inputs) {
-        FlowValue cached = cache.get(insn);
-        if (cached == null) {
-            cached = new ComputedFlowValue(size, type, insn, inputs);
-            cache.put(insn, cached);
-        } else {
-            cached.mergeInputs(inputs);
+    private LocalVariableNode getLocalVariableAt(VarInsnNode varInsn) {
+        int pos = methodNode.instructions.indexOf(varInsn);
+        int var = varInsn.var;
+
+        if (methodNode.localVariables == null || methodNode.localVariables.isEmpty()) {
+            return null;
         }
-        return cached;
+        LocalVariableNode localVariableNode = null;
+
+        for (LocalVariableNode local : methodNode.localVariables) {
+            if (local.index != var || local.desc == null) {
+                continue;
+            }
+            if (isOpcodeInRange(methodNode.instructions, local, pos)) {
+                localVariableNode = local;
+            }
+        }
+
+        return localVariableNode;
+    }
+
+    private boolean isOpcodeInRange(InsnList insns, LocalVariableNode local, int pos) {
+        return insns.indexOf(local.start) <= pos && insns.indexOf(local.end) > pos;
     }
 }
