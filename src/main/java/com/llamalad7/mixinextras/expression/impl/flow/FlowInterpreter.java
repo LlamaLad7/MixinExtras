@@ -4,8 +4,9 @@ import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Interpreter;
-import org.spongepowered.asm.util.Locals;
 import org.spongepowered.asm.util.asm.ASM;
 
 import java.lang.invoke.MethodHandle;
@@ -22,9 +23,19 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
     private final Map<AbstractInsnNode, FlowValue> cache = new IdentityHashMap<>();
     private final Map<VarInsnNode, Type> localTypes;
 
-    public FlowInterpreter(ClassNode classNode, MethodNode methodNode) {
+    private FlowInterpreter(ClassNode classNode, MethodNode methodNode) {
         super(ASM.API_VERSION);
         this.localTypes = LocalsCalculator.getLocalTypes(classNode, methodNode);
+    }
+
+    public static Map<AbstractInsnNode, FlowValue> analyze(ClassNode classNode, MethodNode methodNode) {
+        FlowInterpreter interpreter = new FlowInterpreter(classNode, methodNode);
+        try {
+            new Analyzer<>(interpreter).analyze(classNode.name, methodNode);
+        } catch (AnalyzerException e) {
+            throw new RuntimeException("Failed to analyze value flow: ", e);
+        }
+        return interpreter.finish();
     }
 
     public Map<AbstractInsnNode, FlowValue> finish() {

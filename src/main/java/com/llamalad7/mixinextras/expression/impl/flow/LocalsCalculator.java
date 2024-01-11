@@ -42,7 +42,7 @@ class LocalsCalculator extends Interpreter<BasicValue> {
         return (Map<VarInsnNode, Type>) (Object) calculator.results;
     }
 
-    LocalsCalculator(MethodNode methodNode) {
+    private LocalsCalculator(MethodNode methodNode) {
         super(ASM.API_VERSION);
         this.methodNode = methodNode;
     }

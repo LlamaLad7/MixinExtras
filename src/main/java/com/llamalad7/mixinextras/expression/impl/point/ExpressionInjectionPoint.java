@@ -52,15 +52,10 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         }
         long startTime = System.currentTimeMillis();
         Target target = getTarget(insns);
-        Map<AbstractInsnNode, FlowValue> flows = TargetDecorations.getOrPut(target, "ValueFlow", () -> {
-            FlowInterpreter interpreter = new FlowInterpreter(CURRENT_INFO.getClassNode(), target.method);
-            try {
-                new Analyzer<>(interpreter).analyze(CURRENT_INFO.getClassNode().name, target.method);
-            } catch (AnalyzerException e) {
-                throw new RuntimeException("Failed to analyze value flow: ", e);
-            }
-            return interpreter.finish();
-        });
+        Map<AbstractInsnNode, FlowValue> flows =
+                TargetDecorations.getOrPut(target, "ValueFlow",
+                        () -> FlowInterpreter.analyze(CURRENT_INFO.getClassNode(), target.method)
+                );
         AnnotationNode poolAnnotation = ASMUtils.getRepeatedAnnotation(CURRENT_INFO.getMethod(), Definition.class);
         IdentifierPool pool = new IdentifierPool(target, CURRENT_INFO, poolAnnotation);
         Set<AbstractInsnNode> result = new HashSet<>();
