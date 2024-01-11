@@ -6,12 +6,15 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.analysis.Value;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FlowValue implements Value {
     private final Type type;
     private final AbstractInsnNode insn;
-    private final FlowValue[] parents;
+    protected final FlowValue[] parents;
     private final Set<Pair<FlowValue, Integer>> next = new HashSet<>(1);
 
     public FlowValue(Type type, AbstractInsnNode insn, FlowValue... parents) {
@@ -31,11 +34,11 @@ public class FlowValue implements Value {
     }
 
     @Override
-    public final int getSize() {
+    public int getSize() {
         return type.getSize();
     }
 
-    public final Type getType() {
+    public Type getType() {
         return type;
     }
 
@@ -59,12 +62,22 @@ public class FlowValue implements Value {
         if (this.equals(other)) {
             return this;
         }
-        return new ComplexFlowValue(ASMUtils.getCommonSupertype(getType(), other.getType()));
+        if (other instanceof ComplexFlowValue) {
+            return other.mergeWith(this);
+        }
+        if (this.isTypeKnown() && other.isTypeKnown()) {
+            return new DummyFlowValue(ASMUtils.getCommonSupertype(getType(), other.getType()));
+        }
+        return new ComplexFlowValue(getSize(), new HashSet<>(Arrays.asList(this, other)));
     }
 
     public void mergeInputs(FlowValue[] newInputs) {
         for (int i = 0; i < parents.length; i++) {
             parents[i] = parents[i].mergeWith(newInputs[i]);
         }
+    }
+
+    private boolean isTypeKnown() {
+        return type != null;
     }
 }

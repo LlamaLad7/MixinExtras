@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -41,12 +42,12 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
     @Override
     public FlowValue newValue(final Type type) {
         if (type == null) {
-            return ComplexFlowValue.UNINITIALIZED;
+            return DummyFlowValue.UNINITIALIZED;
         }
         if (type == Type.VOID_TYPE) {
             return null;
         }
-        return new ComplexFlowValue(type);
+        return new DummyFlowValue(type);
     }
 
     @Override
@@ -54,7 +55,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         Type type;
         switch (insn.getOpcode()) {
             case ACONST_NULL:
-                type = ASMUtils.NULL_TYPE;
+                type = ASMUtils.BOTTOM_TYPE;
                 break;
             case ICONST_M1:
             case ICONST_0:
@@ -148,7 +149,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case DSTORE:
             case ASTORE:
                 recordFlow(Type.VOID_TYPE, insn, value);
-                return new ComplexFlowValue(value.getType());
+                return new DummyFlowValue(value.getType());
         }
         VarInsnNode varNode = (VarInsnNode) insn;
         LocalVariableNode local = Locals.getLocalVariableAt(classNode, methodNode, insn, varNode.var);
@@ -267,7 +268,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 break;
             case IINC:
                 recordFlow(Type.VOID_TYPE, insn);
-                return new ComplexFlowValue(Type.INT_TYPE);
+                return new DummyFlowValue(Type.INT_TYPE);
             default:
                 throw new Error("Internal error.");
         }
@@ -280,15 +281,28 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         Type type;
         switch (insn.getOpcode()) {
             case LALOAD:
-            case DALOAD:
-            case IALOAD:
-            case FALOAD:
-            case AALOAD:
-            case BALOAD:
-            case CALOAD:
-            case SALOAD:
-                type = Type.getType(value1.getType().getDescriptor().substring(1));
+            case LADD:
+            case LSUB:
+            case LMUL:
+            case LDIV:
+            case LREM:
+            case LSHL:
+            case LSHR:
+            case LUSHR:
+            case LAND:
+            case LOR:
+            case LXOR:
+                type = Type.LONG_TYPE;
                 break;
+            case DALOAD:
+            case DADD:
+            case DSUB:
+            case DMUL:
+            case DDIV:
+            case DREM:
+                type = Type.DOUBLE_TYPE;
+                break;
+            case IALOAD:
             case IADD:
             case ISUB:
             case IMUL:
@@ -307,6 +321,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case DCMPG:
                 type = Type.INT_TYPE;
                 break;
+            case FALOAD:
             case FADD:
             case FSUB:
             case FMUL:
@@ -314,25 +329,11 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case FREM:
                 type = Type.FLOAT_TYPE;
                 break;
-            case LADD:
-            case LSUB:
-            case LMUL:
-            case LDIV:
-            case LREM:
-            case LSHL:
-            case LSHR:
-            case LUSHR:
-            case LAND:
-            case LOR:
-            case LXOR:
-                type = Type.LONG_TYPE;
+            case CALOAD:
+                type = Type.CHAR_TYPE;
                 break;
-            case DADD:
-            case DSUB:
-            case DMUL:
-            case DDIV:
-            case DREM:
-                type = Type.DOUBLE_TYPE;
+            case SALOAD:
+                type = Type.SHORT_TYPE;
                 break;
             case IF_ICMPEQ:
             case IF_ICMPNE:
@@ -345,6 +346,9 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             case PUTFIELD:
                 type = Type.VOID_TYPE;
                 break;
+            case AALOAD:
+            case BALOAD:
+                return recordComputedFlow(1, inputs -> ASMUtils.getInnerType(inputs[0].getType()), insn, value1, value2);
             default:
                 throw new Error("Internal error.");
         }
@@ -394,6 +398,17 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         FlowValue cached = cache.get(insn);
         if (cached == null) {
             cached = new FlowValue(type, insn, inputs);
+            cache.put(insn, cached);
+        } else {
+            cached.mergeInputs(inputs);
+        }
+        return cached;
+    }
+
+    private FlowValue recordComputedFlow(int size, Function<FlowValue[], Type> type, AbstractInsnNode insn, FlowValue... inputs) {
+        FlowValue cached = cache.get(insn);
+        if (cached == null) {
+            cached = new ComputedFlowValue(size, type, insn, inputs);
             cache.put(insn, cached);
         } else {
             cached.mergeInputs(inputs);

@@ -1,7 +1,5 @@
 package com.llamalad7.mixinextras.utils;
 
-import com.llamalad7.mixinextras.expression.Definition;
-import com.llamalad7.mixinextras.expression.Definitions;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -19,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class ASMUtils {
     public static final Type OBJECT_TYPE = Type.getType(Object.class);
-    public static final Type NULL_TYPE = Type.getObjectType("null");
+    public static final Type BOTTOM_TYPE = Type.getObjectType("null");
 
     public static String annotationToString(AnnotationNode annotation) {
         StringBuilder builder = new StringBuilder("@").append(typeToString(Type.getType(annotation.desc)));
@@ -145,10 +143,10 @@ public class ASMUtils {
     }
 
     public static Type getCommonSupertype(Type type1, Type type2) {
-        if (type1.equals(type2) || type2.equals(NULL_TYPE)) {
+        if (type1.equals(type2) || type2.equals(BOTTOM_TYPE)) {
             return type1;
         }
-        if (type1.equals(NULL_TYPE)) {
+        if (type1.equals(BOTTOM_TYPE)) {
             return type2;
         }
         if (isIntLike(type1) && isIntLike(type2)) {
@@ -203,6 +201,13 @@ public class ASMUtils {
         return Type.getType(
                 StringUtils.repeat('[', dimensions) + element.getDescriptor()
         );
+    }
+
+    public static Type getInnerType(Type arrayType) {
+        if (arrayType.equals(ASMUtils.BOTTOM_TYPE)) {
+            return ASMUtils.BOTTOM_TYPE;
+        }
+        return Type.getType(arrayType.getDescriptor().substring(1));
     }
 
     public static AnnotationNode getRepeatedAnnotation(MethodNode method, Class<? extends Annotation> single) {

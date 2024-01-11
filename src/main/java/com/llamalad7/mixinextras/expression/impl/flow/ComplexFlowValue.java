@@ -1,13 +1,20 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
+import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-public class ComplexFlowValue extends FlowValue {
-    public static final FlowValue UNINITIALIZED = new ComplexFlowValue(Type.VOID_TYPE);
+import java.util.HashSet;
+import java.util.Set;
 
-    public ComplexFlowValue(Type type) {
-        super(type, null, (FlowValue[]) null);
+public class ComplexFlowValue extends FlowValue {
+    private final int size;
+    private final Set<FlowValue> sources;
+
+    public ComplexFlowValue(int size, Set<FlowValue> sources) {
+        super(null, null, (FlowValue[]) null);
+        this.size = size;
+        this.sources = sources;
     }
 
     @Override
@@ -38,10 +45,26 @@ public class ComplexFlowValue extends FlowValue {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
+    public int getSize() {
+        return size;
+    }
+
+    @Override
+    public FlowValue mergeWith(FlowValue other) {
+        if (this == other) {
+            return this;
         }
-        return obj instanceof ComplexFlowValue && getType().equals(((ComplexFlowValue) obj).getType());
+        Set<FlowValue> newSources = new HashSet<>(sources);
+        if (other instanceof ComplexFlowValue) {
+            newSources.addAll(((ComplexFlowValue) other).sources);
+        } else {
+            newSources.add(other);
+        }
+        return new ComplexFlowValue(size, newSources);
+    }
+
+    @Override
+    public Type getType() {
+        return sources.stream().map(FlowValue::getType).reduce(ASMUtils::getCommonSupertype).get();
     }
 }
