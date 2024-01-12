@@ -13,15 +13,24 @@ import java.util.Objects;
 @SerializedExpressionId("str")
 public class StringLiteralExpression implements SimpleExpression {
     public final String value;
+    private final Integer charValue;
 
     public StringLiteralExpression(String value) {
         this.value = value;
+        if (value.length() == 1) {
+            this.charValue = (int) value.charAt(0);
+        } else {
+            this.charValue = null;
+        }
     }
 
     @Override
     public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         Object cst = Bytecode.getConstant(node.getInsn());
-        return Objects.equals(cst, value) || (!value.isEmpty() && Objects.equals(cst, value.charAt(0)));
+        if (cst == null) {
+            return false;
+        }
+        return cst.equals(value) || cst.equals(charValue);
     }
 
     @Override
