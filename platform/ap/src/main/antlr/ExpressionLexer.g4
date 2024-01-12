@@ -48,13 +48,13 @@ Identifier
    ;
 
 IntLit
-   : [0-9]+
-   | '0x' [0-9a-fA-F]+
-   { setText(String.valueOf(Integer.parseInt(getText().substring(2), 16))); }
+   : '-'? [0-9]+
+   | '-'? '0x' [0-9a-fA-F]+
+   { setText(String.valueOf(Integer.parseInt(getText().replace("0x", ""), 16))); }
    ;
 
 DecLit
-   : [0-9]* Dot [0-9]+
+   : '-'? [0-9]* Dot [0-9]+
    ;
 
 Plus
