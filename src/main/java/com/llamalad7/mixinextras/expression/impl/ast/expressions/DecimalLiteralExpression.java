@@ -23,7 +23,7 @@ public class DecimalLiteralExpression implements SimpleExpression {
         if (cst == null) {
             return false;
         }
-        return (cst instanceof Float || cst instanceof Double) && ((Number) cst).doubleValue() == value;
+        return (cst instanceof Float || cst instanceof Double) && String.valueOf(value).equals(cst.toString());
     }
 
     @Override
