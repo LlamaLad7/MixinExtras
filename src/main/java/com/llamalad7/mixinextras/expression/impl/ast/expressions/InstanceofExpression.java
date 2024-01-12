@@ -6,7 +6,7 @@ import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-public class InstanceofExpression implements Expression {
+public class InstanceofExpression implements SimpleExpression {
     private static final long serialVersionUID = 708423533524244884L;
 
     public final Expression expression;

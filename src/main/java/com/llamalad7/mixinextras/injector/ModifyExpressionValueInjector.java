@@ -36,7 +36,9 @@ public class ModifyExpressionValueInjector extends Injector {
             valueNode = ASMUtils.findInitNodeFor(target, (TypeInsnNode) valueNode);
         }
 
-        this.injectValueModifier(target, valueNode, valueType, InjectorUtils.isDupedFactoryRedirect(node), shouldPop, stack);
+        TargetInfo info = new TargetInfo(node);
+
+        this.injectValueModifier(target, valueNode, valueType, info, shouldPop, stack);
     }
 
     private void checkTargetReturnsAValue(Target target, InjectionNode node) {
@@ -55,13 +57,13 @@ public class ModifyExpressionValueInjector extends Injector {
         }
     }
 
-    private void injectValueModifier(Target target, AbstractInsnNode valueNode, Type valueType, boolean isDupedFactoryRedirect, boolean shouldPop, StackExtension stack) {
+    private void injectValueModifier(Target target, AbstractInsnNode valueNode, Type valueType, TargetInfo info, boolean shouldPop, StackExtension stack) {
         final InsnList after = new InsnList();
         this.invokeHandler(valueType, target, after, stack);
         if (shouldPop) {
             after.add(new InsnNode(Opcodes.POP));
         }
-        target.insns.insert(getInsertionPoint(valueNode, isDupedFactoryRedirect), after);
+        target.insns.insert(info.getInsertionPoint(valueNode), after);
     }
 
     private void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
@@ -87,13 +89,6 @@ public class ModifyExpressionValueInjector extends Injector {
         stack.capturedArgs(target.arguments, handler.captureTargetArgs);
 
         this.invokeHandler(after);
-    }
-
-    private AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode, boolean isDupedFactoryRedirect) {
-        if (!isDupedFactoryRedirect) {
-            return valueNode;
-        }
-        return PreviousInjectorInsns.DUPED_FACTORY_REDIRECT.getLast(valueNode);
     }
 
     private Type getReturnType(InjectionNode node) {
@@ -125,5 +120,25 @@ public class ModifyExpressionValueInjector extends Injector {
         }
 
         return null;
+    }
+
+    private static class TargetInfo {
+        public final boolean isDupedFactoryRedirect;
+        public final boolean isDynamicInstanceofRedirect;
+
+        public TargetInfo(InjectionNode node) {
+            this.isDupedFactoryRedirect = InjectorUtils.isDupedFactoryRedirect(node);
+            this.isDynamicInstanceofRedirect = InjectorUtils.isDynamicInstanceofRedirect(node);
+        }
+
+        public AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode) {
+            if (isDupedFactoryRedirect) {
+                return PreviousInjectorInsns.DUPED_FACTORY_REDIRECT.getLast(valueNode);
+            }
+            if (isDynamicInstanceofRedirect) {
+                return PreviousInjectorInsns.DYNAMIC_INSTANCEOF_REDIRECT.getLast(valueNode);
+            }
+            return valueNode;
+        }
     }
 }
