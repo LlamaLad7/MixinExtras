@@ -1,8 +1,7 @@
 lexer grammar ExpressionLexer;
 
 NewLine
-   : '\r\n'
-   | '\n'
+   : ('\r\n' | '\n') -> skip
    ;
 
 WS
