@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
-import com.llamalad7.mixinextras.utils.ASMUtils;
+import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -66,7 +66,7 @@ public class FlowValue implements Value {
             return other.mergeWith(this);
         }
         if (this.isTypeKnown() && other.isTypeKnown()) {
-            return new DummyFlowValue(ASMUtils.getCommonSupertype(getType(), other.getType()));
+            return new DummyFlowValue(TypeUtils.getCommonSupertype(getType(), other.getType()));
         }
         return new ComplexFlowValue(getSize(), new HashSet<>(Arrays.asList(this, other)));
     }

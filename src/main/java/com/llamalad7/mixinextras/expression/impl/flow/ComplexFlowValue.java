@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
-import com.llamalad7.mixinextras.utils.ASMUtils;
+import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -65,6 +65,6 @@ public class ComplexFlowValue extends FlowValue {
 
     @Override
     public Type getType() {
-        return sources.stream().map(FlowValue::getType).reduce(ASMUtils::getCommonSupertype).get();
+        return sources.stream().map(FlowValue::getType).reduce(TypeUtils::getCommonSupertype).get();
     }
 }

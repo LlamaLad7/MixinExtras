@@ -4,8 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.expression.impl.utils.ComplexComparisonInfo;
-import com.llamalad7.mixinextras.utils.ASMUtils;
-import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -103,7 +102,7 @@ public class ComparisonExpression implements Expression {
             Type input;
             boolean isComplex = false;
             if (opcode == directObject || opcode == invertedObject) {
-                input = ASMUtils.OBJECT_TYPE;
+                input = TypeUtils.OBJECT_TYPE;
             } else if (opcode == directInt || opcode == invertedInt) {
                 input = Type.INT_TYPE;
             } else if (opcode == LCMP) {
@@ -118,7 +117,7 @@ public class ComparisonExpression implements Expression {
             } else {
                 return false;
             }
-            if (isWithZero && input != Type.INT_TYPE || isWithNull && input != ASMUtils.OBJECT_TYPE) {
+            if (isWithZero && input != Type.INT_TYPE || isWithNull && input != TypeUtils.OBJECT_TYPE) {
                 return false;
             }
             ComparisonInfo info;

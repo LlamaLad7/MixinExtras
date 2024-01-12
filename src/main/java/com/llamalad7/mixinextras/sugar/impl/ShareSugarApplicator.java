@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.sugar.impl.ref.LocalRefUtils;
 import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.TargetDecorations;
+import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -27,7 +28,7 @@ class ShareSugarApplicator extends SugarApplicator {
 
     @Override
     void validate(Target target, InjectionNodes.InjectionNode node) {
-        innerType = LocalRefUtils.getTargetType(paramType, ASMUtils.OBJECT_TYPE);
+        innerType = LocalRefUtils.getTargetType(paramType, TypeUtils.OBJECT_TYPE);
         if (innerType == paramType) {
             throw new SugarApplicationException("@Share parameter must be some variation of LocalRef.");
         }
