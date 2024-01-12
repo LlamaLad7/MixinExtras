@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionReader;
 import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionWriter;
 import com.llamalad7.mixinextras.expression.impl.serialization.SerializedExpressionId;
 import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -42,7 +43,7 @@ public class ArrayStoreExpression implements Expression {
     @Override
     public void capture(FlowValue node, OutputSink sink) {
         Type arrayType = node.getInput(0).getType();
-        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, arrayType.getElementType()});
+        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, TypeUtils.getInnerType(arrayType)});
         sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.VOID_TYPE);
         Expression.super.capture(node, sink);
     }
