@@ -3,16 +3,19 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionReader;
+import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionWriter;
+import com.llamalad7.mixinextras.expression.impl.serialization.SerializedExpressionId;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 
+import java.io.IOException;
 import java.util.List;
 
+@SerializedExpressionId("new")
 public class InstantiationExpression implements Expression {
-    private static final long serialVersionUID = -5119008925820708327L;
-
     public final Identifier type;
     public final List<Expression> arguments;
 
@@ -41,5 +44,15 @@ public class InstantiationExpression implements Expression {
             }
         }
         return false;
+    }
+
+    @Override
+    public void write(ExpressionWriter writer) throws IOException {
+        writer.writeIdentifier(type);
+        writer.writeExpressions(arguments);
+    }
+
+    public static Expression read(ExpressionReader reader) throws IOException {
+        return new InstantiationExpression(reader.readIdentifier(), reader.readExpressions());
     }
 }

@@ -5,6 +5,6 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.io.Serializable;
 
-public interface Identifier extends Serializable {
+public interface Identifier {
     boolean matches(IdentifierPool pool, AbstractInsnNode insn);
 }

@@ -3,12 +3,16 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionReader;
+import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionWriter;
+import com.llamalad7.mixinextras.expression.impl.serialization.SerializedExpressionId;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-public class CastExpression implements SimpleExpression {
-    private static final long serialVersionUID = -4431553484492491514L;
+import java.io.IOException;
 
+@SerializedExpressionId("as")
+public class CastExpression implements SimpleExpression {
     public final Identifier type;
     public final Expression expression;
 
@@ -40,5 +44,15 @@ public class CastExpression implements SimpleExpression {
                 return type.matches(pool, insn);
         }
         return false;
+    }
+
+    @Override
+    public void write(ExpressionWriter writer) throws IOException {
+        writer.writeIdentifier(type);
+        writer.writeExpression(expression);
+    }
+
+    public static Expression read(ExpressionReader reader) throws IOException {
+        return new CastExpression(reader.readIdentifier(), reader.readExpression());
     }
 }

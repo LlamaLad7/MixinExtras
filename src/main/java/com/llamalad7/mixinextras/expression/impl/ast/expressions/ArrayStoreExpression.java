@@ -2,13 +2,17 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionReader;
+import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionWriter;
+import com.llamalad7.mixinextras.expression.impl.serialization.SerializedExpressionId;
 import com.llamalad7.mixinextras.utils.Decorations;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public class ArrayStoreExpression implements Expression {
-    private static final long serialVersionUID = -3433941561737164358L;
+import java.io.IOException;
 
+@SerializedExpressionId("[]=")
+public class ArrayStoreExpression implements Expression {
     public final Expression arr;
     public final Expression index;
     public final Expression value;
@@ -41,5 +45,16 @@ public class ArrayStoreExpression implements Expression {
         sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, arrayType.getElementType()});
         sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.VOID_TYPE);
         Expression.super.capture(node, sink);
+    }
+
+    @Override
+    public void write(ExpressionWriter writer) throws IOException {
+        writer.writeExpression(arr);
+        writer.writeExpression(index);
+        writer.writeExpression(value);
+    }
+
+    public static Expression read(ExpressionReader reader) throws IOException {
+        return new ArrayStoreExpression(reader.readExpression(), reader.readExpression(), reader.readExpression());
     }
 }

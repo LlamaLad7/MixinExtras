@@ -86,7 +86,7 @@ public class MixinExtrasAP extends AbstractProcessor {
             try {
                 FileObject file = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", fileName);
                 try (OutputStream fileStream = file.openOutputStream()) {
-                    ExtraMixinInfoSerializer.serialize(info, fileStream);
+                    info.write(fileStream);
                 }
             } catch (IOException e) {
                 throw new RuntimeException("Failed to write MixinExtras info file: ", e);

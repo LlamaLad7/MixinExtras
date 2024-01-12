@@ -2,12 +2,16 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionReader;
+import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionWriter;
+import com.llamalad7.mixinextras.expression.impl.serialization.SerializedExpressionId;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-public class BinaryExpression implements SimpleExpression {
-    private static final long serialVersionUID = -4936042279607486241L;
+import java.io.IOException;
 
+@SerializedExpressionId("bin")
+public class BinaryExpression implements SimpleExpression {
     public final Expression left;
     public final Operator operator;
     public final Expression right;
@@ -21,6 +25,17 @@ public class BinaryExpression implements SimpleExpression {
     @Override
     public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
         return operator.matches(node.getInsn()) && inputsMatch(node, pool, sink, left, right);
+    }
+
+    @Override
+    public void write(ExpressionWriter writer) throws IOException {
+        writer.writeExpression(left);
+        writer.writeEnum(operator);
+        writer.writeExpression(right);
+    }
+
+    public static Expression read(ExpressionReader reader) throws IOException {
+        return new BinaryExpression(reader.readExpression(), reader.readEnum(Operator::valueOf), reader.readExpression());
     }
 
     public enum Operator {

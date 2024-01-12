@@ -2,10 +2,14 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionReader;
+import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionWriter;
+import com.llamalad7.mixinextras.expression.impl.serialization.SerializedExpressionId;
 
+import java.io.IOException;
+
+@SerializedExpressionId("@")
 public class CapturingExpression implements SimpleExpression {
-    private static final long serialVersionUID = 4108519745378235418L;
-
     public final Expression expression;
 
     public CapturingExpression(Expression expression) {
@@ -19,5 +23,14 @@ public class CapturingExpression implements SimpleExpression {
             expression.capture(node, sink);
         }
         return matches;
+    }
+
+    @Override
+    public void write(ExpressionWriter writer) throws IOException {
+        writer.writeExpression(expression);
+    }
+
+    public static Expression read(ExpressionReader reader) throws IOException {
+        return new CapturingExpression(reader.readExpression());
     }
 }
