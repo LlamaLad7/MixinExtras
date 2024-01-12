@@ -10,10 +10,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Bytecode;
 
-import java.util.function.Supplier;
-
 public class ModifyExpressionValueInjector extends Injector {
-    private static final MixinExtrasLogger LOGGER = MixinExtrasLogger.get("ModifyExpressionValue");
 
     public ModifyExpressionValueInjector(InjectionInfo info) {
         super(info, "@ModifyExpressionValue");
@@ -64,7 +61,7 @@ public class ModifyExpressionValueInjector extends Injector {
         if (shouldPop) {
             after.add(new InsnNode(Opcodes.POP));
         }
-        target.insns.insert(getInsertionPoint(valueNode, target, isDupedFactoryRedirect), after);
+        target.insns.insert(getInsertionPoint(valueNode, isDupedFactoryRedirect), after);
     }
 
     private void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
@@ -92,26 +89,11 @@ public class ModifyExpressionValueInjector extends Injector {
         this.invokeHandler(after);
     }
 
-    private AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode, Target target, boolean isDupedFactoryRedirect) {
+    private AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode, boolean isDupedFactoryRedirect) {
         if (!isDupedFactoryRedirect) {
             return valueNode;
         }
-        AbstractInsnNode node = InjectorUtils.findFactoryRedirectThrowString(target, valueNode);
-        if (node == null) {
-            return valueNode;
-        }
-        String message = ((String) ((LdcInsnNode) node).cst);
-        Supplier<AbstractInsnNode> failed = () -> {
-            LOGGER.warn(
-                    "Please inform LlamaLad7! Failed to find end of factory redirect throw for '{}'",
-                    message
-            );
-            return valueNode;
-        };
-        if ((node = node.getNext()).getOpcode() != Opcodes.INVOKESPECIAL) return failed.get();
-        if ((node = node.getNext()).getOpcode() != Opcodes.ATHROW) return failed.get();
-        if (!((node = node.getNext()) instanceof LabelNode)) return failed.get();
-        return node;
+        return PreviousInjectorInsns.DUPED_FACTORY_REDIRECT.getLast(valueNode);
     }
 
     private Type getReturnType(InjectionNode node) {

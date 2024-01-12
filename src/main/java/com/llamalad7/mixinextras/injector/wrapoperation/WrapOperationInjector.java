@@ -23,7 +23,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class WrapOperationInjector extends Injector {
@@ -251,22 +250,6 @@ class WrapOperationInjector extends Injector {
                 method.desc,
                 (this.classNode.access & Opcodes.ACC_INTERFACE) != 0
         );
-    }
-
-    @SafeVarargs
-    private final void checkAndMoveNodes(InsnList from, InsnList to, AbstractInsnNode node, Predicate<AbstractInsnNode>... predicates) {
-        AbstractInsnNode current = node.getNext();
-        for (Predicate<AbstractInsnNode> predicate : predicates) {
-            if (!predicate.test(current)) {
-                throw new AssertionError("Failed assertion when wrapping instructions. Please inform LlamaLad7!");
-            }
-            AbstractInsnNode old = current;
-            do {
-                current = current.getNext();
-            } while (current instanceof FrameNode);
-            from.remove(old);
-            to.add(old);
-        }
     }
 
     private Type getReturnType(InjectionNode node) {
@@ -531,31 +514,8 @@ class WrapOperationInjector extends Injector {
             insns.add(new InsnNode(Opcodes.ICONST_0));
             insns.add(new InsnNode(Opcodes.AALOAD));
             insns.add(new InsnNode(Opcodes.SWAP));
-            // Sanity checks for the instructions being moved based on what I expect RedirectInjector to have added.
-            checkAndMoveNodes(
-                    target.insns,
-                    insns,
-                    currentTarget,
-                    it -> it.getOpcode() == Opcodes.DUP,
-                    it -> it.getOpcode() == Opcodes.IFNONNULL,
-                    it -> it.getOpcode() == Opcodes.NEW && ((TypeInsnNode) it).desc.equals(NPE),
-                    it -> it.getOpcode() == Opcodes.DUP,
-                    it -> it instanceof LdcInsnNode && ((LdcInsnNode) it).cst instanceof String,
-                    it -> it.getOpcode() == Opcodes.INVOKESPECIAL && ((MethodInsnNode) it).owner.equals(NPE),
-                    it -> it.getOpcode() == Opcodes.ATHROW,
-                    it -> it instanceof LabelNode,
-                    it -> it.getOpcode() == Opcodes.SWAP,
-                    it -> it.getOpcode() == Opcodes.DUP,
-                    it -> it.getOpcode() == Opcodes.IFNULL,
-                    it -> it.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) it).name.equals("getClass"),
-                    it -> it.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) it).name.equals("isAssignableFrom"),
-                    it -> it.getOpcode() == Opcodes.GOTO,
-                    it -> it instanceof LabelNode,
-                    it -> it.getOpcode() == Opcodes.POP,
-                    it -> it.getOpcode() == Opcodes.POP,
-                    it -> it.getOpcode() == Opcodes.ICONST_0,
-                    it -> it instanceof LabelNode
-            );
+            // We need to encompass all the extra logic added by RedirectInjector
+            PreviousInjectorInsns.DYNAMIC_INSTANCEOF_REDIRECT.moveNodes(target.insns, insns, currentTarget);
         }
 
         @Override
@@ -581,22 +541,8 @@ class WrapOperationInjector extends Injector {
         @Override
         void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
             super.copyNode(insns, paramArrayIndex, loadArgs);
-            AbstractInsnNode ldc = InjectorUtils.findFactoryRedirectThrowString(target, currentTarget);
-            if (ldc == null) return;
             // We need to encompass the null check added by RedirectInjector.
-            checkAndMoveNodes(
-                    target.insns,
-                    insns,
-                    currentTarget,
-                    it -> it.getOpcode() == Opcodes.DUP,
-                    it -> it.getOpcode() == Opcodes.IFNONNULL,
-                    it -> it.getOpcode() == Opcodes.NEW && ((TypeInsnNode) it).desc.equals(NPE),
-                    it -> it.getOpcode() == Opcodes.DUP,
-                    it -> it == ldc,
-                    it -> it.getOpcode() == Opcodes.INVOKESPECIAL && ((MethodInsnNode) it).name.equals("<init>"),
-                    it -> it.getOpcode() == Opcodes.ATHROW,
-                    it -> it instanceof LabelNode
-            );
+            PreviousInjectorInsns.DUPED_FACTORY_REDIRECT.moveNodes(target.insns, insns, currentTarget);
         }
     }
 
@@ -631,18 +577,7 @@ class WrapOperationInjector extends Injector {
             if (isWrapped) {
                 super.copyNode(insns, paramArrayIndex, loadArgs);
                 // Encompass the extra branching we added ourselves
-                Predicate<AbstractInsnNode> is0Or1 = it -> it.getOpcode() == Opcodes.ICONST_0 || it.getOpcode() == Opcodes.ICONST_1;
-                checkAndMoveNodes(
-                        target.insns,
-                        insns,
-                        currentTarget,
-                        it -> it.getOpcode() == Opcodes.IFNE,
-                        is0Or1,
-                        it -> it.getOpcode() == Opcodes.GOTO,
-                        it -> it instanceof LabelNode,
-                        is0Or1,
-                        it -> it instanceof LabelNode
-                );
+                PreviousInjectorInsns.COMPARISON_WRAPPER.moveNodes(target.insns, insns, currentTarget);
                 if (!comparison.jumpOnTrue) {
                     ASMUtils.ifElse(
                             insns,

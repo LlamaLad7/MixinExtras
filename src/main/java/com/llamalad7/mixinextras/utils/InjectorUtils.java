@@ -4,7 +4,6 @@ import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
@@ -18,11 +17,9 @@ import org.spongepowered.asm.util.SignaturePrinter;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 public class InjectorUtils {
-    private static final MixinExtrasLogger LOGGER = MixinExtrasLogger.get("InjectorUtils");
 
     public static boolean isVirtualRedirect(InjectionNode node) {
         return node.isReplaced() && node.hasDecoration("redirector") && node.getCurrentTarget().getOpcode() != Opcodes.INVOKESTATIC;
@@ -58,24 +55,6 @@ public class InjectorUtils {
     public static boolean isDupedFactoryRedirect(InjectionNode node) {
         AbstractInsnNode originalTarget = node.getOriginalTarget();
         return node.isReplaced() && originalTarget.getOpcode() == Opcodes.NEW && !node.hasDecoration(Decorations.WRAPPED) && node.hasDecoration(Decorations.NEW_IS_DUPED);
-    }
-
-    public static AbstractInsnNode findFactoryRedirectThrowString(Target target, AbstractInsnNode start) {
-        for (ListIterator<AbstractInsnNode> it = target.insns.iterator(target.indexOf(start)); it.hasNext(); ) {
-            AbstractInsnNode insn = it.next();
-
-            if (insn instanceof LdcInsnNode) {
-                LdcInsnNode ldc = (LdcInsnNode) insn;
-                if (ldc.cst instanceof String && ((String) ldc.cst).startsWith("@Redirect constructor handler ")) {
-                    return ldc;
-                }
-            }
-        }
-        LOGGER.warn(
-                "Please inform LlamaLad7! Failed to find factory redirect throw string for {}",
-                Bytecode.describeNode(start)
-        );
-        return null;
     }
 
     public static void checkForImmediatePops(Map<Target, List<InjectionNode>> targets) {
