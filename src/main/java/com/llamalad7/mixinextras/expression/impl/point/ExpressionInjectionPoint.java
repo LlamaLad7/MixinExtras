@@ -16,8 +16,6 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.analysis.Analyzer;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.InjectionPoint.AtCode;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
@@ -56,7 +54,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                 TargetDecorations.getOrPut(target, "ValueFlow",
                         () -> FlowInterpreter.analyze(CURRENT_INFO.getClassNode(), target.method)
                 );
-        AnnotationNode poolAnnotation = ASMUtils.getRepeatedAnnotation(CURRENT_INFO.getMethod(), Definition.class);
+        AnnotationNode poolAnnotation = ASMUtils.getRepeatedMEAnnotation(CURRENT_INFO.getMethod(), Definition.class);
         IdentifierPool pool = new IdentifierPool(target, CURRENT_INFO, poolAnnotation);
         Set<AbstractInsnNode> result = new HashSet<>();
         for (Expression expr : parseExpressions()) {
@@ -174,7 +172,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
 
     private List<String> getMatchingExpressions(MethodNode method) {
         List<String> result = new ArrayList<>();
-        AnnotationNode expressions = ASMUtils.getRepeatedAnnotation(method, com.llamalad7.mixinextras.expression.Expression.class);
+        AnnotationNode expressions = ASMUtils.getRepeatedMEAnnotation(method, com.llamalad7.mixinextras.expression.Expression.class);
         for (AnnotationNode expression : Annotations.<AnnotationNode>getValue(expressions, "value", true)) {
             if (Annotations.getValue(expression, "id", "").equals(this.id)) {
                 result.addAll(Annotations.getValue(expression, "value", true));

@@ -2,12 +2,10 @@ package com.llamalad7.mixinextras.ap;
 
 import com.llamalad7.mixinextras.ap.expressions.ExpressionParserFacade;
 import com.llamalad7.mixinextras.utils.info.ExtraMixinInfo;
-import com.llamalad7.mixinextras.utils.info.ExtraMixinInfoSerializer;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;

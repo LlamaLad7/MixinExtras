@@ -9,13 +9,12 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
-import org.spongepowered.asm.util.Annotations;
 
 public class ExpressionInjectorWrapperTransformer implements MixinTransformer {
     @Override
     public void transform(IMixinInfo mixinInfo, ClassNode mixinNode) {
         for (MethodNode method : mixinNode.methods) {
-            if (ASMUtils.getRepeatedAnnotation(method, Expression.class) != null) {
+            if (ASMUtils.getRepeatedMEAnnotation(method, Expression.class) != null) {
                 AnnotationNode ann = InjectionInfo.getInjectorAnnotation(mixinInfo, method);
                 wrapInjectorAnnotation(method, ann);
             }

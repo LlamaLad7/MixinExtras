@@ -1,10 +1,11 @@
 package com.llamalad7.mixinextras.utils;
 
+import com.llamalad7.mixinextras.service.MixinExtrasService;
+import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.injection.struct.Target;
-import org.spongepowered.asm.util.Annotations;
 import org.spongepowered.asm.util.Constants;
 
 import java.lang.annotation.Annotation;
@@ -137,18 +138,36 @@ public class ASMUtils {
         insns.add(end);
     }
 
-    public static AnnotationNode getRepeatedAnnotation(MethodNode method, Class<? extends Annotation> single) {
+    public static AnnotationNode getRepeatedMEAnnotation(MethodNode method, Class<? extends Annotation> single) {
         Class<? extends Annotation> container = single.getAnnotation(Repeatable.class).value();
-        AnnotationNode repeated = Annotations.getInvisible(method, container);
+        AnnotationNode repeated = getInvisibleMEAnnotation(method, container);
         if (repeated != null) {
             return repeated;
         }
-        AnnotationNode individual = Annotations.getInvisible(method, single);
+        AnnotationNode individual = getInvisibleMEAnnotation(method, single);
         if (individual == null) {
             return null;
         }
         AnnotationNode result = new AnnotationNode(Type.getDescriptor(container));
         result.visit("value", individual);
         return result;
+    }
+
+    public static AnnotationNode getInvisibleMEAnnotation(MethodNode method, Class<? extends Annotation> annotation) {
+        return getMEAnnotation(method.invisibleAnnotations, Type.getInternalName(annotation));
+    }
+
+    private static AnnotationNode getMEAnnotation(List<AnnotationNode> annotations, String internalAnnotationName) {
+        String annotationName = "." + StringUtils.substringAfterLast(internalAnnotationName, "/");
+        if (annotations == null) {
+            return null;
+        }
+        for (AnnotationNode annotation : annotations) {
+            String binaryName = Type.getType(annotation.desc).getClassName();
+            if (MixinExtrasService.getInstance().isClassOwned(binaryName) && binaryName.endsWith(annotationName)) {
+                return annotation;
+            }
+        }
+        return null;
     }
 }
