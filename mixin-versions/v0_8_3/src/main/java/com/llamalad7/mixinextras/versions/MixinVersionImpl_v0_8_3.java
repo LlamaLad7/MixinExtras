@@ -2,7 +2,6 @@ package com.llamalad7.mixinextras.versions;
 
 import com.llamalad7.mixinextras.utils.MixinInternals_v0_8_3;
 import org.objectweb.asm.tree.AnnotationNode;
-import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.refmap.IMixinContext;

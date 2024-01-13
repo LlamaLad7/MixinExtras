@@ -7,7 +7,6 @@ import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.spongepowered.asm.mixin.injection.modify.InvalidImplicitDiscriminatorException;
@@ -17,9 +16,6 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Annotations;
-import org.spongepowered.asm.util.Bytecode;
-import org.spongepowered.asm.util.PrettyPrinter;
-import org.spongepowered.asm.util.SignaturePrinter;
 
 import java.util.HashMap;
 import java.util.Map;

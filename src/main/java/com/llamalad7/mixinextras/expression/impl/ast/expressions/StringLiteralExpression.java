@@ -8,7 +8,6 @@ import com.llamalad7.mixinextras.expression.impl.serialization.SerializedExpress
 import org.spongepowered.asm.util.Bytecode;
 
 import java.io.IOException;
-import java.util.Objects;
 
 @SerializedExpressionId("str")
 public class StringLiteralExpression implements SimpleExpression {

@@ -1,7 +1,6 @@
 package com.llamalad7.mixinextras.utils;
 
 import com.llamalad7.mixinextras.wrapper.WrapperInjectionInfo;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
