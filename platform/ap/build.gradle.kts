@@ -7,6 +7,7 @@ dependencies {
     antlr("org.antlr:antlr4:4.13.1")
     api("org.antlr:antlr4-runtime:4.13.1")
     api("org.ow2.asm:asm-debug-all:5.2")
+    implementation("org.spongepowered:mixin:0.8.3")
 }
 
 tasks.withType<AntlrTask> {
