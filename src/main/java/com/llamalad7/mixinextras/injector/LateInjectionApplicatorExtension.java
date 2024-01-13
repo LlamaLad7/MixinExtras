@@ -36,16 +36,14 @@ public class LateInjectionApplicatorExtension implements IExtension {
             return;
         }
         for (List<Runnable[]> queuedInjections : relevant.values()) {
-            if (queuedInjections != null) {
-                for (Runnable[] injection : queuedInjections) {
-                    injection[0].run();
-                }
-                for (Runnable[] injection : queuedInjections) {
-                    injection[1].run();
-                }
-                QUEUED_INJECTIONS.remove(context);
+            for (Runnable[] injection : queuedInjections) {
+                injection[0].run();
+            }
+            for (Runnable[] injection : queuedInjections) {
+                injection[1].run();
             }
         }
+        QUEUED_INJECTIONS.remove(context);
     }
 
     @Override
