@@ -10,7 +10,7 @@ public enum MixinExtrasVersion {
     V0_2_0_BETA_7("0.2.0-beta.7", -3),
     V0_2_0_BETA_8("0.2.0-beta.8", -2),
     V0_2_0_BETA_9("0.2.0-beta.9", -1),
-    V0_3_2("0.3.2", 211);
+    V0_3_3("0.3.3", 212);
 
     public static final MixinExtrasVersion LATEST = values()[values().length - 1];
 
