@@ -5,9 +5,9 @@ import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo;
 import com.llamalad7.mixinextras.utils.MixinExtrasLogger;
 import com.llamalad7.mixinextras.utils.ProxyUtils;
+import org.apache.commons.lang3.ClassUtils;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 
 public interface LateApplyingInjectorInfo {
     void lateInject();
@@ -16,6 +16,8 @@ public interface LateApplyingInjectorInfo {
 
     @SuppressWarnings("unused")
     void wrap(LateApplyingInjectorInfo outer);
+
+    String getLateInjectionType();
 
     /**
      * Will be called by 0.2.0-beta.1 when enqueueing a {@link SugarWrapperInjectionInfo} for a {@link WrapOperation}.
@@ -31,7 +33,7 @@ public interface LateApplyingInjectorInfo {
      * Handles the inner injection info being from a different package to ours.
      */
     static boolean wrap(Object inner, LateApplyingInjectorInfo outer) {
-        Class<?> theirInterface = Arrays.stream(inner.getClass().getInterfaces())
+        Class<?> theirInterface = ClassUtils.getAllInterfaces(inner.getClass()).stream()
                 .filter(it -> it.getName().endsWith(".LateApplyingInjectorInfo")).findFirst().orElse(null);
         if (theirInterface == null || !MixinExtrasService.getInstance().isClassOwned(theirInterface.getName())) {
             return false;
