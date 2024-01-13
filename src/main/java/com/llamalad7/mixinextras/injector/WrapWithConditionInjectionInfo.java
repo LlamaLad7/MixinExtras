@@ -17,7 +17,7 @@ import java.util.List;
 
 @InjectionInfo.AnnotationType(WrapWithCondition.class)
 @HandlerPrefix("wrapWithCondition")
-public class WrapWithConditionInjectionInfo extends MixinExtrasInjectionInfo {
+public class WrapWithConditionInjectionInfo extends MixinExtrasLateInjectionInfo {
     public WrapWithConditionInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
         super(mixin, method, annotation);
     }
@@ -41,6 +41,11 @@ public class WrapWithConditionInjectionInfo extends MixinExtrasInjectionInfo {
                 }
             }
         }
+    }
+
+    @Override
+    public String getLateInjectionType() {
+        return "WrapWithCondition";
     }
 
     private boolean isTypePoppedByInstruction(Type type, AbstractInsnNode insn) {

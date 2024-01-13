@@ -1,7 +1,6 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
-import com.llamalad7.mixinextras.injector.LateApplyingInjectorInfo;
-import com.llamalad7.mixinextras.injector.MixinExtrasInjectionInfo;
+import com.llamalad7.mixinextras.injector.MixinExtrasLateInjectionInfo;
 import com.llamalad7.mixinextras.utils.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -22,9 +21,8 @@ import java.util.Map;
 
 @InjectionInfo.AnnotationType(WrapOperation.class)
 @HandlerPrefix("wrapOperation")
-public class WrapOperationInjectionInfo extends MixinExtrasInjectionInfo implements LateApplyingInjectorInfo {
+public class WrapOperationInjectionInfo extends MixinExtrasLateInjectionInfo {
     private static final MixinExtrasLogger LOGGER = MixinExtrasLogger.get("WrapOperation");
-    private LateApplyingInjectorInfo injectionInfoToQueue = this;
 
     public WrapOperationInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
         super(mixin, method, annotation, determineAtKey(mixin, method, annotation));
@@ -58,30 +56,6 @@ public class WrapOperationInjectionInfo extends MixinExtrasInjectionInfo impleme
     }
 
     @Override
-    public void inject() {
-        WrapOperationApplicatorExtension.offerInjection(this.mixin.getTarget(), injectionInfoToQueue);
-    }
-
-    @Override
-    public void postInject() {
-    }
-
-    @Override
-    public void lateInject() {
-        super.inject();
-    }
-
-    @Override
-    public void latePostInject() {
-        super.postInject();
-    }
-
-    @Override
-    public void wrap(LateApplyingInjectorInfo outer) {
-        this.injectionInfoToQueue = outer;
-    }
-
-    @Override
     protected void parseInjectionPoints(List<AnnotationNode> ats) {
         if (this.atKey.equals("at")) {
             super.parseInjectionPoints(ats);
@@ -93,6 +67,11 @@ public class WrapOperationInjectionInfo extends MixinExtrasInjectionInfo impleme
         for (AnnotationNode at : ats) {
             this.injectionPoints.add(new BeforeConstant(CompatibilityHelper.getMixin(this), at, returnType.getDescriptor()));
         }
+    }
+
+    @Override
+    public String getLateInjectionType() {
+        return "WrapOperation";
     }
 
     private static String determineAtKey(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {

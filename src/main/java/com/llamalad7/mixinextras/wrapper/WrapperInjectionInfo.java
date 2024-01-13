@@ -99,6 +99,18 @@ public abstract class WrapperInjectionInfo extends MixinExtrasInjectionInfo impl
         LateApplyingInjectorInfo.wrap(delegate, outer);
     }
 
+    @Override
+    public String getLateInjectionType() {
+        if (!lateApply) {
+            throw new IllegalStateException("Wrapper was asked for its late injection type but does not have one!");
+        }
+        if (!(delegate instanceof LateApplyingInjectorInfo)) {
+            // Must be from an old relocated instance
+            return "WrapOperation";
+        }
+        return ((LateApplyingInjectorInfo) delegate).getLateInjectionType();
+    }
+
     private void checkDelegate() {
         try {
             if (delegate.getClass().getMethod("inject").getDeclaringClass() != InjectionInfo.class) {

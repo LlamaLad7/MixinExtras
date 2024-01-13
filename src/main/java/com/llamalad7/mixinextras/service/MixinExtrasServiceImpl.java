@@ -1,10 +1,7 @@
 package com.llamalad7.mixinextras.service;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValueInjectionInfo;
-import com.llamalad7.mixinextras.injector.ModifyReceiverInjectionInfo;
-import com.llamalad7.mixinextras.injector.ModifyReturnValueInjectionInfo;
-import com.llamalad7.mixinextras.injector.WrapWithConditionInjectionInfo;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationApplicatorExtension;
+import com.llamalad7.mixinextras.injector.*;
+import com.llamalad7.mixinextras.injector.LateInjectionApplicatorExtension;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
 import com.llamalad7.mixinextras.sugar.impl.SugarPostProcessingExtension;
 import com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo;
@@ -33,7 +30,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     ));
     private final List<IExtension> ownExtensions = Arrays.asList(
             new MixinTransformerExtension(), new ServiceInitializationExtension(this),
-            new WrapOperationApplicatorExtension(), new SugarPostProcessingExtension()
+            new LateInjectionApplicatorExtension(), new SugarPostProcessingExtension()
     );
     private final List<Class<? extends InjectionInfo>> ownInjectors = Arrays.asList(
             ModifyExpressionValueInjectionInfo.class, ModifyReceiverInjectionInfo.class, ModifyReturnValueInjectionInfo.class,

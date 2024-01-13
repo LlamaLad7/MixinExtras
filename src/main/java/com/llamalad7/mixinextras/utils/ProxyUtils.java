@@ -1,8 +1,9 @@
 package com.llamalad7.mixinextras.utils;
 
+import org.apache.commons.lang3.ClassUtils;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
 
 public class ProxyUtils {
     @SuppressWarnings("unchecked")
@@ -11,7 +12,7 @@ public class ProxyUtils {
             return interfaceClass.cast(impl);
         }
         String simpleName = interfaceClass.getSimpleName();
-        if (Arrays.stream(impl.getClass().getInterfaces()).anyMatch(it -> it.getName().endsWith('.' + simpleName))) {
+        if (ClassUtils.getAllInterfaces(impl.getClass()).stream().anyMatch(it -> it.getName().endsWith('.' + simpleName))) {
             return (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class[]{interfaceClass}, (proxy, method, args) -> {
                 Method original = impl.getClass().getMethod(method.getName(), method.getParameterTypes());
                 original.setAccessible(true);
