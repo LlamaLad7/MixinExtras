@@ -15,6 +15,7 @@ import static org.objectweb.asm.Opcodes.*;
 public class TypeUtils {
     public static final Type OBJECT_TYPE = Type.getType(Object.class);
     public static final Type BOTTOM_TYPE = Type.getObjectType("null");
+    public static final Type INTLIKE_TYPE = Type.getObjectType("intlike");
 
     public static Type getNewType(AbstractInsnNode insn) {
         switch (insn.getOpcode()) {
@@ -29,7 +30,7 @@ public class TypeUtils {
             case ICONST_5:
             case BIPUSH:
             case SIPUSH:
-                return Type.INT_TYPE;
+                return INTLIKE_TYPE;
             case LCONST_0:
             case LCONST_1:
                 return Type.LONG_TYPE;
@@ -43,7 +44,7 @@ public class TypeUtils {
             case LDC:
                 Object cst = ((LdcInsnNode) insn).cst;
                 if (cst instanceof Integer) {
-                    return Type.INT_TYPE;
+                    return INTLIKE_TYPE;
                 }
                 if (cst instanceof Float) {
                     return Type.FLOAT_TYPE;
