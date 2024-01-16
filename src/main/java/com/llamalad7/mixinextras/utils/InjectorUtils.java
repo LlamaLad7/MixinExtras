@@ -5,6 +5,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
+import org.spongepowered.asm.mixin.injection.struct.InjectionNodes;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Bytecode;
@@ -68,5 +69,30 @@ public class InjectorUtils {
                 Bytecode.describeNode(start)
         );
         return null;
+    }
+
+    public static void checkForImmediatePops(Map<Target, List<InjectionNode>> targets) {
+        for (List<InjectionNodes.InjectionNode> nodeList : targets.values()) {
+            for (InjectionNodes.InjectionNode node : nodeList) {
+                AbstractInsnNode currentTarget = node.getCurrentTarget();
+                if (currentTarget instanceof MethodInsnNode) {
+                    Type returnType = Type.getReturnType(((MethodInsnNode) currentTarget).desc);
+                    if (isTypePoppedByInstruction(returnType, currentTarget.getNext())) {
+                        node.decorate(Decorations.POPPED_OPERATION, true);
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isTypePoppedByInstruction(Type type, AbstractInsnNode insn) {
+        switch (type.getSize()) {
+            case 2:
+                return insn.getOpcode() == Opcodes.POP2;
+            case 1:
+                return insn.getOpcode() == Opcodes.POP;
+            default:
+                return false;
+        }
     }
 }
