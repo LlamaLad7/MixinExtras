@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.service;
 
 import com.llamalad7.mixinextras.injector.*;
-import com.llamalad7.mixinextras.injector.LateInjectionApplicatorExtension;
+import com.llamalad7.mixinextras.injector.v2.WrapWithConditionInjectionInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
 import com.llamalad7.mixinextras.sugar.impl.SugarPostProcessingExtension;
 import com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo;
@@ -34,11 +34,15 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     );
     private final List<Class<? extends InjectionInfo>> ownInjectors = Arrays.asList(
             ModifyExpressionValueInjectionInfo.class, ModifyReceiverInjectionInfo.class, ModifyReturnValueInjectionInfo.class,
-            WrapOperationInjectionInfo.class, WrapWithConditionInjectionInfo.class
+            WrapOperationInjectionInfo.class, WrapWithConditionV1InjectionInfo.class
+    );
+    private final List<Versioned<Class<? extends InjectionInfo>>> ownGatedInjectors = Arrays.asList(
+            new Versioned<>(MixinExtrasVersion.V0_3_4.getNumber(), WrapWithConditionInjectionInfo.class)
     );
     private final List<Class<? extends InjectionInfo>> internalInjectors = Arrays.asList(
             SugarWrapperInjectionInfo.class, FactoryRedirectWrapperInjectionInfo.class
     );
+    private final List<String> registeredInjectors = new ArrayList<>();
 
     boolean initialized;
 
@@ -63,6 +67,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
             MixinInternals.registerExtension(it, it instanceof ServiceInitializationExtension || it instanceof MixinTransformerExtension);
         });
         ownInjectors.forEach(it -> registerInjector(it, ownPackage));
+        ownGatedInjectors.forEach(it -> registerInjector(it.value, ownPackage));
     }
 
     @Override
@@ -91,6 +96,11 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
         offeredPackages.add(new Versioned<>(version, packageName));
         allPackages.add(new Versioned<>(version, packageName));
         ownInjectors.forEach(it -> registerInjector(it, packageName));
+        for (Versioned<Class<? extends InjectionInfo>> gatedInjector : ownGatedInjectors) {
+            if (version >= gatedInjector.version) {
+                registerInjector(gatedInjector.value, packageName);
+            }
+        }
     }
 
     @Override
@@ -126,21 +136,14 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
         for (IExtension extension : ownExtensions) {
             MixinInternals.unregisterExtension(extension);
         }
-        for (Class<? extends InjectionInfo> injector : ownInjectors) {
-            allPackages.forEach(it -> unregisterInjector(injector, it.value));
-        }
+        registeredInjectors.forEach(MixinInternals::unregisterInjector);
     }
 
     private void registerInjector(Class<? extends InjectionInfo> injector, String packageName) {
         String name = injector.getAnnotation(InjectionInfo.AnnotationType.class).value().getName();
         String suffix = StringUtils.removeStart(name, ownPackage);
+        registeredInjectors.add(packageName + suffix);
         MixinInternals.registerInjector(packageName + suffix, injector);
-    }
-
-    private void unregisterInjector(Class<? extends InjectionInfo> injector, String packageName) {
-        String name = injector.getAnnotation(InjectionInfo.AnnotationType.class).value().getName();
-        String suffix = StringUtils.removeStart(name, ownPackage);
-        MixinInternals.unregisterInjector(packageName + suffix);
     }
 
     public Type changePackage(Class<?> ourType, Type theirReference, Class<?> ourReference) {

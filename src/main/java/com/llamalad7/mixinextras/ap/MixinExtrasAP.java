@@ -3,7 +3,8 @@ package com.llamalad7.mixinextras.ap;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValueInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReceiverInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReturnValueInjectionInfo;
-import com.llamalad7.mixinextras.injector.WrapWithConditionInjectionInfo;
+import com.llamalad7.mixinextras.injector.WrapWithConditionV1InjectionInfo;
+import com.llamalad7.mixinextras.injector.v2.WrapWithConditionInjectionInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.util.logging.MessageRouter;
@@ -39,6 +40,7 @@ public class MixinExtrasAP extends AbstractProcessor {
         InjectionInfo.register(ModifyReceiverInjectionInfo.class);
         InjectionInfo.register(ModifyReturnValueInjectionInfo.class);
         InjectionInfo.register(WrapOperationInjectionInfo.class);
+        InjectionInfo.register(WrapWithConditionV1InjectionInfo.class);
         InjectionInfo.register(WrapWithConditionInjectionInfo.class);
     }
 

@@ -9,45 +9,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Allows you to wrap a
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeInvoke void method call} or
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeFieldAccess field write}
- * with a conditional check.
- * <p>
- * Your handler method receives the targeted instruction's arguments (optionally followed by the enclosing method's
- * parameters), and should return a boolean indicating whether the operation should go ahead:
- * <table width="100%">
- *   <tr>
- *     <th width="25%">Targeted operation</th>
- *     <th>Handler signature</th>
- *   </tr>
- *   <tr>
- *     <td>Non-static method call</td>
- *     <td><code>private (static) boolean handler(<b>ReceiverType</b> instance, <b>&lt;params of the original
- *     call&gt;</b>)</code></td>
- *   </tr>
- *   <tr>
- *     <td>Static method call</td>
- *     <td><code>private (static) boolean handler(<b>&lt;params of the original call&gt;</b>)</code></td>
- *   </tr>
- *   <tr>
- *     <td>Non-static field write</td>
- *     <td><code>private (static) boolean handler(<b>ReceiverType</b> instance, <b>FieldType</b> newValue)
- *   </tr>
- *   <tr>
- *     <td>Static field write</td>
- *     <td><code>private (static) boolean handler(<b>FieldType</b> newValue)</code></td>
- *   </tr>
- * </table>
- * This chains when used by multiple people, unlike
- * {@link org.spongepowered.asm.mixin.injection.Redirect @Redirect}.
- * <p>
- * <b>If you always return false then you risk other people's code being silently ignored.</b>
- * <p>
- * See <a href="https://github.com/LlamaLad7/MixinExtras/wiki/WrapWithCondition">the wiki article</a> for more info.
+ * Use {@link com.llamalad7.mixinextras.injector.v2.WrapWithCondition} instead.
+ * This injector occasionally wraps {@code @Inject} handlers if it applies before them.
+ * The new version applies at a later stage, however in the unlikely case that you rely on the old ordering, make sure
+ * to test your mixin after converting.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
+@Deprecated
 public @interface WrapWithCondition {
     String[] method();
 
