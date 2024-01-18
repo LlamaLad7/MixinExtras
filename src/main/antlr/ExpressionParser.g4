@@ -22,6 +22,7 @@ expression
    | receiver = expression Dot memberName = name LeftParen args = arguments RightParen # MethodCallExpression
    | memberName = name LeftParen args = arguments RightParen # StaticMethodCallExpression
    | arr = expression LeftBracket index = expression RightBracket # ArrayAccessExpression
+   | type = name Dot Class # ClassConstantExpression
    | receiver = expression Dot memberName = name # MemberAccessExpression
    | op = (Minus | BitwiseNot) expr = expression # UnaryExpression
    | < assoc = right > LeftParen type = name RightParen expr = expression # CastExpression

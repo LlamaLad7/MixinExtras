@@ -50,6 +50,10 @@ Super
    : 'super'
    ;
 
+Class
+   : 'class'
+   ;
+
 Identifier
    : [A-Za-z_] [A-Za-z0-9_]*
    ;
@@ -173,7 +177,6 @@ Reserved
    | 'break'
    | 'case'
    | 'catch'
-   | 'class'
    | 'const'
    | 'continue'
    | 'default'

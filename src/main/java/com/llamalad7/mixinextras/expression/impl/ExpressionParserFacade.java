@@ -96,6 +96,9 @@ public class ExpressionParserFacade {
         if (expression instanceof ArrayAccessExpressionContext) {
             return parse((ArrayAccessExpressionContext) expression);
         }
+        if (expression instanceof ClassConstantExpressionContext) {
+            return parse((ClassConstantExpressionContext) expression);
+        }
         if (expression instanceof MemberAccessExpressionContext) {
             return parse((MemberAccessExpressionContext) expression);
         }
@@ -185,6 +188,10 @@ public class ExpressionParserFacade {
 
     private ArrayAccessExpression parse(ArrayAccessExpressionContext expression) {
         return new ArrayAccessExpression(parse(expression.arr), parse(expression.index));
+    }
+
+    private ClassConstantExpression parse(ClassConstantExpressionContext expression) {
+        return new ClassConstantExpression(parse(expression.type));
     }
 
     private MemberAccessExpression parse(MemberAccessExpressionContext expression) {

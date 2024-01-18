@@ -3,6 +3,7 @@ package com.llamalad7.mixinextras.expression.impl.pool;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
 class TypePoolEntry implements PoolEntry {
@@ -20,6 +21,7 @@ class TypePoolEntry implements PoolEntry {
         if (type.getSort() != Type.ARRAY && type.getSort() != Type.OBJECT) {
             return false;
         }
-        return insn instanceof TypeInsnNode && ((TypeInsnNode) insn).desc.equals(type.getInternalName());
+        return insn instanceof TypeInsnNode && ((TypeInsnNode) insn).desc.equals(type.getInternalName())
+                || insn instanceof LdcInsnNode && ((LdcInsnNode) insn).cst.equals(type);
     }
 }
