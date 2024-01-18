@@ -69,7 +69,7 @@ public class ModifyExpressionValueInjector extends Injector {
     private void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
         InjectorData handler = new InjectorData(target, "expression value modifier");
 
-        Type expectedDesc = IntLikeBehaviour.MatchReturnType.INSTANCE.handle(
+        Type expectedDesc = IntLikeBehaviour.MatchReturnType.INSTANCE.transform(
                 info,
                 Type.getMethodType(valueType, valueType),
                 Type.getMethodType(returnType, methodArgs)

@@ -301,7 +301,7 @@ class WrapOperationInjector extends Injector {
     }
 
     private Type[] cleanIntLikeArgs(Type[] originalArgs) {
-        return new IntLikeBehaviour.MatchArgType(0).handle(
+        return new IntLikeBehaviour.MatchArgType(0).transform(
                 info,
                 Type.getMethodType(returnType, originalArgs),
                 Type.getMethodType(this.returnType, methodArgs)

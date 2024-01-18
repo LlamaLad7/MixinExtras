@@ -11,7 +11,14 @@ public abstract class IntLikeBehaviour {
     private IntLikeBehaviour() {
     }
 
-    public abstract Type handle(InjectionInfo info, Type expected, Type handler);
+    public Type transform(InjectionInfo info, Type expected, Type handler) {
+        if (!expected.getDescriptor().contains(TypeUtils.INTLIKE_TYPE.getDescriptor())) {
+            return expected;
+        }
+        return transformImpl(info, expected, handler);
+    }
+
+    protected abstract Type transformImpl(InjectionInfo info, Type expected, Type handler);
 
     protected Type replaceIntLike(InjectionInfo info, Type desc, Type replacement) {
         if (!TypeUtils.isIntLike(replacement)) {
@@ -37,7 +44,7 @@ public abstract class IntLikeBehaviour {
         public static final MatchReturnType INSTANCE = new MatchReturnType();
 
         @Override
-        public Type handle(InjectionInfo info, Type expected, Type handler) {
+        public Type transformImpl(InjectionInfo info, Type expected, Type handler) {
             return replaceIntLike(info, expected, handler.getReturnType());
         }
     }
@@ -50,7 +57,7 @@ public abstract class IntLikeBehaviour {
         }
 
         @Override
-        public Type handle(InjectionInfo info, Type expected, Type handler) {
+        public Type transformImpl(InjectionInfo info, Type expected, Type handler) {
             if (index >= handler.getArgumentTypes().length) {
                 throw CompatibilityHelper.makeInvalidInjectionException(
                         info,
