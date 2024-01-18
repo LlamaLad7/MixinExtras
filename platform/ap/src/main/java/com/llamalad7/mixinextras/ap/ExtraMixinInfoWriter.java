@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.ap;
 
-import com.llamalad7.mixinextras.ap.expressions.ExpressionParserFacade;
+import com.llamalad7.mixinextras.expression.impl.ExpressionParserFacade;
 import com.llamalad7.mixinextras.utils.info.ExtraMixinInfo;
 
 import javax.lang.model.element.Element;

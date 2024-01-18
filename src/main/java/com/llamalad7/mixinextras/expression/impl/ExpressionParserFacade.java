@@ -1,8 +1,8 @@
-package com.llamalad7.mixinextras.ap.expressions;
+package com.llamalad7.mixinextras.expression.impl;
 
-import com.llamalad7.mixinextras.ap.grammar.ExpressionLexer;
-import com.llamalad7.mixinextras.ap.grammar.ExpressionParser;
-import com.llamalad7.mixinextras.ap.grammar.ExpressionParser.*;
+import com.llamalad7.mixinextras.expression.grammar.ExpressionLexer;
+import com.llamalad7.mixinextras.expression.grammar.ExpressionParser;
+import com.llamalad7.mixinextras.expression.grammar.ExpressionParser.*;
 import com.llamalad7.mixinextras.expression.impl.ast.expressions.*;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.PoolIdentifier;

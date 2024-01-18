@@ -10,6 +10,8 @@ buildscript {
 plugins {
     `java-library`
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    antlr
+    id("com.diffplug.spotless") version "6.22.0"
 }
 
 allprojects {
@@ -39,6 +41,10 @@ allprojects {
     tasks.withType<Javadoc> {
         (options as CoreJavadocOptions).addStringOption("Xdoclint:none", "-quiet")
     }
+
+    tasks.withType<Jar> {
+        dependsOn(":generateGrammarSource")
+    }
 }
 
 val shade by configurations.creating {
@@ -48,14 +54,36 @@ val shade by configurations.creating {
 val shadeOnly by configurations.creating
 
 dependencies {
+    antlr("org.antlr:antlr4:4.13.1")
+    shadeOnly("org.antlr:antlr4-runtime:4.13.1")
     shade("org.apache.commons:commons-lang3:3.3.2")
     shadeOnly(project("mixin-versions"))
+}
+
+tasks.withType<AntlrTask> {
+    arguments.addAll(listOf("-package", "com.llamalad7.mixinextras.expression.grammar"))
+}
+
+tasks.withType<JavaCompile> {
+    dependsOn("generateGrammarSource")
+}
+
+spotless {
+    antlr4 {
+        target("src/*/antlr/**/*.g4")
+        antlr4Formatter()
+    }
+}
+
+tasks.getByName("generateGrammarSource") {
+    dependsOn("spotlessAntlr4Apply")
 }
 
 tasks.named<ShadowJar>("shadowJar") {
     configurations = listOf(shade, shadeOnly)
     archiveClassifier = "fat"
     relocate("org.apache.commons.lang3", "com.llamalad7.mixinextras.lib.apache.commons")
+    relocate("org.antlr.v4", "com.llamalad7.mixinextras.lib.antlr")
     exclude("META-INF/maven/**/*", "META-INF/*.txt")
     from("LICENSE") {
         rename { "${it}_MixinExtras"}
@@ -69,7 +97,7 @@ val proguardJar = tasks.create<ProGuardTask>("proguardJar") {
     outputs.files(proguardFile)
 
     doFirst {
-        configurations.compileClasspath.get().resolve().forEach {
+        (configurations.compileClasspath.get().resolve() - configurations.antlr.get().resolve()).forEach {
             libraryjars(it)
         }
     }

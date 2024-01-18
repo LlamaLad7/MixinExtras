@@ -21,9 +21,9 @@ subprojects {
         }
 
         tasks.named<Jar>("sourcesJar") {
-            from(rootProject.sourceSets.main.get().allSource)
+            from(rootProject.sourceSets.main.get().java)
             inclusions.forEach {
-                from(it.sourceSets.main.get().allSource)
+                from(it.sourceSets.main.get().java)
             }
         }
 
