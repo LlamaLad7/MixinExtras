@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
+import com.llamalad7.mixinextras.injector.IntLikeBehaviour;
 import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.utils.*;
@@ -287,16 +288,24 @@ class WrapOperationInjector extends Injector {
             return node.getDecoration(Decorations.NEW_ARG_TYPES);
         }
         if (node.hasDecoration(Decorations.SIMPLE_OPERATION_ARGS)) {
-            return node.getDecoration(Decorations.SIMPLE_OPERATION_ARGS);
+            return cleanIntLikeArgs(node.getDecoration(Decorations.SIMPLE_OPERATION_ARGS));
         }
         return getEffectiveArgTypes(node.getOriginalTarget());
     }
 
     private Type[] getCurrentArgTypes(InjectionNode node) {
         if (!node.isReplaced() && node.hasDecoration(Decorations.SIMPLE_OPERATION_ARGS)) {
-            return node.getDecoration(Decorations.SIMPLE_OPERATION_ARGS);
+            return cleanIntLikeArgs(node.getDecoration(Decorations.SIMPLE_OPERATION_ARGS));
         }
         return getEffectiveArgTypes(node.getCurrentTarget());
+    }
+
+    private Type[] cleanIntLikeArgs(Type[] originalArgs) {
+        return new IntLikeBehaviour.MatchArgType(0).handle(
+                info,
+                Type.getMethodType(returnType, originalArgs),
+                Type.getMethodType(this.returnType, methodArgs)
+        ).getArgumentTypes();
     }
 
     private Type[] getEffectiveArgTypes(AbstractInsnNode node) {

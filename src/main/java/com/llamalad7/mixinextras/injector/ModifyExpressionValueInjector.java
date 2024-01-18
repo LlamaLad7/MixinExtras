@@ -68,7 +68,13 @@ public class ModifyExpressionValueInjector extends Injector {
 
     private void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
         InjectorData handler = new InjectorData(target, "expression value modifier");
-        this.validateParams(handler, valueType, valueType);
+
+        Type expectedDesc = IntLikeBehaviour.MatchReturnType.INSTANCE.handle(
+                info,
+                Type.getMethodType(valueType, valueType),
+                Type.getMethodType(returnType, methodArgs)
+        );
+        this.validateParams(handler, expectedDesc.getReturnType(), expectedDesc.getArgumentTypes());
 
         if (!this.isStatic) {
             after.add(new VarInsnNode(Opcodes.ALOAD, 0));

@@ -119,7 +119,11 @@ public class ComparisonExpression implements Expression {
             if (opcode == directObject || opcode == invertedObject) {
                 input = TypeUtils.OBJECT_TYPE;
             } else if (opcode == directInt || opcode == invertedInt) {
-                input = Type.INT_TYPE;
+                if (node.inputCount() == 1) {
+                    input = node.getInput(0).getType();
+                } else {
+                    input = TypeUtils.getCommonSupertype(node.getInput(0).getType(), node.getInput(1).getType());
+                }
             } else if (opcode == LCMP) {
                 input = Type.LONG_TYPE;
                 isComplex = true;

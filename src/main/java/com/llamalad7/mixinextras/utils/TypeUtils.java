@@ -15,7 +15,7 @@ import static org.objectweb.asm.Opcodes.*;
 public class TypeUtils {
     public static final Type OBJECT_TYPE = Type.getType(Object.class);
     public static final Type BOTTOM_TYPE = Type.getObjectType("null");
-    public static final Type INTLIKE_TYPE = Type.getObjectType("intlike");
+    public static final Type INTLIKE_TYPE = Type.getObjectType("int-like");
 
     public static Type getNewType(AbstractInsnNode insn) {
         switch (insn.getOpcode()) {
@@ -264,7 +264,7 @@ public class TypeUtils {
             return type2;
         }
         if (isIntLike(type1) && isIntLike(type2)) {
-            return Type.INT_TYPE;
+            return INTLIKE_TYPE;
         }
         if (type1.getSort() == Type.ARRAY && type2.getSort() == Type.ARRAY) {
             int dim1 = type1.getDimensions();
@@ -299,7 +299,7 @@ public class TypeUtils {
         return ClassInfo.getCommonSuperClassOrInterface(type1, type2).getType();
     }
 
-    private static boolean isIntLike(Type type) {
+    public static boolean isIntLike(Type type) {
         switch (type.getSort()) {
             case Type.BOOLEAN:
             case Type.CHAR:
@@ -307,6 +307,8 @@ public class TypeUtils {
             case Type.SHORT:
             case Type.INT:
                 return true;
+            case Type.OBJECT:
+                return type.equals(INTLIKE_TYPE);
         }
         return false;
     }
