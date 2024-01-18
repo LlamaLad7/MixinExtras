@@ -263,8 +263,13 @@ public class TypeUtils {
         if (type1.equals(BOTTOM_TYPE)) {
             return type2;
         }
-        if (isIntLike(type1) && isIntLike(type2)) {
+        boolean isIntLike1 = isIntLike(type1);
+        boolean isIntLike2 = isIntLike(type2);
+        if (isIntLike1 && isIntLike2) {
             return INTLIKE_TYPE;
+        }
+        if (isIntLike1 || isIntLike2) {
+            return BOTTOM_TYPE;
         }
         if (type1.getSort() == Type.ARRAY && type2.getSort() == Type.ARRAY) {
             int dim1 = type1.getDimensions();
