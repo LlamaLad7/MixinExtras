@@ -18,6 +18,7 @@ statement
 expression
    : At LeftParen expr = expression RightParen # CapturingExpression
    | LeftParen expr = expression RightParen # ParenthesizedExpression
+   | Super Dot memberName = name LeftParen args = arguments RightParen # SuperCallExpression
    | receiver = expression Dot memberName = name LeftParen args = arguments RightParen # MethodCallExpression
    | memberName = name LeftParen args = arguments RightParen # StaticMethodCallExpression
    | arr = expression LeftBracket index = expression RightBracket # ArrayAccessExpression

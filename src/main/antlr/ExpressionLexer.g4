@@ -42,6 +42,10 @@ Throw
    : 'throw'
    ;
 
+Super
+   : 'super'
+   ;
+
 Identifier
    : [A-Za-z_] [A-Za-z0-9_]*
    ;
@@ -175,7 +179,6 @@ Reserved
    | 'for'
    | 'goto'
    | 'if'
-   | 'super'
    | 'switch'
    | 'synchronized'
    | 'try'
@@ -183,3 +186,4 @@ Reserved
    | 'yield'
    | '_'
    ;
+

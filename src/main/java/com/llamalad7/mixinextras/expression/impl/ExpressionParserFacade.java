@@ -84,6 +84,9 @@ public class ExpressionParserFacade {
         if (expression instanceof ParenthesizedExpressionContext) {
             return parse((ParenthesizedExpressionContext) expression);
         }
+        if (expression instanceof SuperCallExpressionContext) {
+            return parse((SuperCallExpressionContext) expression);
+        }
         if (expression instanceof MethodCallExpressionContext) {
             return parse((MethodCallExpressionContext) expression);
         }
@@ -163,6 +166,10 @@ public class ExpressionParserFacade {
 
     private Expression parse(ParenthesizedExpressionContext expression) {
         return parse(expression.expr);
+    }
+
+    private SuperCallExpression parse(SuperCallExpressionContext expression) {
+        return new SuperCallExpression(parse(expression.memberName), parse(expression.args));
     }
 
     private MethodCallExpression parse(MethodCallExpressionContext expression) {
