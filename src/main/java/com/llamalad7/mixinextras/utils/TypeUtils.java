@@ -301,6 +301,12 @@ public class TypeUtils {
             }
             return arrayType(OBJECT_TYPE, shared);
         }
+        if (type1.getSort() == Type.ARRAY && type2.getSort() == Type.OBJECT || type2.getSort() == Type.ARRAY && type1.getSort() == Type.OBJECT) {
+            return OBJECT_TYPE;
+        }
+        if (type1.getSort() != type2.getSort()) {
+            return BOTTOM_TYPE;
+        }
         return ClassInfo.getCommonSuperClassOrInterface(type1, type2).getType();
     }
 
