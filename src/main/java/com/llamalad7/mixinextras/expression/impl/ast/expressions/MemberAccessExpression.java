@@ -23,7 +23,7 @@ public class MemberAccessExpression implements SimpleExpression {
         switch (insn.getOpcode()) {
             case Opcodes.GETFIELD:
             case Opcodes.ARRAYLENGTH:
-                return name.matches(ctx.getPool(), insn) && inputsMatch(node, ctx, receiver);
+                return name.matches(ctx.getPool(), insn, Identifier.Role.MEMBER) && inputsMatch(node, ctx, receiver);
         }
         return false;
     }

@@ -28,7 +28,7 @@ public class SuperCallExpression implements SimpleExpression {
         if (call.name.equals("<init>") || !call.owner.equals(ctx.getTarget().classNode.superName)) {
             return false;
         }
-        if (!name.matches(ctx.getPool(), node.getInsn())) {
+        if (!name.matches(ctx.getPool(), node.getInsn(), Identifier.Role.MEMBER)) {
             return false;
         }
         return isLoadThis(node.getInput(0).getInsn()) && inputsMatch(1, node, ctx, arguments.toArray(new Expression[0]));

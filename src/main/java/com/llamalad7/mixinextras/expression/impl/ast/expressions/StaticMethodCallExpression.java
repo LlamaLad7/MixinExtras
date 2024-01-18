@@ -21,6 +21,6 @@ public class StaticMethodCallExpression implements SimpleExpression {
     public boolean matches(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
         return insn.getOpcode() == Opcodes.INVOKESTATIC
-                && name.matches(ctx.getPool(), insn) && inputsMatch(node, ctx, arguments.toArray(new Expression[0]));
+                && name.matches(ctx.getPool(), insn, Identifier.Role.MEMBER) && inputsMatch(node, ctx, arguments.toArray(new Expression[0]));
     }
 }

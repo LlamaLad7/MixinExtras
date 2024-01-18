@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.pool;
 
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
@@ -12,7 +13,10 @@ class TypePoolEntry implements PoolEntry {
     }
 
     @Override
-    public boolean matches(AbstractInsnNode insn) {
+    public boolean matches(AbstractInsnNode insn, Identifier.Role role) {
+        if (role != Identifier.Role.TYPE) {
+            return false;
+        }
         if (type.getSort() != Type.ARRAY && type.getSort() != Type.OBJECT) {
             return false;
         }

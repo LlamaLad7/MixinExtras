@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.pool;
 
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -37,12 +38,12 @@ public class IdentifierPool {
         }
     }
 
-    public boolean matches(String id, AbstractInsnNode insn) {
+    public boolean matches(String id, AbstractInsnNode insn, Identifier.Role role) {
         List<PoolEntry> matching = pool.get(id);
         if (matching == null) {
             throw new IllegalStateException("Use of undeclared identifier '" + id + '\'');
         }
-        return matching.stream().anyMatch(it -> it.matches(insn));
+        return matching.stream().anyMatch(it -> it.matches(insn, role));
     }
 
     private void parseEntry(AnnotationNode entry, Target target, InjectionInfo info) {

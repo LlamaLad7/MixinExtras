@@ -11,7 +11,7 @@ public class PoolIdentifier implements Identifier {
     }
 
     @Override
-    public boolean matches(IdentifierPool pool, AbstractInsnNode insn) {
-        return pool.matches(name, insn);
+    public boolean matches(IdentifierPool pool, AbstractInsnNode insn, Role role) {
+        return pool.matches(name, insn, role);
     }
 }

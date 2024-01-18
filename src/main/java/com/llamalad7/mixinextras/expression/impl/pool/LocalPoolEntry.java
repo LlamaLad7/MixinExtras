@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.pool;
 
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -29,8 +30,8 @@ public class LocalPoolEntry implements PoolEntry {
     }
 
     @Override
-    public boolean matches(AbstractInsnNode insn) {
-        if (!(insn instanceof VarInsnNode)) {
+    public boolean matches(AbstractInsnNode insn, Identifier.Role role) {
+        if (role != Identifier.Role.MEMBER || !(insn instanceof VarInsnNode)) {
             return false;
         }
         VarInsnNode varInsn = (VarInsnNode) insn;

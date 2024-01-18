@@ -18,6 +18,6 @@ public class InstanceofExpression implements SimpleExpression {
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
-        return insn.getOpcode() == Opcodes.INSTANCEOF && type.matches(ctx.getPool(), insn) && inputsMatch(node, ctx, expression);
+        return insn.getOpcode() == Opcodes.INSTANCEOF && type.matches(ctx.getPool(), insn, Identifier.Role.TYPE) && inputsMatch(node, ctx, expression);
     }
 }

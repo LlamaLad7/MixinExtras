@@ -22,7 +22,7 @@ public class InstantiationExpression implements Expression {
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
-        if (insn.getOpcode() != Opcodes.NEW || !type.matches(ctx.getPool(), insn)) {
+        if (insn.getOpcode() != Opcodes.NEW || !type.matches(ctx.getPool(), insn, Identifier.Role.TYPE)) {
             return false;
         }
         for (Pair<FlowValue, Integer> next : node.getNext()) {

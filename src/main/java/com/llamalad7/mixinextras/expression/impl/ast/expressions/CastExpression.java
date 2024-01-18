@@ -35,7 +35,7 @@ public class CastExpression implements SimpleExpression {
             case Opcodes.I2D:
             case Opcodes.L2D:
             case Opcodes.F2D:
-                return type.matches(ctx.getPool(), insn);
+                return type.matches(ctx.getPool(), insn, Identifier.Role.TYPE);
         }
         return false;
     }

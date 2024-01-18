@@ -5,7 +5,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 
 public class WildcardIdentifier implements Identifier {
     @Override
-    public boolean matches(IdentifierPool pool, AbstractInsnNode insn) {
+    public boolean matches(IdentifierPool pool, AbstractInsnNode insn, Role role) {
         return true;
     }
 }

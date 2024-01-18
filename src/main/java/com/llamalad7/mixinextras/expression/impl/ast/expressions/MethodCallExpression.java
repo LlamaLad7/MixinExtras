@@ -30,7 +30,7 @@ public class MethodCallExpression implements SimpleExpression {
                 }
             case Opcodes.INVOKEVIRTUAL:
             case Opcodes.INVOKEINTERFACE:
-                if (!name.matches(ctx.getPool(), node.getInsn())) {
+                if (!name.matches(ctx.getPool(), node.getInsn(), Identifier.Role.MEMBER)) {
                     return false;
                 }
                 Expression[] inputs = ArrayUtils.add(arguments.toArray(new Expression[0]), 0, receiver);

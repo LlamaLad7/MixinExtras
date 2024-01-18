@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
@@ -20,7 +21,7 @@ public class IdentifierExpression implements SimpleExpression {
             case Opcodes.DLOAD:
             case Opcodes.ALOAD:
             case Opcodes.GETSTATIC:
-                return ctx.getPool().matches(identifier, node.getInsn());
+                return ctx.getPool().matches(identifier, node.getInsn(), Identifier.Role.MEMBER);
         }
         return false;
     }

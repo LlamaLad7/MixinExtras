@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.pool;
 
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -20,7 +21,7 @@ class AtPoolEntry implements PoolEntry {
     }
 
     @Override
-    public boolean matches(AbstractInsnNode insn) {
-        return matched.contains(insn);
+    public boolean matches(AbstractInsnNode insn, Identifier.Role role) {
+        return role == Identifier.Role.MEMBER && matched.contains(insn);
     }
 }
