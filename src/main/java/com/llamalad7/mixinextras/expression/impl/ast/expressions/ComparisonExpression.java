@@ -2,9 +2,6 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionReader;
-import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionWriter;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedExpressionId;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.expression.impl.utils.ComplexComparisonInfo;
 import com.llamalad7.mixinextras.utils.TypeUtils;
@@ -13,9 +10,6 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 
-import java.io.IOException;
-
-@SerializedExpressionId("cmp")
 public class ComparisonExpression implements Expression {
     public final Expression left;
     public final Operator operator;
@@ -45,13 +39,6 @@ public class ComparisonExpression implements Expression {
         return matches;
     }
 
-    @Override
-    public void write(ExpressionWriter writer) throws IOException {
-        writer.writeExpression(left);
-        writer.writeEnum(operator);
-        writer.writeExpression(right);
-    }
-
     private boolean matchesImpl(FlowValue node, IdentifierPool pool, OutputSink sink, boolean isWithZero, boolean isWithNull) {
         if (!operator.matches(node, sink, isWithZero, isWithNull)) {
             return false;
@@ -60,10 +47,6 @@ public class ComparisonExpression implements Expression {
             return true;
         }
         return inputsMatch(node, pool, sink, left, right);
-    }
-
-    public static Expression read(ExpressionReader reader) throws IOException {
-        return new ComparisonExpression(reader.readExpression(), reader.readEnum(Operator::valueOf), reader.readExpression());
     }
 
     public enum Operator implements Opcodes {

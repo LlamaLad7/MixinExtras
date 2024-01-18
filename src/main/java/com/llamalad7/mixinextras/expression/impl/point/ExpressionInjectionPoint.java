@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.point;
 
 import com.llamalad7.mixinextras.expression.Definition;
+import com.llamalad7.mixinextras.expression.impl.ExpressionParserFacade;
 import com.llamalad7.mixinextras.expression.impl.ast.expressions.Expression;
 import com.llamalad7.mixinextras.expression.impl.flow.ComplexDataException;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
@@ -10,8 +11,6 @@ import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import com.llamalad7.mixinextras.utils.TargetDecorations;
-import com.llamalad7.mixinextras.utils.info.ExtraMixinInfo;
-import com.llamalad7.mixinextras.utils.info.ExtraMixinInfoManager;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.InsnList;
@@ -165,9 +164,8 @@ public class ExpressionInjectionPoint extends InjectionPoint {
     }
 
     private List<Expression> parseExpressions() {
-        ExtraMixinInfo info = ExtraMixinInfoManager.getInfo(CompatibilityHelper.getMixin(CURRENT_INFO).getMixin());
         List<String> strings = getMatchingExpressions(CURRENT_INFO.getMethod());
-        return strings.stream().map(info::getExpression).collect(Collectors.toList());
+        return strings.stream().map(ExpressionParserFacade::parse).collect(Collectors.toList());
     }
 
     private List<String> getMatchingExpressions(MethodNode method) {

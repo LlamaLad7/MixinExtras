@@ -2,14 +2,8 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionReader;
-import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionWriter;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedExpressionId;
 import org.spongepowered.asm.util.Bytecode;
 
-import java.io.IOException;
-
-@SerializedExpressionId("str")
 public class StringLiteralExpression implements SimpleExpression {
     public final String value;
     private final Integer charValue;
@@ -30,14 +24,5 @@ public class StringLiteralExpression implements SimpleExpression {
             return false;
         }
         return cst.equals(value) || cst.equals(charValue);
-    }
-
-    @Override
-    public void write(ExpressionWriter writer) throws IOException {
-        writer.writeString(value);
-    }
-
-    public static Expression read(ExpressionReader reader) throws IOException {
-        return new StringLiteralExpression(reader.readString());
     }
 }

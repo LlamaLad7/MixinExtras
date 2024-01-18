@@ -24,11 +24,6 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.tools.FileObject;
-import javax.tools.StandardLocation;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,41 +72,7 @@ public class MixinExtrasAP extends AbstractProcessor {
             return true;
         }
         gatherDefinitions(roundEnv);
-        processExpressions(roundEnv);
-        writeInfo();
         return true;
-    }
-
-    private void processExpressions(RoundEnvironment roundEnv) {
-        for (Element elem : roundEnv.getElementsAnnotatedWith(Expression.class)) {
-            Expression ann = elem.getAnnotation(Expression.class);
-            for (String str : ann.value()) {
-                ExtraMixinInfoWriter.offerExpression(elem, str);
-            }
-        }
-        for (Element elem : roundEnv.getElementsAnnotatedWith(Expressions.class)) {
-            Expressions ann = elem.getAnnotation(Expressions.class);
-            for (Expression expr : ann.value()) {
-                for (String str : expr.value()) {
-                    ExtraMixinInfoWriter.offerExpression(elem, str);
-                }
-            }
-        }
-    }
-
-    private void writeInfo() {
-        ExtraMixinInfoWriter.build((mixin, info) -> {
-            String fileName = "META-INF/mixinextras/" + mixin + ".info";
-            new File(fileName).getParentFile().mkdirs();
-            try {
-                FileObject file = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", fileName);
-                try (OutputStream fileStream = file.openOutputStream()) {
-                    info.write(fileStream);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to write MixinExtras info file: ", e);
-            }
-        });
     }
 
     private void gatherDefinitions(RoundEnvironment roundEnv) {

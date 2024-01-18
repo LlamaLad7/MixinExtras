@@ -2,10 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionWriter;
 import org.objectweb.asm.tree.AbstractInsnNode;
-
-import java.io.IOException;
 
 public interface Expression {
     default boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
@@ -32,8 +29,6 @@ public interface Expression {
         }
         return true;
     }
-
-    void write(ExpressionWriter writer) throws IOException;
 
     interface OutputSink {
         void capture(AbstractInsnNode insn);

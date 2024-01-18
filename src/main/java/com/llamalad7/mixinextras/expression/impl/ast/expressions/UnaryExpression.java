@@ -2,15 +2,9 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionReader;
-import com.llamalad7.mixinextras.expression.impl.serialization.ExpressionWriter;
-import com.llamalad7.mixinextras.expression.impl.serialization.SerializedExpressionId;
 import org.objectweb.asm.Opcodes;
 
-import java.io.IOException;
 
-
-@SerializedExpressionId("un")
 public class UnaryExpression implements SimpleExpression {
     public final Operator operator;
     public final Expression expression;
@@ -39,16 +33,6 @@ public class UnaryExpression implements SimpleExpression {
                 ).matches(node, pool, sink);
         }
         return false;
-    }
-
-    @Override
-    public void write(ExpressionWriter writer) throws IOException {
-        writer.writeEnum(operator);
-        writer.writeExpression(expression);
-    }
-
-    public static Expression read(ExpressionReader reader) throws IOException {
-        return new UnaryExpression(reader.readEnum(Operator::valueOf), reader.readExpression());
     }
 
     public enum Operator {
