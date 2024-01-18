@@ -160,3 +160,26 @@ Assign
    : '='
    ;
 
+Reserved
+   : 'assert'
+   | 'break'
+   | 'case'
+   | 'catch'
+   | 'class'
+   | 'const'
+   | 'continue'
+   | 'default'
+   | 'do'
+   | 'else'
+   | 'finally'
+   | 'for'
+   | 'goto'
+   | 'if'
+   | 'super'
+   | 'switch'
+   | 'synchronized'
+   | 'try'
+   | 'while'
+   | 'yield'
+   | '_'
+   ;
