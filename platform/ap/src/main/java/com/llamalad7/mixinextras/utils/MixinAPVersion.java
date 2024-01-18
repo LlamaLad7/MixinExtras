@@ -7,15 +7,15 @@ import org.spongepowered.asm.util.VersionNumber;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.tools.Diagnostic;
-import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.Enumeration;
 
 public class MixinAPVersion {
     private static final String MIN_VERSION = "0.8.3";
     private static final VersionNumber MIN_VERSION_NUMBER = VersionNumber.parse(MIN_VERSION);
-    private static final String BOOTSTRAP_PACKAGE = "org.spongepowered.asm.launch";
-    private static final String BOOTSTRAP_ClASS = "MixinBootstrap.class";
+    private static final String BOOTSTRAP_ClASS = "org/spongepowered/asm/launch/MixinBootstrap.class";
     private static boolean checked = false;
 
     public static void check(ProcessingEnvironment env) {
@@ -23,7 +23,11 @@ public class MixinAPVersion {
             return;
         }
         checked = true;
-        try (InputStream is = env.getFiler().getResource(StandardLocation.CLASS_PATH, BOOTSTRAP_PACKAGE, BOOTSTRAP_ClASS).openInputStream()) {
+        try (InputStream is = findBootstrapClass()) {
+            if (is == null) {
+                printFailed(env);
+                return;
+            }
             ClassNode node = new ClassNode();
             new ClassReader(is).accept(node, ClassReader.SKIP_CODE);
             VersionNumber version = getBootstrapVersion(node);
@@ -53,5 +57,13 @@ public class MixinAPVersion {
 
     private static void printFailed(ProcessingEnvironment env) {
         env.getMessager().printMessage(Diagnostic.Kind.WARNING, "[MixinExtras] Failed to determine Mixin version. Assuming >=" + MIN_VERSION);
+    }
+
+    private static InputStream findBootstrapClass() throws IOException {
+        Enumeration<URL> urls = MixinAPVersion.class.getClassLoader().getResources(BOOTSTRAP_ClASS);
+        if (!urls.hasMoreElements()) {
+            return null;
+        }
+        return urls.nextElement().openStream();
     }
 }
