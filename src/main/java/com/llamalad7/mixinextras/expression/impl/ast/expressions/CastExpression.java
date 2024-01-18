@@ -2,7 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -16,7 +16,7 @@ public class CastExpression implements SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
         switch (insn.getOpcode()) {
             case Opcodes.CHECKCAST:
@@ -35,7 +35,7 @@ public class CastExpression implements SimpleExpression {
             case Opcodes.I2D:
             case Opcodes.L2D:
             case Opcodes.F2D:
-                return type.matches(pool, insn);
+                return type.matches(ctx.getPool(), insn);
         }
         return false;
     }

@@ -2,7 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.utils.Decorations;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -18,12 +18,12 @@ public class MemberAccessExpression implements SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
         switch (insn.getOpcode()) {
             case Opcodes.GETFIELD:
             case Opcodes.ARRAYLENGTH:
-                return name.matches(pool, insn) && inputsMatch(node, pool, sink, receiver);
+                return name.matches(ctx.getPool(), insn) && inputsMatch(node, ctx, receiver);
         }
         return false;
     }

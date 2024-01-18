@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -17,8 +17,8 @@ public class BinaryExpression implements SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
-        return operator.matches(node.getInsn()) && inputsMatch(node, pool, sink, left, right);
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
+        return operator.matches(node.getInsn()) && inputsMatch(node, ctx, left, right);
     }
 
     public enum Operator {

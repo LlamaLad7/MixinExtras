@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
 
 public class ReturnExpression implements Expression {
@@ -12,14 +12,14 @@ public class ReturnExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.IRETURN:
             case Opcodes.LRETURN:
             case Opcodes.FRETURN:
             case Opcodes.DRETURN:
             case Opcodes.ARETURN:
-                return inputsMatch(node, pool, sink, value);
+                return inputsMatch(node, ctx, value);
         }
         return false;
     }

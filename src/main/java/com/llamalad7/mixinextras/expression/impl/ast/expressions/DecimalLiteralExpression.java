@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.spongepowered.asm.util.Bytecode;
 
 public class DecimalLiteralExpression implements SimpleExpression {
@@ -12,7 +12,7 @@ public class DecimalLiteralExpression implements SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
         Object cst = Bytecode.getConstant(node.getInsn());
         if (cst == null) {
             return false;

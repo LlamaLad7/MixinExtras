@@ -2,7 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
 
 public class IdentifierAssignmentExpression implements Expression {
@@ -15,7 +15,7 @@ public class IdentifierAssignmentExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.ISTORE:
             case Opcodes.LSTORE:
@@ -23,7 +23,7 @@ public class IdentifierAssignmentExpression implements Expression {
             case Opcodes.DSTORE:
             case Opcodes.ASTORE:
             case Opcodes.PUTSTATIC:
-                return identifier.matches(pool, node.getInsn()) && inputsMatch(node, pool, sink, value);
+                return identifier.matches(ctx.getPool(), node.getInsn()) && inputsMatch(node, ctx, value);
         }
         return false;
     }

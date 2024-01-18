@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 
 public class CapturingExpression implements SimpleExpression {
     public final Expression expression;
@@ -11,10 +11,10 @@ public class CapturingExpression implements SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
-        boolean matches = expression.matches(node, pool, sink);
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
+        boolean matches = expression.matches(node, ctx);
         if (matches) {
-            expression.capture(node, sink);
+            expression.capture(node, ctx.getSink());
         }
         return matches;
     }

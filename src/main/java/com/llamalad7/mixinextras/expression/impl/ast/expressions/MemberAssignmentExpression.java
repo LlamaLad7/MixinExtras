@@ -2,7 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -18,9 +18,9 @@ public class MemberAssignmentExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
         return insn.getOpcode() == Opcodes.PUTFIELD
-                && name.matches(pool, node.getInsn()) && inputsMatch(node, pool, sink, receiver, value);
+                && name.matches(ctx.getPool(), node.getInsn()) && inputsMatch(node, ctx, receiver, value);
     }
 }

@@ -2,7 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
 
@@ -20,16 +20,16 @@ public class MethodCallExpression implements SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.INVOKEVIRTUAL:
             case Opcodes.INVOKESPECIAL:
             case Opcodes.INVOKEINTERFACE:
-                if (!name.matches(pool, node.getInsn())) {
+                if (!name.matches(ctx.getPool(), node.getInsn())) {
                     return false;
                 }
                 Expression[] inputs = ArrayUtils.add(arguments.toArray(new Expression[0]), 0, receiver);
-                return inputsMatch(node, pool, sink, inputs);
+                return inputsMatch(node, ctx, inputs);
         }
         return false;
     }

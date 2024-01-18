@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.expression.impl.utils.ComplexComparisonInfo;
@@ -28,25 +29,25 @@ public class ComparisonExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
-        boolean matches = matchesImpl(node, pool, sink, false, false);
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
+        boolean matches = matchesImpl(node, ctx, false, false);
         if (isWithZero || isWildcard) {
-            matches = matches || matchesImpl(node, pool, sink, true, false);
+            matches = matches || matchesImpl(node, ctx, true, false);
         }
         if (isWithNull || isWildcard) {
-            matches = matches || matchesImpl(node, pool, sink, false, true);
+            matches = matches || matchesImpl(node, ctx, false, true);
         }
         return matches;
     }
 
-    private boolean matchesImpl(FlowValue node, IdentifierPool pool, OutputSink sink, boolean isWithZero, boolean isWithNull) {
-        if (!operator.matches(node, sink, isWithZero, isWithNull)) {
+    private boolean matchesImpl(FlowValue node, ExpressionContext ctx, boolean isWithZero, boolean isWithNull) {
+        if (!operator.matches(node, ctx.getSink(), isWithZero, isWithNull)) {
             return false;
         }
-        if ((isWithZero || isWithNull) && inputsMatch(node, pool, sink, left)) {
+        if ((isWithZero || isWithNull) && inputsMatch(node, ctx, left)) {
             return true;
         }
-        return inputsMatch(node, pool, sink, left, right);
+        return inputsMatch(node, ctx, left, right);
     }
 
     public enum Operator implements Opcodes {

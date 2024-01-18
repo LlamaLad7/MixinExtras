@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
@@ -19,7 +19,7 @@ public class ArrayStoreExpression implements Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, IdentifierPool pool, OutputSink sink) {
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.IASTORE:
             case Opcodes.LASTORE:
@@ -29,7 +29,7 @@ public class ArrayStoreExpression implements Expression {
             case Opcodes.BASTORE:
             case Opcodes.CASTORE:
             case Opcodes.SASTORE:
-                return inputsMatch(node, pool, sink, arr, index, value);
+                return inputsMatch(node, ctx, arr, index, value);
         }
         return false;
     }
