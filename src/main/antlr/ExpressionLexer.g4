@@ -9,8 +9,8 @@ WS
    ;
 
 StringLit
-   : '\'' (~ ["\\\r\n] | '\\\'')* '\''
-   { setText(getText().replace("\\'", "'")); }
+   : '\'' (~ ["\\\r\n] | '\\\'' | '\\\\')* '\''
+   { setText(getText().replace("\\'", "'").replace("\\\\", "\\")); }
    ;
 
 Wildcard
