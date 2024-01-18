@@ -33,9 +33,6 @@ public class IdentifierPool {
         addEntry("long", new PrimitiveCastPoolEntry(Opcodes.I2L, Opcodes.F2L, Opcodes.D2L));
         addEntry("short", new PrimitiveCastPoolEntry(Opcodes.I2S));
         addEntry("length", new ArrayLengthPoolEntry());
-        if (!target.isStatic) {
-            addEntry("this", new ThisPoolEntry());
-        }
     }
 
     public boolean matches(String id, AbstractInsnNode insn, Identifier.Role role) {

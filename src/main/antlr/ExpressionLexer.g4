@@ -42,6 +42,10 @@ Throw
    : 'throw'
    ;
 
+This
+   : 'this'
+   ;
+
 Super
    : 'super'
    ;

@@ -153,6 +153,9 @@ public class ExpressionParserFacade {
         if (expression instanceof WildcardExpressionContext) {
             return parse((WildcardExpressionContext) expression);
         }
+        if (expression instanceof ThisExpressionContext) {
+            return parse((ThisExpressionContext) expression);
+        }
         if (expression instanceof IdentifierExpressionContext) {
             return parse((IdentifierExpressionContext) expression);
         }
@@ -337,6 +340,10 @@ public class ExpressionParserFacade {
 
     private WildcardExpression parse(WildcardExpressionContext expression) {
         return new WildcardExpression();
+    }
+
+    private ThisExpression parse(ThisExpressionContext expression) {
+        return new ThisExpression();
     }
 
     private IdentifierExpression parse(IdentifierExpressionContext expression) {

@@ -4,9 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.List;
 
@@ -31,10 +29,6 @@ public class SuperCallExpression implements SimpleExpression {
         if (!name.matches(ctx.getPool(), node.getInsn(), Identifier.Role.MEMBER)) {
             return false;
         }
-        return isLoadThis(node.getInput(0).getInsn()) && inputsMatch(1, node, ctx, arguments.toArray(new Expression[0]));
-    }
-
-    private boolean isLoadThis(AbstractInsnNode insn) {
-        return insn.getOpcode() == Opcodes.ALOAD && ((VarInsnNode) insn).var == 0;
+        return new ThisExpression().matches(node.getInput(0), ctx) && inputsMatch(1, node, ctx, arguments.toArray(new Expression[0]));
     }
 }

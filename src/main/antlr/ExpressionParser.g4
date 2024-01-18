@@ -41,6 +41,7 @@ expression
    | lit = BoolLit # BoolLitExpression
    | lit = NullLit # NullExpression
    | Wildcard # WildcardExpression
+   | This # ThisExpression
    | id = Identifier # IdentifierExpression
    ;
 
