@@ -1,2 +1,3 @@
-install:
-  - echo "MixinExtras no longer supports JitPack. Please use Maven Central as per the README."
+before_install:
+  - sdk install java 17.0.8-tem
+  - sdk use java 17.0.8-tem
