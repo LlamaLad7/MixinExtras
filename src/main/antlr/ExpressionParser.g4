@@ -24,6 +24,8 @@ expression
    | arr = expression LeftBracket index = expression RightBracket # ArrayAccessExpression
    | type = name Dot Class # ClassConstantExpression
    | receiver = expression Dot memberName = name # MemberAccessExpression
+   | lit = Minus? DecLit # DecimalLitExpression
+   | lit = Minus? IntLit # IntLitExpression
    | op = (Minus | BitwiseNot) expr = expression # UnaryExpression
    | < assoc = right > LeftParen type = name RightParen expr = expression # CastExpression
    | < assoc = right > New type = name LeftParen args = arguments RightParen # InstantiationExpression
@@ -36,8 +38,6 @@ expression
    | left = expression BitwiseAnd right = expression # BitwiseAndExpression
    | left = expression BitwiseXor right = expression # BitwiseXorExpression
    | left = expression BitwiseOr right = expression # BitwiseOrExpression
-   | lit = DecLit # DecimalLitExpression
-   | lit = IntLit # IntLitExpression
    | lit = StringLit # StringLitExpression
    | lit = BoolLit # BoolLitExpression
    | lit = NullLit # NullExpression
