@@ -98,4 +98,8 @@ public class FlowValue implements Value {
     public <V> V getDecoration(String key) {
         return (V) (decorations == null ? null : decorations.get(key));
     }
+
+    public Map<String, Object> getDecorations() {
+        return decorations == null ? Collections.emptyMap() : decorations;
+    }
 }

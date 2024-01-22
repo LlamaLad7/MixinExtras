@@ -10,7 +10,7 @@ public interface Expression {
     }
 
     default void capture(FlowValue node, OutputSink sink) {
-        sink.capture(node.getInsn());
+        sink.capture(node);
     }
 
     default boolean inputsMatch(FlowValue node, ExpressionContext ctx, Expression... values) {
@@ -31,7 +31,7 @@ public interface Expression {
     }
 
     interface OutputSink {
-        void capture(AbstractInsnNode insn);
+        void capture(FlowValue node);
 
         void decorate(AbstractInsnNode insn, String key, Object value);
 

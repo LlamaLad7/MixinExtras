@@ -64,17 +64,17 @@ public class ExpressionInjectionPoint extends InjectionPoint {
 
                 Expression.OutputSink sink = new Expression.OutputSink() {
                     @Override
-                    public void capture(AbstractInsnNode insn) {
+                    public void capture(FlowValue node) {
+                        AbstractInsnNode insn = node.getInsn();
+                        InjectionNode injectionNode = target.addInjectionNode(insn);
                         Map<String, Object> decorations = genericDecorations.get(insn);
                         if (decorations != null) {
-                            InjectionNode injectionNode = target.addInjectionNode(insn);
                             for (Map.Entry<String, Object> decoration : decorations.entrySet()) {
                                 injectionNode.decorate(decoration.getKey(), decoration.getValue());
                             }
                         }
                         Map<String, Object> injectorSpecific = injectorSpecificDecorations.get(insn);
                         if (injectorSpecific != null) {
-                            InjectionNode injectionNode = target.addInjectionNode(insn);
                             for (Map.Entry<String, Object> decoration : injectorSpecific.entrySet()) {
                                 InjectorUtils.decorateInjectorSpecific(
                                         injectionNode,
@@ -83,6 +83,9 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                                         decoration.getValue()
                                 );
                             }
+                        }
+                        for (Map.Entry<String, Object> decoration : node.getDecorations().entrySet()) {
+                            injectionNode.decorate(decoration.getKey(), decoration.getValue());
                         }
                         captured.add(insn);
                     }

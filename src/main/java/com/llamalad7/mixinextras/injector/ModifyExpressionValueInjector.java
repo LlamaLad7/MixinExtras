@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector;
 
+import com.llamalad7.mixinextras.expression.impl.flow.ArrayCreationInfo;
 import com.llamalad7.mixinextras.utils.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -129,12 +130,15 @@ public class ModifyExpressionValueInjector extends Injector {
     }
 
     private static class TargetInfo {
-        public final boolean isDupedFactoryRedirect;
-        public final boolean isDynamicInstanceofRedirect;
+        private final boolean isDupedFactoryRedirect;
+        private final boolean isDynamicInstanceofRedirect;
+        private final ArrayCreationInfo arrayCreationInfo;
+
 
         public TargetInfo(InjectionNode node) {
             this.isDupedFactoryRedirect = InjectorUtils.isDupedFactoryRedirect(node);
             this.isDynamicInstanceofRedirect = InjectorUtils.isDynamicInstanceofRedirect(node);
+            this.arrayCreationInfo = node.getDecoration(Decorations.ARRAY_CREATION_INFO);
         }
 
         public AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode) {
@@ -143,6 +147,9 @@ public class ModifyExpressionValueInjector extends Injector {
             }
             if (isDynamicInstanceofRedirect) {
                 return PreviousInjectorInsns.DYNAMIC_INSTANCEOF_REDIRECT.getLast(valueNode);
+            }
+            if (arrayCreationInfo != null) {
+                return arrayCreationInfo.initialized;
             }
             return valueNode;
         }

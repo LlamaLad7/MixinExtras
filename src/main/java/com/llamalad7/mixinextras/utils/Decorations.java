@@ -54,4 +54,9 @@ public class Decorations {
      * Stores the return type of this operation if it has been offered by an Expression.
      */
     public static final String SIMPLE_OPERATION_RETURN_TYPE = "mixinextras_simpleOperationReturnType";
+
+    /**
+     * Stores information about this array creation.
+     */
+    public static final String ARRAY_CREATION_INFO = "mixinextras_arrayCreationInfo";
 }

@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
+import com.llamalad7.mixinextras.utils.Decorations;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -25,16 +26,20 @@ public class NewArrayPostProcessor implements FlowPostProcessor {
         AbstractInsnNode insn = node.getInsn();
         if (insn.getOpcode() == Opcodes.ANEWARRAY || insn.getOpcode() == Opcodes.NEWARRAY) {
             List<FlowValue> stores = getCreationStores(node);
-            if (stores == null) {
+            if (stores == null || stores.isEmpty()) {
                 return;
             }
             for (FlowValue store : stores) {
                 syntheticMarker.accept(store);
                 syntheticMarker.accept(store.getInput(1));
             }
-            node.decorate(FlowDecorations.ARRAY_CREATION_INFO, new ArrayCreationInfo(
-                    stores.stream().map(it -> it.getInput(2)).collect(Collectors.toList())
-            ));
+            node.decorate(
+                    Decorations.ARRAY_CREATION_INFO,
+                    new ArrayCreationInfo(
+                            stores.stream().map(it -> it.getInput(2)).collect(Collectors.toList()),
+                            stores.get(stores.size() - 1).getInsn()
+                    )
+            );
         }
     }
 
