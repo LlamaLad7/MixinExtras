@@ -11,10 +11,8 @@ import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Interpreter;
 import org.spongepowered.asm.util.asm.ASM;
 
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -22,10 +20,14 @@ import static org.objectweb.asm.Opcodes.*;
 public class FlowInterpreter extends Interpreter<FlowValue> {
     private final Map<AbstractInsnNode, FlowValue> cache = new IdentityHashMap<>();
     private final Map<VarInsnNode, Type> localTypes;
+    private final List<FlowPostProcessor> postProcessors;
 
     private FlowInterpreter(ClassNode classNode, MethodNode methodNode) {
         super(ASM.API_VERSION);
         this.localTypes = LocalsCalculator.getLocalTypes(classNode, methodNode);
+        this.postProcessors = Arrays.asList(
+                new NewArrayPostProcessor(methodNode)
+        );
     }
 
     public static Map<AbstractInsnNode, FlowValue> analyze(ClassNode classNode, MethodNode methodNode) {
@@ -42,6 +44,18 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         for (Map.Entry<AbstractInsnNode, FlowValue> entry : cache.entrySet()) {
             entry.getValue().finish();
         }
+        Set<AbstractInsnNode> synthetic = Collections.newSetFromMap(new IdentityHashMap<>());
+        Consumer<FlowValue> syntheticMarker = node -> {
+            if (!node.isComplex()) {
+                synthetic.add(node.getInsn());
+            }
+        };
+        for (FlowPostProcessor postProcessor : postProcessors) {
+            for (FlowValue value : cache.values()) {
+                postProcessor.process(value, syntheticMarker);
+            }
+        }
+        synthetic.forEach(cache::remove);
         return Collections.unmodifiableMap(cache);
     }
 

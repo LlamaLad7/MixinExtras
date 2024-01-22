@@ -6,16 +6,14 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.analysis.Value;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class FlowValue implements Value {
     private final Type type;
     private final AbstractInsnNode insn;
     protected final FlowValue[] parents;
     private final Set<Pair<FlowValue, Integer>> next = new HashSet<>(1);
+    private Map<String, Object> decorations = null;
 
     public FlowValue(Type type, AbstractInsnNode insn, FlowValue... parents) {
         this.type = type;
@@ -83,5 +81,21 @@ public class FlowValue implements Value {
 
     public boolean isComplex() {
         return insn == null;
+    }
+
+    public <V> void decorate(String key, V value) {
+        if (decorations == null) {
+            decorations = new HashMap<>();
+        }
+        decorations.put(key, value);
+    }
+
+    public boolean hasDecoration(String key) {
+        return decorations != null && decorations.get(key) != null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <V> V getDecoration(String key) {
+        return (V) (decorations == null ? null : decorations.get(key));
     }
 }
