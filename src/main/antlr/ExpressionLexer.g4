@@ -54,6 +54,28 @@ Class
    : 'class'
    ;
 
+Reserved
+   : 'assert'
+   | 'break'
+   | 'case'
+   | 'catch'
+   | 'const'
+   | 'continue'
+   | 'default'
+   | 'do'
+   | 'else'
+   | 'finally'
+   | 'for'
+   | 'goto'
+   | 'if'
+   | 'switch'
+   | 'synchronized'
+   | 'try'
+   | 'while'
+   | 'yield'
+   | '_'
+   ;
+
 Identifier
    : [A-Za-z_] [A-Za-z0-9_]*
    ;
@@ -170,27 +192,5 @@ BitwiseOr
 
 Assign
    : '='
-   ;
-
-Reserved
-   : 'assert'
-   | 'break'
-   | 'case'
-   | 'catch'
-   | 'const'
-   | 'continue'
-   | 'default'
-   | 'do'
-   | 'else'
-   | 'finally'
-   | 'for'
-   | 'goto'
-   | 'if'
-   | 'switch'
-   | 'synchronized'
-   | 'try'
-   | 'while'
-   | 'yield'
-   | '_'
    ;
 
