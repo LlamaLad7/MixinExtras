@@ -100,6 +100,9 @@ public class ExpressionParserFacade {
         if (expression instanceof MemberAccessExpressionContext) {
             return parse((MemberAccessExpressionContext) expression);
         }
+        if (expression instanceof NewArrayExpressionContext) {
+            return parse((NewArrayExpressionContext) expression);
+        }
         if (expression instanceof UnaryExpressionContext) {
             return parse((UnaryExpressionContext) expression);
         }
@@ -194,6 +197,10 @@ public class ExpressionParserFacade {
 
     private MemberAccessExpression parse(MemberAccessExpressionContext expression) {
         return new MemberAccessExpression(parse(expression.receiver), parseMemberId(expression.memberName));
+    }
+
+    private NewArrayExpression parse(NewArrayExpressionContext expression) {
+        return new NewArrayExpression(parseTypeId(expression.innerType), parse(expression.dims), expression.blankDims.size());
     }
 
     private UnaryExpression parse(UnaryExpressionContext expression) {
@@ -385,7 +392,11 @@ public class ExpressionParserFacade {
     }
 
     private List<Expression> parse(ArgumentsContext args) {
-        return args.expression().stream().map(this::parse).collect(Collectors.toList());
+        return parse(args.expression());
+    }
+
+    private List<Expression> parse(List<ExpressionContext> exprs) {
+        return exprs.stream().map(this::parse).collect(Collectors.toList());
     }
 
     private RuntimeException unimplemented() {

@@ -26,6 +26,7 @@ expression
    | receiver = expression Dot memberName = name # MemberAccessExpression
    | lit = Minus? DecLit # DecimalLitExpression
    | lit = Minus? IntLit # IntLitExpression
+   | New innerType = name (LeftBracket dims += expression RightBracket)+ (blankDims += LeftBracket RightBracket)* # NewArrayExpression
    | op = (Minus | BitwiseNot) expr = expression # UnaryExpression
    | < assoc = right > LeftParen type = nameWithDims RightParen expr = expression # CastExpression
    | < assoc = right > New type = name LeftParen args = arguments RightParen # InstantiationExpression
