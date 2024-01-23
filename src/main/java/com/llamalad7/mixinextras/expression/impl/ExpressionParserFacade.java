@@ -4,9 +4,7 @@ import com.llamalad7.mixinextras.expression.grammar.ExpressionLexer;
 import com.llamalad7.mixinextras.expression.grammar.ExpressionParser;
 import com.llamalad7.mixinextras.expression.grammar.ExpressionParser.*;
 import com.llamalad7.mixinextras.expression.impl.ast.expressions.*;
-import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
-import com.llamalad7.mixinextras.expression.impl.ast.identifiers.PoolIdentifier;
-import com.llamalad7.mixinextras.expression.impl.ast.identifiers.WildcardIdentifier;
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.*;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -54,7 +52,7 @@ public class ExpressionParserFacade {
     }
 
     private MemberAssignmentExpression parse(MemberAssignmentStatementContext statement) {
-        return new MemberAssignmentExpression(parse(statement.receiver), parse(statement.memberName), parse(statement.value));
+        return new MemberAssignmentExpression(parse(statement.receiver), parseMemberId(statement.memberName), parse(statement.value));
     }
 
     private ArrayStoreExpression parse(ArrayStoreStatementContext statement) {
@@ -62,7 +60,7 @@ public class ExpressionParserFacade {
     }
 
     private IdentifierAssignmentExpression parse(IdentifierAssignmentStatementContext statement) {
-        return new IdentifierAssignmentExpression(parse(statement.identifier), parse(statement.value));
+        return new IdentifierAssignmentExpression(parseMemberId(statement.identifier), parse(statement.value));
     }
 
     private ReturnExpression parse(ReturnStatementContext statement) {
@@ -175,15 +173,15 @@ public class ExpressionParserFacade {
     }
 
     private SuperCallExpression parse(SuperCallExpressionContext expression) {
-        return new SuperCallExpression(parse(expression.memberName), parse(expression.args));
+        return new SuperCallExpression(parseMemberId(expression.memberName), parse(expression.args));
     }
 
     private MethodCallExpression parse(MethodCallExpressionContext expression) {
-        return new MethodCallExpression(parse(expression.receiver), parse(expression.memberName), parse(expression.args));
+        return new MethodCallExpression(parse(expression.receiver), parseMemberId(expression.memberName), parse(expression.args));
     }
 
     private StaticMethodCallExpression parse(StaticMethodCallExpressionContext expression) {
-        return new StaticMethodCallExpression(parse(expression.memberName), parse(expression.args));
+        return new StaticMethodCallExpression(parseMemberId(expression.memberName), parse(expression.args));
     }
 
     private ArrayAccessExpression parse(ArrayAccessExpressionContext expression) {
@@ -191,11 +189,11 @@ public class ExpressionParserFacade {
     }
 
     private ClassConstantExpression parse(ClassConstantExpressionContext expression) {
-        return new ClassConstantExpression(parse(expression.type));
+        return new ClassConstantExpression(parseTypeId(expression.type));
     }
 
     private MemberAccessExpression parse(MemberAccessExpressionContext expression) {
-        return new MemberAccessExpression(parse(expression.receiver), parse(expression.memberName));
+        return new MemberAccessExpression(parse(expression.receiver), parseMemberId(expression.memberName));
     }
 
     private UnaryExpression parse(UnaryExpressionContext expression) {
@@ -214,11 +212,11 @@ public class ExpressionParserFacade {
     }
 
     private CastExpression parse(CastExpressionContext expression) {
-        return new CastExpression(parse(expression.type), parse(expression.expr));
+        return new CastExpression(parseTypeId(expression.type), parse(expression.expr));
     }
 
     private InstantiationExpression parse(InstantiationExpressionContext expression) {
-        return new InstantiationExpression(parse(expression.type), parse(expression.args));
+        return new InstantiationExpression(parseTypeId(expression.type), parse(expression.args));
     }
 
     private BinaryExpression parse(MultiplicativeExpressionContext expression) {
@@ -294,7 +292,7 @@ public class ExpressionParserFacade {
     }
 
     private InstanceofExpression parse(InstanceofExpressionContext expression) {
-        return new InstanceofExpression(parse(expression.expr), parse(expression.type));
+        return new InstanceofExpression(parse(expression.expr), parseTypeId(expression.type));
     }
 
     private ComparisonExpression parse(EqualityExpressionContext expression) {
@@ -357,14 +355,33 @@ public class ExpressionParserFacade {
         return new IdentifierExpression(expression.getText());
     }
 
-    private Identifier parse(NameContext name) {
+    private MemberIdentifier parseMemberId(NameContext name) {
         if (name instanceof IdentifierNameContext) {
-            return new PoolIdentifier(name.getText());
+            return new DefinedMemberIdentifier(name.getText());
         }
         if (name instanceof WildcardNameContext) {
             return new WildcardIdentifier();
         }
         throw unimplemented();
+    }
+
+    private TypeIdentifier parseTypeId(NameContext name) {
+        if (name instanceof IdentifierNameContext) {
+            return new DefinedTypeIdentifier(name.getText());
+        }
+        if (name instanceof WildcardNameContext) {
+            return new WildcardIdentifier();
+        }
+        throw unimplemented();
+    }
+
+    private TypeIdentifier parseTypeId(NameWithDimsContext name) {
+        int dims = name.dims.size();
+        TypeIdentifier elementType = parseTypeId(name.name());
+        if (dims == 0) {
+            return elementType;
+        }
+        return new ArrayTypeIdentifier(dims, elementType);
     }
 
     private List<Expression> parse(ArgumentsContext args) {

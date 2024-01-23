@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.utils.Decorations;
@@ -10,9 +10,9 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 
 public class MemberAccessExpression implements SimpleExpression {
     public final Expression receiver;
-    public final Identifier name;
+    public final MemberIdentifier name;
 
-    public MemberAccessExpression(Expression receiver, Identifier name) {
+    public MemberAccessExpression(Expression receiver, MemberIdentifier name) {
         this.receiver = receiver;
         this.name = name;
     }
@@ -23,7 +23,7 @@ public class MemberAccessExpression implements SimpleExpression {
         switch (insn.getOpcode()) {
             case Opcodes.GETFIELD:
             case Opcodes.ARRAYLENGTH:
-                return name.matches(ctx.getPool(), insn, Identifier.Role.MEMBER) && inputsMatch(node, ctx, receiver);
+                return name.matches(ctx.getPool(), insn) && inputsMatch(node, ctx, receiver);
         }
         return false;
     }

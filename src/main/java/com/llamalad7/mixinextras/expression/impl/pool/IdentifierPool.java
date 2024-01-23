@@ -1,7 +1,5 @@
 package com.llamalad7.mixinextras.expression.impl.pool;
 
-import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -15,7 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 public class IdentifierPool {
-    private final Map<String, List<PoolEntry>> pool = new HashMap<>();
+    private final Map<String, List<MemberDefinition>> members = new HashMap<>();
+    private final Map<String, List<TypeDefinition>> types = new HashMap<>();
 
     public IdentifierPool(Target target, InjectionInfo info, AnnotationNode poolAnnotation) {
         this(target);
@@ -25,41 +24,50 @@ public class IdentifierPool {
     }
 
     IdentifierPool(Target target) {
-        addEntry("byte", new PrimitiveCastPoolEntry(Opcodes.I2B));
-        addEntry("char", new PrimitiveCastPoolEntry(Opcodes.I2C));
-        addEntry("double", new PrimitiveCastPoolEntry(Opcodes.I2D, Opcodes.L2D, Opcodes.F2D));
-        addEntry("float", new PrimitiveCastPoolEntry(Opcodes.I2F, Opcodes.L2F, Opcodes.D2F));
-        addEntry("int", new PrimitiveCastPoolEntry(Opcodes.L2I, Opcodes.F2I, Opcodes.D2I));
-        addEntry("long", new PrimitiveCastPoolEntry(Opcodes.I2L, Opcodes.F2L, Opcodes.D2L));
-        addEntry("short", new PrimitiveCastPoolEntry(Opcodes.I2S));
-        addEntry("length", new ArrayLengthPoolEntry());
-        for (Type type : new Type[]{Type.BYTE_TYPE, Type.CHAR_TYPE, Type.DOUBLE_TYPE, Type.FLOAT_TYPE, Type.INT_TYPE, Type.LONG_TYPE, Type.SHORT_TYPE}) {
-            addEntry(type.getClassName(), new PrimitiveTypePoolEntry(type));
-        }
+        addType("byte", new ExactTypeDef(Type.BYTE_TYPE));
+        addType("char", new ExactTypeDef(Type.CHAR_TYPE));
+        addType("double", new ExactTypeDef(Type.DOUBLE_TYPE));
+        addType("float", new ExactTypeDef(Type.FLOAT_TYPE));
+        addType("int", new ExactTypeDef(Type.INT_TYPE));
+        addType("long", new ExactTypeDef(Type.LONG_TYPE));
+        addType("short", new ExactTypeDef(Type.SHORT_TYPE));
+        addMember("length", new ArrayLengthDef());
     }
 
-    public boolean matches(String id, AbstractInsnNode insn, Identifier.Role role) {
-        List<PoolEntry> matching = pool.get(id);
+    public boolean matchesMember(String id, AbstractInsnNode insn) {
+        List<MemberDefinition> matching = members.get(id);
         if (matching == null) {
             throw new IllegalStateException("Use of undeclared identifier '" + id + '\'');
         }
-        return matching.stream().anyMatch(it -> it.matches(insn, role));
+        return matching.stream().anyMatch(it -> it.matches(insn));
+    }
+
+    public boolean matchesType(String id, Type type) {
+        List<TypeDefinition> matching = types.get(id);
+        if (matching == null) {
+            throw new IllegalStateException("Use of undeclared identifier '" + id + '\'');
+        }
+        return matching.stream().anyMatch(it -> it.matches(type));
     }
 
     private void parseEntry(AnnotationNode entry, Target target, InjectionInfo info) {
         String id = Annotations.getValue(entry, "id");
         for (AnnotationNode at : Annotations.<AnnotationNode>getValue(entry, "at", true)) {
-            addEntry(id, new AtPoolEntry(at, info, target));
+            addMember(id, new AtDef(at, info, target));
         }
         for (Type type : Annotations.<Type>getValue(entry, "type", true)) {
-            addEntry(id, new TypePoolEntry(type));
+            addType(id, new ExactTypeDef(type));
         }
         for (AnnotationNode local : Annotations.<AnnotationNode>getValue(entry, "local", true)) {
-            addEntry(id, new LocalPoolEntry(local, info, target));
+            addMember(id, new LocalDefinition(local, info, target));
         }
     }
 
-    private void addEntry(String id, PoolEntry entry) {
-        pool.computeIfAbsent(id, k -> new ArrayList<>()).add(entry);
+    private void addMember(String id, MemberDefinition entry) {
+        members.computeIfAbsent(id, k -> new ArrayList<>()).add(entry);
+    }
+
+    private void addType(String id, TypeDefinition entry) {
+        types.computeIfAbsent(id, k -> new ArrayList<>()).add(entry);
     }
 }

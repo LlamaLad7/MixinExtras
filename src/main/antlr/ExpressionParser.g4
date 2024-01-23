@@ -22,18 +22,18 @@ expression
    | receiver = expression Dot memberName = name LeftParen args = arguments RightParen # MethodCallExpression
    | memberName = name LeftParen args = arguments RightParen # StaticMethodCallExpression
    | arr = expression LeftBracket index = expression RightBracket # ArrayAccessExpression
-   | type = name Dot Class # ClassConstantExpression
+   | type = nameWithDims Dot Class # ClassConstantExpression
    | receiver = expression Dot memberName = name # MemberAccessExpression
    | lit = Minus? DecLit # DecimalLitExpression
    | lit = Minus? IntLit # IntLitExpression
    | op = (Minus | BitwiseNot) expr = expression # UnaryExpression
-   | < assoc = right > LeftParen type = name RightParen expr = expression # CastExpression
+   | < assoc = right > LeftParen type = nameWithDims RightParen expr = expression # CastExpression
    | < assoc = right > New type = name LeftParen args = arguments RightParen # InstantiationExpression
    | left = expression op = (Mult | Div | Mod) right = expression # MultiplicativeExpression
    | left = expression op = (Plus | Minus) right = expression # AdditiveExpression
    | left = expression op = (Shl | Shr | Ushr) right = expression # ShiftExpression
    | left = expression op = (Lt | Le | Gt | Ge) right = expression # ComparisonExpression
-   | expr = expression Instanceof type = name # InstanceofExpression
+   | expr = expression Instanceof type = nameWithDims # InstanceofExpression
    | left = expression op = (Eq | Ne) right = expression # EqualityExpression
    | left = expression BitwiseAnd right = expression # BitwiseAndExpression
    | left = expression BitwiseXor right = expression # BitwiseXorExpression
@@ -49,6 +49,10 @@ expression
 name
    : Identifier # IdentifierName
    | Wildcard # WildcardName
+   ;
+
+nameWithDims
+   : name (dims += LeftBracket RightBracket)*
    ;
 
 arguments

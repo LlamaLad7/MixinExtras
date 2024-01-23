@@ -1,15 +1,15 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
 
 public class IdentifierAssignmentExpression implements Expression {
-    public final Identifier identifier;
+    public final MemberIdentifier identifier;
     public final Expression value;
 
-    public IdentifierAssignmentExpression(Identifier identifier, Expression value) {
+    public IdentifierAssignmentExpression(MemberIdentifier identifier, Expression value) {
         this.identifier = identifier;
         this.value = value;
     }
@@ -23,7 +23,7 @@ public class IdentifierAssignmentExpression implements Expression {
             case Opcodes.DSTORE:
             case Opcodes.ASTORE:
             case Opcodes.PUTSTATIC:
-                return identifier.matches(ctx.getPool(), node.getInsn(), Identifier.Role.MEMBER) && inputsMatch(node, ctx, value);
+                return identifier.matches(ctx.getPool(), node.getInsn()) && inputsMatch(node, ctx, value);
         }
         return false;
     }

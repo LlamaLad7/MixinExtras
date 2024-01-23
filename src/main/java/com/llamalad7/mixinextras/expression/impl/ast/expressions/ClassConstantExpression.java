@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
@@ -10,39 +10,48 @@ import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 
 public class ClassConstantExpression implements SimpleExpression {
-    public final Identifier type;
+    public final TypeIdentifier type;
 
-    public ClassConstantExpression(Identifier type) {
+    public ClassConstantExpression(TypeIdentifier type) {
         this.type = type;
     }
 
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
-        return isValid(node.getInsn()) && type.matches(ctx.getPool(), node.getInsn(), Identifier.Role.TYPE);
+        Type cstType = getConstantType(node.getInsn());
+        return cstType != null && type.matches(ctx.getPool(), cstType);
     }
 
-    private boolean isValid(AbstractInsnNode insn) {
-        if (insn instanceof LdcInsnNode && ((LdcInsnNode) insn).cst instanceof Type) {
-            return true;
+    private Type getConstantType(AbstractInsnNode insn) {
+        if (insn instanceof LdcInsnNode) {
+            Object cst = ((LdcInsnNode) insn).cst;
+            return cst instanceof Type ? (Type) cst : null;
         }
         if (insn.getOpcode() != Opcodes.GETSTATIC) {
-            return false;
+            return null;
         }
         FieldInsnNode get = (FieldInsnNode) insn;
         if (!get.name.equals("TYPE") || !get.desc.equals(Type.getDescriptor(Class.class))) {
-            return false;
+            return null;
         }
         switch (get.owner) {
             case "java/lang/Boolean":
+                return Type.BOOLEAN_TYPE;
             case "java/lang/Character":
+                return Type.CHAR_TYPE;
             case "java/lang/Byte":
+                return Type.BYTE_TYPE;
             case "java/lang/Short":
+                return Type.SHORT_TYPE;
             case "java/lang/Integer":
+                return Type.INT_TYPE;
             case "java/lang/Float":
+                return Type.FLOAT_TYPE;
             case "java/lang/Long":
+                return Type.LONG_TYPE;
             case "java/lang/Double":
-                return true;
+                return Type.DOUBLE_TYPE;
         }
-        return false;
+        return null;
     }
 }

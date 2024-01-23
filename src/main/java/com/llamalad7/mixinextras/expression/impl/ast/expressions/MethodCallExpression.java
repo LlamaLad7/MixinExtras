@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.apache.commons.lang3.ArrayUtils;
@@ -11,10 +11,10 @@ import java.util.List;
 
 public class MethodCallExpression implements SimpleExpression {
     public final Expression receiver;
-    public final Identifier name;
+    public final MemberIdentifier name;
     public final List<Expression> arguments;
 
-    public MethodCallExpression(Expression receiver, Identifier name, List<Expression> arguments) {
+    public MethodCallExpression(Expression receiver, MemberIdentifier name, List<Expression> arguments) {
         this.receiver = receiver;
         this.name = name;
         this.arguments = arguments;
@@ -30,7 +30,7 @@ public class MethodCallExpression implements SimpleExpression {
                 }
             case Opcodes.INVOKEVIRTUAL:
             case Opcodes.INVOKEINTERFACE:
-                if (!name.matches(ctx.getPool(), node.getInsn(), Identifier.Role.MEMBER)) {
+                if (!name.matches(ctx.getPool(), node.getInsn())) {
                     return false;
                 }
                 Expression[] inputs = ArrayUtils.add(arguments.toArray(new Expression[0]), 0, receiver);

@@ -1,6 +1,5 @@
 package com.llamalad7.mixinextras.expression.impl.pool;
 
-import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -14,14 +13,14 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Annotations;
 
-public class LocalPoolEntry implements PoolEntry {
+public class LocalDefinition implements MemberDefinition {
     private final LocalVariableDiscriminator discriminator;
     private final InjectionInfo info;
     private final Type targetLocalType;
     private final boolean isArgsOnly;
     private final Target target;
 
-    LocalPoolEntry(AnnotationNode local, InjectionInfo info, Target target) {
+    LocalDefinition(AnnotationNode local, InjectionInfo info, Target target) {
         discriminator = LocalVariableDiscriminator.parse(local);
         this.info = info;
         targetLocalType = Annotations.getValue(local, "type", Type.VOID_TYPE);
@@ -30,8 +29,8 @@ public class LocalPoolEntry implements PoolEntry {
     }
 
     @Override
-    public boolean matches(AbstractInsnNode insn, Identifier.Role role) {
-        if (role != Identifier.Role.MEMBER || !(insn instanceof VarInsnNode)) {
+    public boolean matches(AbstractInsnNode insn) {
+        if (!(insn instanceof VarInsnNode)) {
             return false;
         }
         VarInsnNode varInsn = (VarInsnNode) insn;

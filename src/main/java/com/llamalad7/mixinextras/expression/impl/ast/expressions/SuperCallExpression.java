@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
-import com.llamalad7.mixinextras.expression.impl.ast.identifiers.Identifier;
+import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
@@ -9,10 +9,10 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import java.util.List;
 
 public class SuperCallExpression implements SimpleExpression {
-    public final Identifier name;
+    public final MemberIdentifier name;
     public final List<Expression> arguments;
 
-    public SuperCallExpression(Identifier name, List<Expression> arguments) {
+    public SuperCallExpression(MemberIdentifier name, List<Expression> arguments) {
         this.name = name;
         this.arguments = arguments;
     }
@@ -26,7 +26,7 @@ public class SuperCallExpression implements SimpleExpression {
         if (call.name.equals("<init>") || !call.owner.equals(ctx.getTarget().classNode.superName)) {
             return false;
         }
-        if (!name.matches(ctx.getPool(), node.getInsn(), Identifier.Role.MEMBER)) {
+        if (!name.matches(ctx.getPool(), node.getInsn())) {
             return false;
         }
         return new ThisExpression().matches(node.getInput(0), ctx) && inputsMatch(1, node, ctx, arguments.toArray(new Expression[0]));
