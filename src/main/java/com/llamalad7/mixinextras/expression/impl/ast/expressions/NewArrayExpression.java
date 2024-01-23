@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -50,25 +51,7 @@ public class NewArrayExpression implements SimpleExpression {
                 Type elementType = Type.getObjectType(((TypeInsnNode) insn).desc);
                 return elementType.getSort() == Type.ARRAY ? elementType.getElementType() : elementType;
             case Opcodes.NEWARRAY:
-                int type = ((IntInsnNode) insn).operand;
-                switch (type) {
-                    case Opcodes.T_BOOLEAN:
-                        return Type.BOOLEAN_TYPE;
-                    case Opcodes.T_CHAR:
-                        return Type.CHAR_TYPE;
-                    case Opcodes.T_FLOAT:
-                        return Type.FLOAT_TYPE;
-                    case Opcodes.T_DOUBLE:
-                        return Type.DOUBLE_TYPE;
-                    case Opcodes.T_BYTE:
-                        return Type.BYTE_TYPE;
-                    case Opcodes.T_SHORT:
-                        return Type.SHORT_TYPE;
-                    case Opcodes.T_INT:
-                        return Type.INT_TYPE;
-                    case Opcodes.T_LONG:
-                        return Type.LONG_TYPE;
-                }
+                return TypeUtils.getNewArrayType((IntInsnNode) insn);
             case Opcodes.MULTIANEWARRAY:
                 return Type.getType(((MultiANewArrayInsnNode) insn).desc).getElementType();
         }

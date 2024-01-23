@@ -27,6 +27,7 @@ expression
    | lit = Minus? DecLit # DecimalLitExpression
    | lit = Minus? IntLit # IntLitExpression
    | New innerType = name (LeftBracket dims += expression RightBracket)+ (blankDims += LeftBracket RightBracket)* # NewArrayExpression
+   | New elementType = nameWithDims LeftBracket RightBracket LeftBrace values = nonEmptyArguments RightBrace # ArrayLitExpression
    | op = (Minus | BitwiseNot) expr = expression # UnaryExpression
    | < assoc = right > LeftParen type = nameWithDims RightParen expr = expression # CastExpression
    | < assoc = right > New type = name LeftParen args = arguments RightParen # InstantiationExpression
@@ -57,6 +58,10 @@ nameWithDims
    ;
 
 arguments
-   : ((expression Comma)* expression)?
+   : nonEmptyArguments?
+   ;
+
+nonEmptyArguments
+   : (expression Comma)* expression
    ;
 

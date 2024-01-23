@@ -138,6 +138,14 @@ RightBracket
    : ']'
    ;
 
+LeftBrace
+   : '{'
+   ;
+
+RightBrace
+   : '}'
+   ;
+
 At
    : '@'
    ;

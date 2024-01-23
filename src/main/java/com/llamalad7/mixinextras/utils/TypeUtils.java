@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.utils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.transformer.ClassInfo;
@@ -335,5 +336,27 @@ public class TypeUtils {
             return BOTTOM_TYPE;
         }
         return Type.getType(arrayType.getDescriptor().substring(1));
+    }
+
+    public static Type getNewArrayType(IntInsnNode newArray) {
+        switch (newArray.operand) {
+            case Opcodes.T_BOOLEAN:
+                return Type.BOOLEAN_TYPE;
+            case Opcodes.T_CHAR:
+                return Type.CHAR_TYPE;
+            case Opcodes.T_FLOAT:
+                return Type.FLOAT_TYPE;
+            case Opcodes.T_DOUBLE:
+                return Type.DOUBLE_TYPE;
+            case Opcodes.T_BYTE:
+                return Type.BYTE_TYPE;
+            case Opcodes.T_SHORT:
+                return Type.SHORT_TYPE;
+            case Opcodes.T_INT:
+                return Type.INT_TYPE;
+            case Opcodes.T_LONG:
+                return Type.LONG_TYPE;
+        }
+        return null;
     }
 }

@@ -103,6 +103,9 @@ public class ExpressionParserFacade {
         if (expression instanceof NewArrayExpressionContext) {
             return parse((NewArrayExpressionContext) expression);
         }
+        if (expression instanceof ArrayLitExpressionContext) {
+            return parse((ArrayLitExpressionContext) expression);
+        }
         if (expression instanceof UnaryExpressionContext) {
             return parse((UnaryExpressionContext) expression);
         }
@@ -201,6 +204,10 @@ public class ExpressionParserFacade {
 
     private NewArrayExpression parse(NewArrayExpressionContext expression) {
         return new NewArrayExpression(parseTypeId(expression.innerType), parse(expression.dims), expression.blankDims.size());
+    }
+
+    private ArrayLiteralExpression parse(ArrayLitExpressionContext expression) {
+        return new ArrayLiteralExpression(parseTypeId(expression.elementType), parse(expression.values));
     }
 
     private UnaryExpression parse(UnaryExpressionContext expression) {
@@ -392,6 +399,10 @@ public class ExpressionParserFacade {
     }
 
     private List<Expression> parse(ArgumentsContext args) {
+        return parse(args.nonEmptyArguments());
+    }
+
+    private List<Expression> parse(NonEmptyArgumentsContext args) {
         return parse(args.expression());
     }
 
