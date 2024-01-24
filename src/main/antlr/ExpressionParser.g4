@@ -18,19 +18,25 @@ statement
 expression
    : At LeftParen expr = expression RightParen # CapturingExpression
    | LeftParen expr = expression RightParen # ParenthesizedExpression
+   | Wildcard # WildcardExpression
+   | This # ThisExpression
+   | lit = Minus? IntLit # IntLitExpression
+   | lit = Minus? DecLit # DecimalLitExpression
+   | lit = BoolLit # BoolLitExpression
+   | lit = NullLit # NullExpression
+   | lit = StringLit # StringLitExpression
+   | id = Identifier # IdentifierExpression
+   | type = nameWithDims Dot Class # ClassConstantExpression
+   | arr = expression LeftBracket index = expression RightBracket # ArrayAccessExpression
+   | receiver = expression Dot memberName = name # MemberAccessExpression
    | Super Dot memberName = name LeftParen args = arguments RightParen # SuperCallExpression
    | receiver = expression Dot memberName = name LeftParen args = arguments RightParen # MethodCallExpression
    | memberName = name LeftParen args = arguments RightParen # StaticMethodCallExpression
-   | arr = expression LeftBracket index = expression RightBracket # ArrayAccessExpression
-   | type = nameWithDims Dot Class # ClassConstantExpression
-   | receiver = expression Dot memberName = name # MemberAccessExpression
-   | lit = Minus? DecLit # DecimalLitExpression
-   | lit = Minus? IntLit # IntLitExpression
-   | New innerType = name (LeftBracket dims += expression RightBracket)+ (blankDims += LeftBracket RightBracket)* # NewArrayExpression
-   | New elementType = nameWithDims LeftBracket RightBracket LeftBrace values = nonEmptyArguments RightBrace # ArrayLitExpression
    | op = (Minus | BitwiseNot) expr = expression # UnaryExpression
    | < assoc = right > LeftParen type = nameWithDims RightParen expr = expression # CastExpression
    | < assoc = right > New type = name LeftParen args = arguments RightParen # InstantiationExpression
+   | New elementType = nameWithDims LeftBracket RightBracket LeftBrace values = nonEmptyArguments RightBrace # ArrayLitExpression
+   | New innerType = name (LeftBracket dims += expression RightBracket)+ (blankDims += LeftBracket RightBracket)* # NewArrayExpression
    | left = expression op = (Mult | Div | Mod) right = expression # MultiplicativeExpression
    | left = expression op = (Plus | Minus) right = expression # AdditiveExpression
    | left = expression op = (Shl | Shr | Ushr) right = expression # ShiftExpression
@@ -40,12 +46,6 @@ expression
    | left = expression BitwiseAnd right = expression # BitwiseAndExpression
    | left = expression BitwiseXor right = expression # BitwiseXorExpression
    | left = expression BitwiseOr right = expression # BitwiseOrExpression
-   | lit = StringLit # StringLitExpression
-   | lit = BoolLit # BoolLitExpression
-   | lit = NullLit # NullExpression
-   | Wildcard # WildcardExpression
-   | This # ThisExpression
-   | id = Identifier # IdentifierExpression
    ;
 
 name
