@@ -61,7 +61,7 @@ dependencies {
 }
 
 tasks.withType<AntlrTask> {
-    arguments.addAll(listOf("-package", "com.llamalad7.mixinextras.expression.grammar"))
+    arguments.addAll(listOf("-package", "com.llamalad7.mixinextras.lib.grammar.expressions"))
 }
 
 tasks.withType<JavaCompile> {
