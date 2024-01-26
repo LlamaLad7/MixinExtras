@@ -17,6 +17,7 @@ statement
 
 expression
    : At LeftParen expr = expression RightParen # CapturingExpression
+   | < assoc = right > LeftParen type = nameWithDims RightParen expr = expression # CastExpression
    | LeftParen expr = expression RightParen # ParenthesizedExpression
    | Wildcard # WildcardExpression
    | This # ThisExpression
@@ -33,7 +34,6 @@ expression
    | receiver = expression Dot memberName = name LeftParen args = arguments RightParen # MethodCallExpression
    | memberName = name LeftParen args = arguments RightParen # StaticMethodCallExpression
    | op = (Minus | BitwiseNot) expr = expression # UnaryExpression
-   | < assoc = right > LeftParen type = nameWithDims RightParen expr = expression # CastExpression
    | < assoc = right > New type = name LeftParen args = arguments RightParen # InstantiationExpression
    | New elementType = nameWithDims LeftBracket RightBracket LeftBrace values = nonEmptyArguments RightBrace # ArrayLitExpression
    | New innerType = name (LeftBracket dims += expression RightBracket)+ (blankDims += LeftBracket RightBracket)* # NewArrayExpression
