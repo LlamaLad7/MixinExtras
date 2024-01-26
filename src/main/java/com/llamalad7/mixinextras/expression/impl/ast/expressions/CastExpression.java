@@ -20,7 +20,7 @@ public class CastExpression implements SimpleExpression {
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
         Type castType = getCastType(node.getInsn());
-        return castType != null && type.matches(ctx.getPool(), castType);
+        return castType != null && type.matches(ctx.pool, castType) && inputsMatch(node, ctx, expression);
     }
 
     private Type getCastType(AbstractInsnNode insn) {
