@@ -17,13 +17,13 @@ public class IdentifierPool {
     private final Map<String, List<TypeDefinition>> types = new HashMap<>();
 
     public IdentifierPool(Target target, InjectionInfo info, AnnotationNode poolAnnotation) {
-        this(target);
+        this();
         for (AnnotationNode entry : Annotations.<AnnotationNode>getValue(poolAnnotation, "value", true)) {
             parseEntry(entry, target, info);
         }
     }
 
-    IdentifierPool(Target target) {
+    public IdentifierPool() {
         addType("byte", new ExactTypeDef(Type.BYTE_TYPE));
         addType("char", new ExactTypeDef(Type.CHAR_TYPE));
         addType("double", new ExactTypeDef(Type.DOUBLE_TYPE));
@@ -63,11 +63,11 @@ public class IdentifierPool {
         }
     }
 
-    private void addMember(String id, MemberDefinition entry) {
+    public void addMember(String id, MemberDefinition entry) {
         members.computeIfAbsent(id, k -> new ArrayList<>()).add(entry);
     }
 
-    private void addType(String id, TypeDefinition entry) {
+    public void addType(String id, TypeDefinition entry) {
         types.computeIfAbsent(id, k -> new ArrayList<>()).add(entry);
     }
 }
