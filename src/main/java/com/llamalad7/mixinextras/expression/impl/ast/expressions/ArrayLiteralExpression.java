@@ -30,7 +30,7 @@ public class ArrayLiteralExpression implements SimpleExpression {
             return false;
         }
         Type newElementType = getElementType(node.getInsn());
-        if (newElementType == null || !elementType.matches(ctx.getPool(), newElementType)) {
+        if (newElementType == null || !elementType.matches(ctx.pool, newElementType)) {
             return false;
         }
         return valuesMatch(creation.values, ctx);

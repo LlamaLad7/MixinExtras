@@ -2,7 +2,6 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
-import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.expression.impl.utils.ComplexComparisonInfo;
 import com.llamalad7.mixinextras.utils.TypeUtils;
@@ -41,7 +40,7 @@ public class ComparisonExpression implements Expression {
     }
 
     private boolean matchesImpl(FlowValue node, ExpressionContext ctx, boolean isWithZero, boolean isWithNull) {
-        if (!operator.matches(node, ctx.getSink(), isWithZero, isWithNull)) {
+        if (!operator.matches(node, ctx.sink, isWithZero, isWithNull)) {
             return false;
         }
         if ((isWithZero || isWithNull) && inputsMatch(node, ctx, left)) {

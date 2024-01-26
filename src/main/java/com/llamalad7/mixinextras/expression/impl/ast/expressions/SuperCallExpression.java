@@ -19,14 +19,14 @@ public class SuperCallExpression implements SimpleExpression {
 
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
-        if (ctx.getTarget().isStatic || node.getInsn().getOpcode() != Opcodes.INVOKESPECIAL) {
+        if (ctx.isStatic || node.getInsn().getOpcode() != Opcodes.INVOKESPECIAL) {
             return false;
         }
         MethodInsnNode call = (MethodInsnNode) node.getInsn();
-        if (call.name.equals("<init>") || !call.owner.equals(ctx.getTarget().classNode.superName)) {
+        if (call.name.equals("<init>") || !call.owner.equals(ctx.classNode.superName)) {
             return false;
         }
-        if (!name.matches(ctx.getPool(), node.getInsn())) {
+        if (!name.matches(ctx.pool, node.getInsn())) {
             return false;
         }
         return new ThisExpression().matches(node.getInput(0), ctx) && inputsMatch(1, node, ctx, arguments.toArray(new Expression[0]));

@@ -21,6 +21,6 @@ public class MemberAssignmentExpression implements Expression {
     public boolean matches(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
         return insn.getOpcode() == Opcodes.PUTFIELD
-                && name.matches(ctx.getPool(), node.getInsn()) && inputsMatch(node, ctx, receiver, value);
+                && name.matches(ctx.pool, node.getInsn()) && inputsMatch(node, ctx, receiver, value);
     }
 }

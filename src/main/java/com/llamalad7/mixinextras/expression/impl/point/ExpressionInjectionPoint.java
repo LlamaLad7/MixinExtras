@@ -106,7 +106,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                     continue;
                 }
                 try {
-                    if (expr.matches(flow, new ExpressionContext(pool, sink, target))) {
+                    if (expr.matches(flow, new ExpressionContext(pool, sink, target.classNode, target.method))) {
                         result.addAll(captured);
                     }
                 } catch (ComplexDataException ignored) {

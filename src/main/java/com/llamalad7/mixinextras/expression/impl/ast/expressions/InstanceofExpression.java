@@ -24,6 +24,6 @@ public class InstanceofExpression implements SimpleExpression {
             return false;
         }
         Type checkType = Type.getObjectType(((TypeInsnNode) insn).desc);
-        return type.matches(ctx.getPool(), checkType) && inputsMatch(node, ctx, expression);
+        return type.matches(ctx.pool, checkType) && inputsMatch(node, ctx, expression);
     }
 }

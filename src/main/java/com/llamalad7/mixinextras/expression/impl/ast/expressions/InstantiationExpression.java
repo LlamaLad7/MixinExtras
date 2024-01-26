@@ -28,7 +28,7 @@ public class InstantiationExpression implements Expression {
             return false;
         }
         Type newType = Type.getObjectType(((TypeInsnNode) insn).desc);
-        if (!type.matches(ctx.getPool(), newType)) {
+        if (!type.matches(ctx.pool, newType)) {
             return false;
         }
         for (Pair<FlowValue, Integer> next : node.getNext()) {

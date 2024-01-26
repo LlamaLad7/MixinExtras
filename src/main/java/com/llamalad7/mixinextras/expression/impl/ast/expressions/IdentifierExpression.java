@@ -20,7 +20,7 @@ public class IdentifierExpression implements SimpleExpression {
             case Opcodes.DLOAD:
             case Opcodes.ALOAD:
             case Opcodes.GETSTATIC:
-                return ctx.getPool().matchesMember(identifier, node.getInsn());
+                return ctx.pool.matchesMember(identifier, node.getInsn());
         }
         return false;
     }

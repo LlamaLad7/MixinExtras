@@ -8,7 +8,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 public class ThisExpression implements SimpleExpression {
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
-        if (ctx.getTarget().isStatic) {
+        if (ctx.isStatic) {
             return false;
         }
         return node.getInsn().getOpcode() == Opcodes.ALOAD && ((VarInsnNode) node.getInsn()).var == 0;

@@ -39,7 +39,7 @@ public class NewArrayExpression implements SimpleExpression {
         if (blankDims != newBlankDims) {
             return false;
         }
-        if (!innerType.matches(ctx.getPool(), newInnerType)) {
+        if (!innerType.matches(ctx.pool, newInnerType)) {
             return false;
         }
         return inputsMatch(node, ctx, dims.toArray(new Expression[0]));

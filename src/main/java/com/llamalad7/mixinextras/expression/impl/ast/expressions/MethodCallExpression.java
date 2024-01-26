@@ -25,12 +25,12 @@ public class MethodCallExpression implements SimpleExpression {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.INVOKESPECIAL:
                 MethodInsnNode call = (MethodInsnNode) node.getInsn();
-                if (call.name.equals("<init>") || !call.owner.equals(ctx.getTarget().classNode.name)) {
+                if (call.name.equals("<init>") || !call.owner.equals(ctx.classNode.name)) {
                     return false;
                 }
             case Opcodes.INVOKEVIRTUAL:
             case Opcodes.INVOKEINTERFACE:
-                if (!name.matches(ctx.getPool(), node.getInsn())) {
+                if (!name.matches(ctx.pool, node.getInsn())) {
                     return false;
                 }
                 Expression[] inputs = ArrayUtils.add(arguments.toArray(new Expression[0]), 0, receiver);

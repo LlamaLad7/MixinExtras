@@ -23,7 +23,7 @@ public class IdentifierAssignmentExpression implements Expression {
             case Opcodes.DSTORE:
             case Opcodes.ASTORE:
             case Opcodes.PUTSTATIC:
-                return identifier.matches(ctx.getPool(), node.getInsn()) && inputsMatch(node, ctx, value);
+                return identifier.matches(ctx.pool, node.getInsn()) && inputsMatch(node, ctx, value);
         }
         return false;
     }
