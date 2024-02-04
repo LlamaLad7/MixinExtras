@@ -1,5 +1,7 @@
 # MixinExtras
 
+[![](https://dcbadge.vercel.app/api/server/VUkAeRYqdH)](https://llama.is-a.dev/discord)
+
 A small companion library to [Mixin](https://github.com/SpongePowered/Mixin/), designed to help you write your Mixins in
 a more expressive and compatible way.
 
