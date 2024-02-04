@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
@@ -14,12 +15,13 @@ import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.util.List;
 
-public class NewArrayExpression implements SimpleExpression {
+public class NewArrayExpression extends SimpleExpression {
     public final TypeIdentifier innerType;
     public final List<Expression> dims;
     public final int blankDims;
 
-    public NewArrayExpression(TypeIdentifier innerType, List<Expression> dims, int blankDims) {
+    public NewArrayExpression(ExpressionSource src, TypeIdentifier innerType, List<Expression> dims, int blankDims) {
+        super(src);
         this.innerType = innerType;
         this.dims = dims;
         this.blankDims = blankDims;

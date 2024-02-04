@@ -1,13 +1,15 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
 
-public class IdentifierExpression implements SimpleExpression {
+public class IdentifierExpression extends SimpleExpression {
     public final String identifier;
 
-    public IdentifierExpression(String identifier) {
+    public IdentifierExpression(ExpressionSource src, String identifier) {
+        super(src);
         this.identifier = identifier;
     }
 

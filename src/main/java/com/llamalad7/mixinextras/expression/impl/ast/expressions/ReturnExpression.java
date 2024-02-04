@@ -1,13 +1,15 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
 
-public class ReturnExpression implements Expression {
+public class ReturnExpression extends Expression {
     public final Expression value;
 
-    public ReturnExpression(Expression value) {
+    public ReturnExpression(ExpressionSource src, Expression value) {
+        super(src);
         this.value = value;
     }
 

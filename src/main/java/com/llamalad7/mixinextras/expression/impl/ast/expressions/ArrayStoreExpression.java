@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.utils.Decorations;
@@ -7,12 +8,13 @@ import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public class ArrayStoreExpression implements Expression {
+public class ArrayStoreExpression extends Expression {
     public final Expression arr;
     public final Expression index;
     public final Expression value;
 
-    public ArrayStoreExpression(Expression arr, Expression index, Expression value) {
+    public ArrayStoreExpression(ExpressionSource src, Expression arr, Expression index, Expression value) {
+        super(src);
         this.arr = arr;
         this.index = index;
         this.value = value;
@@ -39,6 +41,6 @@ public class ArrayStoreExpression implements Expression {
         Type arrayType = node.getInput(0).getType();
         sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, TypeUtils.getInnerType(arrayType)});
         sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.VOID_TYPE);
-        Expression.super.capture(node, sink);
+        super.capture(node, sink);
     }
 }

@@ -1,15 +1,17 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
 
-public class IdentifierAssignmentExpression implements Expression {
+public class IdentifierAssignmentExpression extends Expression {
     public final MemberIdentifier identifier;
     public final Expression value;
 
-    public IdentifierAssignmentExpression(MemberIdentifier identifier, Expression value) {
+    public IdentifierAssignmentExpression(ExpressionSource src, MemberIdentifier identifier, Expression value) {
+        super(src);
         this.identifier = identifier;
         this.value = value;
     }

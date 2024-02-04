@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.ArrayCreationInfo;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
@@ -14,11 +15,12 @@ import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.util.List;
 
-public class ArrayLiteralExpression implements SimpleExpression {
+public class ArrayLiteralExpression extends SimpleExpression {
     public final TypeIdentifier elementType;
     public final List<Expression> values;
 
-    public ArrayLiteralExpression(TypeIdentifier elementType, List<Expression> values) {
+    public ArrayLiteralExpression(ExpressionSource src, TypeIdentifier elementType, List<Expression> values) {
+        super(src);
         this.elementType = elementType;
         this.values = values;
     }

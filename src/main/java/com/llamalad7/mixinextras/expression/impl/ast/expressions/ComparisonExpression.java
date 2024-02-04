@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
@@ -10,7 +11,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 
-public class ComparisonExpression implements Expression {
+public class ComparisonExpression extends Expression {
     public final Expression left;
     public final Operator operator;
     public final Expression right;
@@ -18,7 +19,8 @@ public class ComparisonExpression implements Expression {
     private final boolean isWithNull;
     private final boolean isWildcard;
 
-    public ComparisonExpression(Expression left, Operator operator, Expression right) {
+    public ComparisonExpression(ExpressionSource src, Expression left, Operator operator, Expression right) {
+        super(src);
         this.left = left;
         this.operator = operator;
         this.right = right;

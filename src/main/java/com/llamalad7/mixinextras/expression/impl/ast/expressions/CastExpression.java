@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
@@ -8,11 +9,12 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
-public class CastExpression implements SimpleExpression {
+public class CastExpression extends SimpleExpression {
     public final TypeIdentifier type;
     public final Expression expression;
 
-    public CastExpression(TypeIdentifier type, Expression expression) {
+    public CastExpression(ExpressionSource src, TypeIdentifier type, Expression expression) {
+        super(src);
         this.type = type;
         this.expression = expression;
     }

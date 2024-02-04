@@ -14,19 +14,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ExpressionParserFacade {
+    private final String expression;
     private boolean hasExplicitCapture = false;
+
+    public ExpressionParserFacade(String expression) {
+        this.expression = expression;
+    }
 
     public static Expression parse(String input) {
         ExpressionLexer lexer = new ExpressionLexer(CharStreams.fromString(input));
         setupErrorListeners(lexer, input);
         ExpressionParser parser = new ExpressionParser(new CommonTokenStream(lexer));
         setupErrorListeners(parser, input);
-        ExpressionParserFacade facade = new ExpressionParserFacade();
+        ExpressionParserFacade facade = new ExpressionParserFacade(input);
         Expression parsed = facade.parse(parser.root().statement());
         if (facade.hasExplicitCapture) {
             return parsed;
         }
-        return new CapturingExpression(parsed);
+        return new CapturingExpression(new ExpressionSource(input, 0, input.length() - 1), parsed);
     }
 
     private Expression parse(StatementContext statement) {
@@ -52,23 +57,23 @@ public class ExpressionParserFacade {
     }
 
     private MemberAssignmentExpression parse(MemberAssignmentStatementContext statement) {
-        return new MemberAssignmentExpression(parse(statement.receiver), parseMemberId(statement.memberName), parse(statement.value));
+        return new MemberAssignmentExpression(getSource(statement), parse(statement.receiver), parseMemberId(statement.memberName), parse(statement.value));
     }
 
     private ArrayStoreExpression parse(ArrayStoreStatementContext statement) {
-        return new ArrayStoreExpression(parse(statement.arr), parse(statement.index), parse(statement.value));
+        return new ArrayStoreExpression(getSource(statement), parse(statement.arr), parse(statement.index), parse(statement.value));
     }
 
     private IdentifierAssignmentExpression parse(IdentifierAssignmentStatementContext statement) {
-        return new IdentifierAssignmentExpression(parseMemberId(statement.identifier), parse(statement.value));
+        return new IdentifierAssignmentExpression(getSource(statement), parseMemberId(statement.identifier), parse(statement.value));
     }
 
     private ReturnExpression parse(ReturnStatementContext statement) {
-        return new ReturnExpression(parse(statement.value));
+        return new ReturnExpression(getSource(statement), parse(statement.value));
     }
 
     private ThrowExpression parse(ThrowStatementContext statement) {
-        return new ThrowExpression(parse(statement.value));
+        return new ThrowExpression(getSource(statement), parse(statement.value));
     }
 
     private Expression parse(ExpressionStatementContext statement) {
@@ -171,7 +176,7 @@ public class ExpressionParserFacade {
 
     private CapturingExpression parse(CapturingExpressionContext expression) {
         this.hasExplicitCapture = true;
-        return new CapturingExpression(parse(expression.expr));
+        return new CapturingExpression(getSource(expression), parse(expression.expr));
     }
 
     private Expression parse(ParenthesizedExpressionContext expression) {
@@ -179,35 +184,35 @@ public class ExpressionParserFacade {
     }
 
     private SuperCallExpression parse(SuperCallExpressionContext expression) {
-        return new SuperCallExpression(parseMemberId(expression.memberName), parse(expression.args));
+        return new SuperCallExpression(getSource(expression), parseMemberId(expression.memberName), parse(expression.args));
     }
 
     private MethodCallExpression parse(MethodCallExpressionContext expression) {
-        return new MethodCallExpression(parse(expression.receiver), parseMemberId(expression.memberName), parse(expression.args));
+        return new MethodCallExpression(getSource(expression), parse(expression.receiver), parseMemberId(expression.memberName), parse(expression.args));
     }
 
     private StaticMethodCallExpression parse(StaticMethodCallExpressionContext expression) {
-        return new StaticMethodCallExpression(parseMemberId(expression.memberName), parse(expression.args));
+        return new StaticMethodCallExpression(getSource(expression), parseMemberId(expression.memberName), parse(expression.args));
     }
 
     private ArrayAccessExpression parse(ArrayAccessExpressionContext expression) {
-        return new ArrayAccessExpression(parse(expression.arr), parse(expression.index));
+        return new ArrayAccessExpression(getSource(expression), parse(expression.arr), parse(expression.index));
     }
 
     private ClassConstantExpression parse(ClassConstantExpressionContext expression) {
-        return new ClassConstantExpression(parseTypeId(expression.type));
+        return new ClassConstantExpression(getSource(expression), parseTypeId(expression.type));
     }
 
     private MemberAccessExpression parse(MemberAccessExpressionContext expression) {
-        return new MemberAccessExpression(parse(expression.receiver), parseMemberId(expression.memberName));
+        return new MemberAccessExpression(getSource(expression), parse(expression.receiver), parseMemberId(expression.memberName));
     }
 
     private NewArrayExpression parse(NewArrayExpressionContext expression) {
-        return new NewArrayExpression(parseTypeId(expression.innerType), parse(expression.dims), expression.blankDims.size());
+        return new NewArrayExpression(getSource(expression), parseTypeId(expression.innerType), parse(expression.dims), expression.blankDims.size());
     }
 
     private ArrayLiteralExpression parse(ArrayLitExpressionContext expression) {
-        return new ArrayLiteralExpression(parseTypeId(expression.elementType), parse(expression.values));
+        return new ArrayLiteralExpression(getSource(expression), parseTypeId(expression.elementType), parse(expression.values));
     }
 
     private UnaryExpression parse(UnaryExpressionContext expression) {
@@ -222,15 +227,15 @@ public class ExpressionParserFacade {
             default:
                 throw unimplemented();
         }
-        return new UnaryExpression(op, parse(expression.expr));
+        return new UnaryExpression(getSource(expression), op, parse(expression.expr));
     }
 
     private CastExpression parse(CastExpressionContext expression) {
-        return new CastExpression(parseTypeId(expression.type), parse(expression.expr));
+        return new CastExpression(getSource(expression), parseTypeId(expression.type), parse(expression.expr));
     }
 
     private InstantiationExpression parse(InstantiationExpressionContext expression) {
-        return new InstantiationExpression(parseTypeId(expression.type), parse(expression.args));
+        return new InstantiationExpression(getSource(expression), parseTypeId(expression.type), parse(expression.args));
     }
 
     private BinaryExpression parse(MultiplicativeExpressionContext expression) {
@@ -248,7 +253,7 @@ public class ExpressionParserFacade {
             default:
                 throw unimplemented();
         }
-        return new BinaryExpression(parse(expression.left), op, parse(expression.right));
+        return new BinaryExpression(getSource(expression), parse(expression.left), op, parse(expression.right));
     }
 
     private BinaryExpression parse(AdditiveExpressionContext expression) {
@@ -263,7 +268,7 @@ public class ExpressionParserFacade {
             default:
                 throw unimplemented();
         }
-        return new BinaryExpression(parse(expression.left), op, parse(expression.right));
+        return new BinaryExpression(getSource(expression), parse(expression.left), op, parse(expression.right));
     }
 
     private BinaryExpression parse(ShiftExpressionContext expression) {
@@ -281,7 +286,7 @@ public class ExpressionParserFacade {
             default:
                 throw unimplemented();
         }
-        return new BinaryExpression(parse(expression.left), op, parse(expression.right));
+        return new BinaryExpression(getSource(expression), parse(expression.left), op, parse(expression.right));
     }
 
     private ComparisonExpression parse(ComparisonExpressionContext expression) {
@@ -302,11 +307,11 @@ public class ExpressionParserFacade {
             default:
                 throw unimplemented();
         }
-        return new ComparisonExpression(parse(expression.left), op, parse(expression.right));
+        return new ComparisonExpression(getSource(expression), parse(expression.left), op, parse(expression.right));
     }
 
     private InstanceofExpression parse(InstanceofExpressionContext expression) {
-        return new InstanceofExpression(parse(expression.expr), parseTypeId(expression.type));
+        return new InstanceofExpression(getSource(expression), parse(expression.expr), parseTypeId(expression.type));
     }
 
     private ComparisonExpression parse(EqualityExpressionContext expression) {
@@ -321,52 +326,52 @@ public class ExpressionParserFacade {
             default:
                 throw unimplemented();
         }
-        return new ComparisonExpression(parse(expression.left), op, parse(expression.right));
+        return new ComparisonExpression(getSource(expression), parse(expression.left), op, parse(expression.right));
     }
 
     private BinaryExpression parse(BitwiseAndExpressionContext expression) {
-        return new BinaryExpression(parse(expression.left), BinaryExpression.Operator.BITWISE_AND, parse(expression.right));
+        return new BinaryExpression(getSource(expression), parse(expression.left), BinaryExpression.Operator.BITWISE_AND, parse(expression.right));
     }
 
     private BinaryExpression parse(BitwiseXorExpressionContext expression) {
-        return new BinaryExpression(parse(expression.left), BinaryExpression.Operator.BITWISE_XOR, parse(expression.right));
+        return new BinaryExpression(getSource(expression), parse(expression.left), BinaryExpression.Operator.BITWISE_XOR, parse(expression.right));
     }
 
     private BinaryExpression parse(BitwiseOrExpressionContext expression) {
-        return new BinaryExpression(parse(expression.left), BinaryExpression.Operator.BITWISE_OR, parse(expression.right));
+        return new BinaryExpression(getSource(expression), parse(expression.left), BinaryExpression.Operator.BITWISE_OR, parse(expression.right));
     }
 
     private DecimalLiteralExpression parse(DecimalLitExpressionContext expression) {
-        return new DecimalLiteralExpression(Double.parseDouble(expression.getText()));
+        return new DecimalLiteralExpression(getSource(expression), Double.parseDouble(expression.getText()));
     }
 
     private IntLiteralExpression parse(IntLitExpressionContext expression) {
-        return new IntLiteralExpression(Long.parseLong(expression.getText()));
+        return new IntLiteralExpression(getSource(expression), Long.parseLong(expression.getText()));
     }
 
     private StringLiteralExpression parse(StringLitExpressionContext expression) {
         String text = expression.getText();
-        return new StringLiteralExpression(text.substring(1, text.length() - 1));
+        return new StringLiteralExpression(getSource(expression), text.substring(1, text.length() - 1));
     }
 
     private BooleanLiteralExpression parse(BoolLitExpressionContext expression) {
-        return new BooleanLiteralExpression(Boolean.parseBoolean(expression.getText()));
+        return new BooleanLiteralExpression(getSource(expression), Boolean.parseBoolean(expression.getText()));
     }
 
     private NullLiteralExpression parse(NullExpressionContext expression) {
-        return new NullLiteralExpression();
+        return new NullLiteralExpression(getSource(expression));
     }
 
     private WildcardExpression parse(WildcardExpressionContext expression) {
-        return new WildcardExpression();
+        return new WildcardExpression(getSource(expression));
     }
 
     private ThisExpression parse(ThisExpressionContext expression) {
-        return new ThisExpression();
+        return new ThisExpression(getSource(expression));
     }
 
     private IdentifierExpression parse(IdentifierExpressionContext expression) {
-        return new IdentifierExpression(expression.getText());
+        return new IdentifierExpression(getSource(expression), expression.getText());
     }
 
     private MemberIdentifier parseMemberId(NameContext name) {
@@ -408,6 +413,10 @@ public class ExpressionParserFacade {
 
     private List<Expression> parse(List<ExpressionContext> exprs) {
         return exprs.stream().map(this::parse).collect(Collectors.toList());
+    }
+
+    private ExpressionSource getSource(ParserRuleContext ctx) {
+        return new ExpressionSource(expression, ctx.start.getStartIndex(), ctx.stop.getStopIndex());
     }
 
     private RuntimeException unimplemented() {

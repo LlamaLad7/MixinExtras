@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
@@ -12,11 +13,12 @@ import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.util.List;
 
-public class InstantiationExpression implements Expression {
+public class InstantiationExpression extends Expression {
     public final TypeIdentifier type;
     public final List<Expression> arguments;
 
-    public InstantiationExpression(TypeIdentifier type, List<Expression> arguments) {
+    public InstantiationExpression(ExpressionSource src, TypeIdentifier type, List<Expression> arguments) {
+        super(src);
         this.type = type;
         this.arguments = arguments;
     }

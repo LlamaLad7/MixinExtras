@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
@@ -8,11 +9,12 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-public class MemberAccessExpression implements SimpleExpression {
+public class MemberAccessExpression extends SimpleExpression {
     public final Expression receiver;
     public final MemberIdentifier name;
 
-    public MemberAccessExpression(Expression receiver, MemberIdentifier name) {
+    public MemberAccessExpression(ExpressionSource src, Expression receiver, MemberIdentifier name) {
+        super(src);
         this.receiver = receiver;
         this.name = name;
     }
@@ -34,6 +36,6 @@ public class MemberAccessExpression implements SimpleExpression {
             sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{node.getInput(0).getType()});
             sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.INT_TYPE);
         }
-        SimpleExpression.super.capture(node, sink);
+        super.capture(node, sink);
     }
 }

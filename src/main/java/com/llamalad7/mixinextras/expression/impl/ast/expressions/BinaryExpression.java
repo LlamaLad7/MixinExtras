@@ -1,16 +1,18 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-public class BinaryExpression implements SimpleExpression {
+public class BinaryExpression extends SimpleExpression {
     public final Expression left;
     public final Operator operator;
     public final Expression right;
 
-    public BinaryExpression(Expression left, Operator operator, Expression right) {
+    public BinaryExpression(ExpressionSource src, Expression left, Operator operator, Expression right) {
+        super(src);
         this.left = left;
         this.operator = operator;
         this.right = right;

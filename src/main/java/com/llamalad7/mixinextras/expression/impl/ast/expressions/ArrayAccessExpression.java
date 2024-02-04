@@ -1,16 +1,18 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.utils.Decorations;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public class ArrayAccessExpression implements SimpleExpression {
+public class ArrayAccessExpression extends SimpleExpression {
     public final Expression arr;
     public final Expression index;
 
-    public ArrayAccessExpression(Expression arr, Expression index) {
+    public ArrayAccessExpression(ExpressionSource src, Expression arr, Expression index) {
+        super(src);
         this.arr = arr;
         this.index = index;
     }
@@ -35,6 +37,6 @@ public class ArrayAccessExpression implements SimpleExpression {
     public void capture(FlowValue node, OutputSink sink) {
         sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{node.getInput(0).getType(), Type.INT_TYPE});
         sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, node.getType());
-        SimpleExpression.super.capture(node, sink);
+        super.capture(node, sink);
     }
 }

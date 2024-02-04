@@ -64,7 +64,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
 
                 Expression.OutputSink sink = new Expression.OutputSink() {
                     @Override
-                    public void capture(FlowValue node) {
+                    public void capture(FlowValue node, Expression expr) {
                         AbstractInsnNode insn = node.getInsn();
                         InjectionNode injectionNode = target.addInjectionNode(insn);
                         Map<String, Object> decorations = genericDecorations.get(insn);

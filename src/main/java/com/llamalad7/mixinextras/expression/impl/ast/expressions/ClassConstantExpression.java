@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
@@ -9,10 +10,11 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 
-public class ClassConstantExpression implements SimpleExpression {
+public class ClassConstantExpression extends SimpleExpression {
     public final TypeIdentifier type;
 
-    public ClassConstantExpression(TypeIdentifier type) {
+    public ClassConstantExpression(ExpressionSource src, TypeIdentifier type) {
+        super(src);
         this.type = type;
     }
 

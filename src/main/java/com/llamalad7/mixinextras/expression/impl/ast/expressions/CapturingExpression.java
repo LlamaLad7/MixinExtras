@@ -1,12 +1,14 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 
-public class CapturingExpression implements SimpleExpression {
+public class CapturingExpression extends SimpleExpression {
     public final Expression expression;
 
-    public CapturingExpression(Expression expression) {
+    public CapturingExpression(ExpressionSource src, Expression expression) {
+        super(src);
         this.expression = expression;
     }
 
