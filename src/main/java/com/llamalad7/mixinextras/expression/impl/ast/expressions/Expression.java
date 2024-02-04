@@ -12,6 +12,10 @@ public abstract class Expression {
         this.src = src;
     }
 
+    public ExpressionSource getSrc() {
+        return src;
+    }
+
     public boolean matches(FlowValue node, ExpressionContext ctx) {
         return false;
     }
