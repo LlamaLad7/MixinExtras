@@ -2,10 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.flow;
 
 import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Interpreter;
@@ -134,6 +131,9 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
     @Override
     public FlowValue naryOperation(
             final AbstractInsnNode insn, final List<? extends FlowValue> values) {
+        if (insn instanceof MethodInsnNode && Boxing.isBoxing((MethodInsnNode) insn)) {
+            return values.get(0);
+        }
         Type type = TypeUtils.getNaryType(insn);
         return recordFlow(type, insn, values.toArray(new FlowValue[0]));
     }
