@@ -17,8 +17,6 @@ statement
 
 expression
    : At LeftParen expr = expression RightParen # CapturingExpression
-   | < assoc = right > LeftParen type = nameWithDims RightParen expr = expression # CastExpression
-   | LeftParen expr = expression RightParen # ParenthesizedExpression
    | Wildcard # WildcardExpression
    | This # ThisExpression
    | lit = Minus? IntLit # IntLitExpression
@@ -37,6 +35,7 @@ expression
    | < assoc = right > New type = name LeftParen args = arguments RightParen # InstantiationExpression
    | New elementType = nameWithDims LeftBracket RightBracket LeftBrace values = nonEmptyArguments RightBrace # ArrayLitExpression
    | New innerType = name (LeftBracket dims += expression RightBracket)+ (blankDims += LeftBracket RightBracket)* # NewArrayExpression
+   | < assoc = right > LeftParen type = nameWithDims RightParen expr = expression # CastExpression
    | left = expression op = (Mult | Div | Mod) right = expression # MultiplicativeExpression
    | left = expression op = (Plus | Minus) right = expression # AdditiveExpression
    | left = expression op = (Shl | Shr | Ushr) right = expression # ShiftExpression
@@ -46,6 +45,7 @@ expression
    | left = expression BitwiseAnd right = expression # BitwiseAndExpression
    | left = expression BitwiseXor right = expression # BitwiseXorExpression
    | left = expression BitwiseOr right = expression # BitwiseOrExpression
+   | LeftParen expr = expression RightParen # ParenthesizedExpression
    ;
 
 name
