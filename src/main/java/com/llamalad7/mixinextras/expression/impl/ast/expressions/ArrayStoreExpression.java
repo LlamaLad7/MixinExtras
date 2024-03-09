@@ -41,6 +41,7 @@ public class ArrayStoreExpression extends Expression {
         Type arrayType = node.getInput(0).getType();
         sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, TypeUtils.getInnerType(arrayType)});
         sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.VOID_TYPE);
+        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index", "value"});
         super.capture(node, sink);
     }
 }

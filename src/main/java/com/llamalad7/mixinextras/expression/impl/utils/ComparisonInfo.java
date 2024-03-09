@@ -28,6 +28,7 @@ public class ComparisonInfo {
         decorateInjectorSpecific.accept(Decorations.COMPARISON_INFO, this);
         decorate.accept(Decorations.SIMPLE_OPERATION_ARGS, new Type[]{input, input});
         decorate.accept(Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.BOOLEAN_TYPE);
+        decorate.accept(Decorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"left", "right"});
     }
 
     public void prepare(Target target, InjectionNode injectionNode) {

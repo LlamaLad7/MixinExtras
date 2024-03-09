@@ -51,6 +51,11 @@ public class Decorations {
     public static final String SIMPLE_OPERATION_ARGS = "mixinextras_simpleOperationArgs";
 
     /**
+     * Stores suggested parameter names for the handler of this operation, for use by MCDev.
+     */
+    public static final String SIMPLE_OPERATION_PARAM_NAMES = "mixinextras_simpleOperationParamNames";
+
+    /**
      * Stores the return type of this operation if it has been offered by an Expression.
      */
     public static final String SIMPLE_OPERATION_RETURN_TYPE = "mixinextras_simpleOperationReturnType";
