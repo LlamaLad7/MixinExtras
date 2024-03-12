@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
 
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -408,7 +409,7 @@ public class ExpressionParserFacade {
     }
 
     private List<Expression> parse(NonEmptyArgumentsContext args) {
-        return parse(args.expression());
+        return args == null ? Collections.emptyList() : parse(args.expression());
     }
 
     private List<Expression> parse(List<ExpressionContext> exprs) {
