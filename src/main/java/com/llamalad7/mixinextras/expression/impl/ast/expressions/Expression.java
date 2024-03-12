@@ -25,11 +25,20 @@ public abstract class Expression {
     }
 
     public boolean inputsMatch(FlowValue node, ExpressionContext ctx, Expression... values) {
-        return inputsMatch(0, node, ctx, values);
+        return inputsMatch(node, ctx, false, values);
+    }
+
+    public boolean inputsMatch(FlowValue node, ExpressionContext ctx, boolean allowIncomplete, Expression... values) {
+        return inputsMatch(0, node, ctx, allowIncomplete, values);
     }
 
     public boolean inputsMatch(int start, FlowValue node, ExpressionContext ctx, Expression... values) {
-        if (values.length != node.inputCount() - start) {
+        return inputsMatch(start, node, ctx, false, values);
+    }
+
+    public boolean inputsMatch(int start, FlowValue node, ExpressionContext ctx, boolean allowIncomplete, Expression... values) {
+        int required = node.inputCount() - start;
+        if (!(allowIncomplete && values.length < required) && values.length != required) {
             return false;
         }
         for (int i = 0; i < values.length; i++) {

@@ -41,7 +41,7 @@ public class InstantiationExpression extends Expression {
                     nextInsn.getOpcode() == Opcodes.INVOKESPECIAL
                             && ((MethodInsnNode) nextInsn).name.equals("<init>")
                             && nextValue.getInput(0) == node
-                            && inputsMatch(1, nextValue, ctx, arguments.toArray(new Expression[0]))
+                            && inputsMatch(1, nextValue, ctx, ctx.allowIncompleteMethodArgs, arguments.toArray(new Expression[0]))
             ) {
                 return true;
             }
