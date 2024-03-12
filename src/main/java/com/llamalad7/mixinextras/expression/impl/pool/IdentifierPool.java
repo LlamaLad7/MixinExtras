@@ -70,4 +70,12 @@ public class IdentifierPool {
     public void addType(String id, TypeDefinition entry) {
         types.computeIfAbsent(id, k -> new ArrayList<>()).add(entry);
     }
+
+    public boolean memberExists(String id) {
+        return members.containsKey(id);
+    }
+
+    public boolean typeExists(String id) {
+        return types.containsKey(id);
+    }
 }
