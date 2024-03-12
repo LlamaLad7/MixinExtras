@@ -19,7 +19,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
     private final Map<VarInsnNode, Type> localTypes;
     private final List<FlowPostProcessor> postProcessors;
 
-    private FlowInterpreter(ClassNode classNode, MethodNode methodNode) {
+    protected FlowInterpreter(ClassNode classNode, MethodNode methodNode) {
         super(ASM.API_VERSION);
         this.localTypes = LocalsCalculator.getLocalTypes(classNode, methodNode);
         this.postProcessors = Arrays.asList(
