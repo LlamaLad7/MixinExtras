@@ -38,13 +38,13 @@ public class NewArrayExpression extends SimpleExpression {
             return false;
         }
         int newBlankDims = getBlankDims(node.getInsn());
-        if (blankDims != newBlankDims) {
+        if (newBlankDims + node.inputCount() < blankDims + dims.size()) {
             return false;
         }
         if (!innerType.matches(ctx.pool, newInnerType)) {
             return false;
         }
-        return inputsMatch(node, ctx, dims.toArray(new Expression[0]));
+        return inputsMatch(node, ctx, ctx.allowIncompleteListInputs, dims.toArray(new Expression[0]));
     }
 
     private Type getInnerType(AbstractInsnNode insn) {

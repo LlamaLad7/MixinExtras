@@ -31,6 +31,6 @@ public class SuperCallExpression extends SimpleExpression {
         if (!name.matches(ctx.pool, node.getInsn())) {
             return false;
         }
-        return new ThisExpression(null).matches(node.getInput(0), ctx) && inputsMatch(1, node, ctx, arguments.toArray(new Expression[0]));
+        return new ThisExpression(null).matches(node.getInput(0), ctx) && inputsMatch(1, node, ctx, ctx.allowIncompleteListInputs, arguments.toArray(new Expression[0]));
     }
 }

@@ -23,6 +23,7 @@ public class StaticMethodCallExpression extends SimpleExpression {
     public boolean matches(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
         return insn.getOpcode() == Opcodes.INVOKESTATIC
-                && name.matches(ctx.pool, insn) && inputsMatch(node, ctx, arguments.toArray(new Expression[0]));
+                && name.matches(ctx.pool, insn)
+                && inputsMatch(node, ctx, ctx.allowIncompleteListInputs, arguments.toArray(new Expression[0]));
     }
 }

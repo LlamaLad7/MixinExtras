@@ -36,7 +36,7 @@ public class MethodCallExpression extends SimpleExpression {
                     return false;
                 }
                 Expression[] inputs = ArrayUtils.add(arguments.toArray(new Expression[0]), 0, receiver);
-                return inputsMatch(node, ctx, ctx.allowIncompleteMethodArgs, inputs);
+                return inputsMatch(node, ctx, ctx.allowIncompleteListInputs, inputs);
         }
         return false;
     }
