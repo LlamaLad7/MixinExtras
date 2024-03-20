@@ -39,10 +39,10 @@ public class ArrayLiteralExpression extends SimpleExpression {
     }
 
     private boolean valuesMatch(List<FlowValue> flows, ExpressionContext ctx) {
-        if (flows.size() != values.size()) {
+        if (!(ctx.allowIncompleteListInputs && values.size() < flows.size()) && flows.size() != values.size()) {
             return false;
         }
-        for (int i = 0; i < flows.size(); i++) {
+        for (int i = 0; i < values.size(); i++) {
             if (!values.get(i).matches(flows.get(i), ctx)) {
                 return false;
             }

@@ -12,14 +12,14 @@ public class ExpressionContext {
     public final ClassNode classNode;
     public final MethodNode method;
     public final boolean isStatic;
-    public final boolean allowIncompleteMethodArgs;
+    public final boolean allowIncompleteListInputs;
 
-    public ExpressionContext(IdentifierPool pool, Expression.OutputSink sink, ClassNode classNode, MethodNode method, boolean allowIncompleteMethodArgs) {
+    public ExpressionContext(IdentifierPool pool, Expression.OutputSink sink, ClassNode classNode, MethodNode method, boolean allowIncompleteListInputs) {
         this.pool = pool;
         this.sink = sink;
         this.classNode = classNode;
         this.method = method;
         this.isStatic = (method.access & Opcodes.ACC_STATIC) != 0;
-        this.allowIncompleteMethodArgs = allowIncompleteMethodArgs;
+        this.allowIncompleteListInputs = allowIncompleteListInputs;
     }
 }
