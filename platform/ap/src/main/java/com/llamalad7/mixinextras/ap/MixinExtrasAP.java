@@ -64,9 +64,10 @@ public class MixinExtrasAP extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        if (MIXIN) {
-            MixinAPVersion.check(processingEnv);
+        if (!MIXIN) {
+            return false;
         }
+        MixinAPVersion.check(processingEnv);
         if (roundEnv.processingOver()) {
             remapDefinitions();
             return true;
@@ -76,9 +77,6 @@ public class MixinExtrasAP extends AbstractProcessor {
     }
 
     private void gatherDefinitions(RoundEnvironment roundEnv) {
-        if (!MIXIN) {
-            return;
-        }
         for (Element elem : roundEnv.getElementsAnnotatedWith(Definition.class)) {
             AnnotationHandle def = AnnotationHandle.of(elem, Definition.class);
             registerDefinition(elem, def);
@@ -94,22 +92,32 @@ public class MixinExtrasAP extends AbstractProcessor {
     private void registerDefinition(Element handler, AnnotationHandle def) {
         TypeElement mixin = (TypeElement) handler.getEnclosingElement();
         AnnotationHandle injector = getInjectorAnnotation(handler);
-        for (IAnnotationHandle at : def.getAnnotationList("at")) {
-            definitions.add(new DefinitionInfo(
+        Boolean remap = def.getValue("remap");
+        for (String method : def.<String>getList("method")) {
+            definitions.add(new DefinitionInfo.Method(
+                    processingEnv,
                     mixin,
                     (ExecutableElement) handler,
                     injector,
-                    (AnnotationHandle) at
+                    method,
+                    remap
+            ));
+        }
+        for (String field : def.<String>getList("field")) {
+            definitions.add(new DefinitionInfo.Field(
+                    processingEnv,
+                    mixin,
+                    (ExecutableElement) handler,
+                    injector,
+                    field,
+                    remap
             ));
         }
     }
 
     private void remapDefinitions() {
-        if (!MIXIN) {
-            return;
-        }
         for (DefinitionInfo def : definitions) {
-            def.remap(processingEnv);
+            def.remap();
         }
         APInternals.writeReferences(processingEnv);
     }

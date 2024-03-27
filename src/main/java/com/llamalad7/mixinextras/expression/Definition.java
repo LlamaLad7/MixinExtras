@@ -17,4 +17,6 @@ public @interface Definition {
     Class<?>[] type() default {};
 
     Local[] local() default {};
+
+    boolean remap() default true;
 }
