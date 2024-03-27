@@ -52,14 +52,17 @@ public class IdentifierPool {
 
     private void parseEntry(AnnotationNode entry, Target target, InjectionInfo info) {
         String id = Annotations.getValue(entry, "id");
-        for (AnnotationNode at : Annotations.<AnnotationNode>getValue(entry, "at", true)) {
-            addMember(id, new AtDef(at, info, target));
+        for (String method : Annotations.<String>getValue(entry, "method", true)) {
+            addMember(id, new MethodDef(method, info));
+        }
+        for (String method : Annotations.<String>getValue(entry, "field", true)) {
+            addMember(id, new FieldDef(method, info));
         }
         for (Type type : Annotations.<Type>getValue(entry, "type", true)) {
             addType(id, new ExactTypeDef(type));
         }
         for (AnnotationNode local : Annotations.<AnnotationNode>getValue(entry, "local", true)) {
-            addMember(id, new LocalDefinition(local, info, target));
+            addMember(id, new LocalDef(local, info, target));
         }
     }
 

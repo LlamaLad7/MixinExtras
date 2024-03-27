@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
+import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.refmap.IMixinContext;
 
@@ -42,5 +43,9 @@ public class CompatibilityHelper {
             return ((WrapperInjectionInfo) info).getSelectedTargets();
         }
         return new ArrayList<>(MixinVersion.getInstance().getTargets(info));
+    }
+
+    public static MemberInfo parseMemberInfo(String targetSelector, InjectionInfo info) {
+        return MixinVersion.getInstance().parseMemberInfo(targetSelector, info);
     }
 }

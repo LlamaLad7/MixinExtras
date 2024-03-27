@@ -5,6 +5,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
+import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException;
 import org.spongepowered.asm.mixin.refmap.IMixinContext;
@@ -43,5 +44,10 @@ public class MixinVersionImpl_v0_8 extends MixinVersion {
     public Collection<Target> getTargets(InjectionInfo info) {
         IMixinContext mixin = MixinVersion.getInstance().getMixin(info);
         return info.getTargets().stream().map(mixin::getTargetMethod).collect(Collectors.toList());
+    }
+
+    @Override
+    public MemberInfo parseMemberInfo(String targetSelector, InjectionInfo info) {
+        return MemberInfo.parse(targetSelector, info.getContext().getReferenceMapper(), info.getContext().getClassRef());
     }
 }

@@ -1,7 +1,6 @@
 package com.llamalad7.mixinextras.expression;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import org.spongepowered.asm.mixin.injection.At;
 
 import java.lang.annotation.*;
 
@@ -11,7 +10,9 @@ import java.lang.annotation.*;
 public @interface Definition {
     String id();
 
-    At[] at() default {};
+    String[] method() default {};
+
+    String[] field() default {};
 
     Class<?>[] type() default {};
 

@@ -13,14 +13,14 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Annotations;
 
-public class LocalDefinition implements MemberDefinition {
+public class LocalDef implements MemberDefinition {
     private final LocalVariableDiscriminator discriminator;
     private final InjectionInfo info;
     private final Type targetLocalType;
     private final boolean isArgsOnly;
     private final Target target;
 
-    LocalDefinition(AnnotationNode local, InjectionInfo info, Target target) {
+    LocalDef(AnnotationNode local, InjectionInfo info, Target target) {
         discriminator = LocalVariableDiscriminator.parse(local);
         this.info = info;
         targetLocalType = Annotations.getValue(local, "type", Type.VOID_TYPE);
