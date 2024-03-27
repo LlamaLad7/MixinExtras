@@ -1,20 +1,19 @@
 package com.llamalad7.mixinextras.ap;
 
-import com.llamalad7.mixinextras.ap.expressions.DefinitionInfo;
 import com.llamalad7.mixinextras.expression.Definition;
 import com.llamalad7.mixinextras.expression.Definitions;
 import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.expression.Expressions;
+import com.llamalad7.mixinextras.ap.expressions.DefinitionInfo;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValueInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReceiverInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReturnValueInjectionInfo;
 import com.llamalad7.mixinextras.injector.WrapWithConditionV1InjectionInfo;
 import com.llamalad7.mixinextras.injector.v2.WrapWithConditionInjectionInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
-import com.llamalad7.mixinextras.utils.APInternals;
+import com.llamalad7.mixinextras.utils.MixinAPInternals;
 import com.llamalad7.mixinextras.utils.MixinAPVersion;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
-import org.spongepowered.asm.util.asm.IAnnotationHandle;
 import org.spongepowered.asm.util.logging.MessageRouter;
 import org.spongepowered.tools.obfuscation.mirror.AnnotationHandle;
 
@@ -83,8 +82,8 @@ public class MixinExtrasAP extends AbstractProcessor {
         }
         for (Element elem : roundEnv.getElementsAnnotatedWith(Definitions.class)) {
             AnnotationHandle defs = AnnotationHandle.of(elem, Definitions.class);
-            for (IAnnotationHandle def : defs.getAnnotationList("value")) {
-                registerDefinition(elem, (AnnotationHandle) def);
+            for (AnnotationHandle def : defs.getAnnotationList("value")) {
+                registerDefinition(elem, def);
             }
         }
     }
@@ -119,7 +118,7 @@ public class MixinExtrasAP extends AbstractProcessor {
         for (DefinitionInfo def : definitions) {
             def.remap();
         }
-        APInternals.writeReferences(processingEnv);
+        MixinAPInternals.writeReferences(processingEnv);
     }
 
     private AnnotationHandle getInjectorAnnotation(Element handler) {

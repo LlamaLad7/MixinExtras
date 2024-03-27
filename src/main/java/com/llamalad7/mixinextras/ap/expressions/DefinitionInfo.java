@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.ap.expressions;
 
-import com.llamalad7.mixinextras.utils.APInternals;
+import com.llamalad7.mixinextras.utils.MixinAPInternals;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.tools.obfuscation.mirror.AnnotationHandle;
 
@@ -26,7 +26,7 @@ public abstract class DefinitionInfo {
     }
 
     public void remap() {
-        APInternals.registerInjectionPoint(processingEnv, mixin, handler, injector, at);
+        MixinAPInternals.registerInjectionPoint(processingEnv, mixin, handler, injector, at);
     }
 
     private class SyntheticAt implements AnnotationMirror {

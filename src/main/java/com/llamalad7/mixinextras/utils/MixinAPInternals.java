@@ -7,7 +7,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
-public class APInternals {
+public class MixinAPInternals {
     private static final String ANNOTATED_MIXINS = "org.spongepowered.tools.obfuscation.AnnotatedMixins";
     private static final String ANNOTATED_MIXIN = "org.spongepowered.tools.obfuscation.AnnotatedMixin";
     private static final Class<?> ANNOTATED_MIXIN_CLASS;
