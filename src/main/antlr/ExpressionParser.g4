@@ -31,6 +31,9 @@ expression
    | Super Dot memberName = name LeftParen args = arguments RightParen # SuperCallExpression
    | receiver = expression Dot memberName = name LeftParen args = arguments RightParen # MethodCallExpression
    | memberName = name LeftParen args = arguments RightParen # StaticMethodCallExpression
+   | receiver = expression MethodRef memberName = name # BoundMethodReferenceExpression
+   | MethodRef memberName = name # FreeMethodReferenceExpression
+   | type = name MethodRef New # ConstructorReferenceExpression
    | op = (Minus | BitwiseNot) expr = expression # UnaryExpression
    | < assoc = right > New type = name LeftParen args = arguments RightParen # InstantiationExpression
    | New elementType = nameWithDims LeftBracket RightBracket LeftBrace values = nonEmptyArguments RightBrace # ArrayLitExpression

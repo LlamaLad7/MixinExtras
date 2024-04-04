@@ -97,6 +97,15 @@ public class ExpressionParserFacade {
         if (expression instanceof StaticMethodCallExpressionContext) {
             return parse((StaticMethodCallExpressionContext) expression);
         }
+        if (expression instanceof BoundMethodReferenceExpressionContext) {
+            return parse((BoundMethodReferenceExpressionContext) expression);
+        }
+        if (expression instanceof FreeMethodReferenceExpressionContext) {
+            return parse((FreeMethodReferenceExpressionContext) expression);
+        }
+        if (expression instanceof ConstructorReferenceExpressionContext) {
+            return parse((ConstructorReferenceExpressionContext) expression);
+        }
         if (expression instanceof ArrayAccessExpressionContext) {
             return parse((ArrayAccessExpressionContext) expression);
         }
@@ -194,6 +203,18 @@ public class ExpressionParserFacade {
 
     private StaticMethodCallExpression parse(StaticMethodCallExpressionContext expression) {
         return new StaticMethodCallExpression(getSource(expression), parseMemberId(expression.memberName), parse(expression.args));
+    }
+
+    private BoundMethodReferenceExpression parse(BoundMethodReferenceExpressionContext expression) {
+        return new BoundMethodReferenceExpression(getSource(expression), parse(expression.receiver), parseMemberId(expression.memberName));
+    }
+
+    private FreeMethodReferenceExpression parse(FreeMethodReferenceExpressionContext expression) {
+        return new FreeMethodReferenceExpression(getSource(expression), parseMemberId(expression.memberName));
+    }
+
+    private ConstructorReferenceExpression parse(ConstructorReferenceExpressionContext expression) {
+        return new ConstructorReferenceExpression(getSource(expression), parseTypeId(expression.type));
     }
 
     private ArrayAccessExpression parse(ArrayAccessExpressionContext expression) {

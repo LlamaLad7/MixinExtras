@@ -18,24 +18,11 @@ import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Bytecode;
 import org.spongepowered.asm.util.asm.ASM;
 
-import java.lang.invoke.CallSite;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 class WrapOperationInjector extends Injector {
-    private static final Handle LMF_HANDLE = new Handle(
-            Opcodes.H_INVOKESTATIC,
-            "java/lang/invoke/LambdaMetafactory",
-            "metafactory",
-            Bytecode.generateDescriptor(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class, MethodType.class, MethodHandle.class, MethodType.class),
-            false
-    );
-    private static final String NPE = Type.getInternalName(NullPointerException.class);
-
     private final Type operationType = MixinExtrasService.getInstance().changePackage(Operation.class, Type.getType(CompatibilityHelper.getAnnotation(info).desc), WrapOperation.class);
     private final List<OperationConstructor> operationTypes = Arrays.asList(
             DynamicInstanceofRedirectOperation::new,
@@ -141,7 +128,7 @@ class WrapOperationInjector extends Injector {
                 // The generated lambda will implement `Operation` and have any trailing parameters bound to it
                 Bytecode.generateDescriptor(operationType, (Object[]) descriptorArgs),
                 // We want to generate the impl with LMF
-                LMF_HANDLE,
+                ASMUtils.LMF_HANDLE,
                 // The SAM method will take an array of args and return an `Object` (the return value of the wrapped call)
                 Type.getMethodType(TypeUtils.OBJECT_TYPE, Type.getType(Object[].class)),
                 // The implementation method will be generated for us to handle array unpacking

@@ -2,19 +2,33 @@ package com.llamalad7.mixinextras.utils;
 
 import com.llamalad7.mixinextras.service.MixinExtrasService;
 import org.apache.commons.lang3.StringUtils;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.injection.struct.Target;
+import org.spongepowered.asm.util.Bytecode;
 import org.spongepowered.asm.util.Constants;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
+import java.lang.invoke.CallSite;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ASMUtils {
+    public static final Handle LMF_HANDLE = new Handle(
+            Opcodes.H_INVOKESTATIC,
+            "java/lang/invoke/LambdaMetafactory",
+            "metafactory",
+            Bytecode.generateDescriptor(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class, MethodType.class, MethodHandle.class, MethodType.class),
+            false
+    );
+
     public static String annotationToString(AnnotationNode annotation) {
         StringBuilder builder = new StringBuilder("@").append(typeToString(Type.getType(annotation.desc)));
         List<Object> values = annotation.values;

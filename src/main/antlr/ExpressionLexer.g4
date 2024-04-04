@@ -202,3 +202,7 @@ Assign
    : '='
    ;
 
+MethodRef
+   : '::'
+   ;
+
