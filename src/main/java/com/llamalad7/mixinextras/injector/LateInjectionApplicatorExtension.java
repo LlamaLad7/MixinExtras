@@ -52,6 +52,7 @@ public class LateInjectionApplicatorExtension implements IExtension {
 
     private static Map<String, List<Runnable[]>> initializeMap() {
         Map<String, List<Runnable[]>> result = new LinkedHashMap<>();
+        result.put("ModifyExpressionValue", new ArrayList<>());
         result.put("WrapWithCondition", new ArrayList<>());
         result.put("WrapOperation", new ArrayList<>());
         return result;

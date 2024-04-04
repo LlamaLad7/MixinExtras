@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 
 @InjectionInfo.AnnotationType(ModifyExpressionValue.class)
 @HandlerPrefix("modifyExpressionValue")
-public class ModifyExpressionValueInjectionInfo extends MixinExtrasInjectionInfo {
+public class ModifyExpressionValueInjectionInfo extends MixinExtrasLateInjectionInfo {
     public ModifyExpressionValueInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
         super(mixin, method, annotation);
     }
@@ -24,5 +24,10 @@ public class ModifyExpressionValueInjectionInfo extends MixinExtrasInjectionInfo
     public void prepare() {
         super.prepare();
         InjectorUtils.checkForDupedNews(this.targetNodes);
+    }
+
+    @Override
+    public String getLateInjectionType() {
+        return "ModifyExpressionValue";
     }
 }
