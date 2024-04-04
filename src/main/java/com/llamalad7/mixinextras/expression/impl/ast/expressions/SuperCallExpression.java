@@ -25,7 +25,7 @@ public class SuperCallExpression extends SimpleExpression {
             return false;
         }
         MethodInsnNode call = (MethodInsnNode) node.getInsn();
-        if (call.name.equals("<init>") || !call.owner.equals(ctx.classNode.superName)) {
+        if (call.name.equals("<init>") || call.owner.equals(ctx.classNode.name)) {
             return false;
         }
         if (!name.matches(ctx.pool, node.getInsn())) {
