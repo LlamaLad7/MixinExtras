@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
+import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.injector.IntLikeBehaviour;
 import com.llamalad7.mixinextras.injector.StackExtension;
@@ -40,7 +41,9 @@ class WrapOperationInjector extends Injector {
     }
 
     @Override
-    protected void inject(Target target, InjectionNode node) {
+    protected void inject(Target target, InjectionNode initialNode) {
+        InjectionNode node = InsnExpander.doExpansion(initialNode, target, info);
+
         this.checkTargetModifiers(target, false);
         StackExtension stack = new StackExtension(target);
         OperationType operation = operationTypes.stream()
@@ -84,7 +87,6 @@ class WrapOperationInjector extends Injector {
         }
         Type[] originalArgs = getOriginalArgTypes(node);
         this.validateParams(handler, returnType, ArrayUtils.add(originalArgs, operationType));
-        operation.prepare();
 
         // Store *all* the args, including ones added by redirectors and previous operation wrappers.
         // Excess ones will be bound to the lambda.
@@ -350,13 +352,14 @@ class WrapOperationInjector extends Injector {
         }
 
         abstract boolean validate();
+
         abstract String getName();
-        void prepare() {
-        }
+
         void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
             loadArgs.accept(insns);
             insns.add(currentTarget.clone(Collections.emptyMap()));
         }
+
         void afterHandlerCall(InsnList insns, AbstractInsnNode champion) {
         }
     }
@@ -564,11 +567,6 @@ class WrapOperationInjector extends Injector {
         }
 
         @Override
-        void prepare() {
-            comparison.prepare(target, node);
-        }
-
-        @Override
         void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
             if (isWrapped) {
                 super.copyNode(insns, paramArrayIndex, loadArgs);
@@ -632,33 +630,6 @@ class WrapOperationInjector extends Injector {
             return null;
         }
         boolean isWrapped = node.hasDecoration(Decorations.WRAPPED);
-        if (comparison.needsExpanding && node.isReplaced() && !isWrapped) {
-            // The comparison has already been expanded by a @ModifyConstant
-            AbstractInsnNode next = node.getCurrentTarget().getNext();
-            if (!(next instanceof JumpInsnNode)) {
-                throw new IllegalStateException("Could not find jump for expanded @ModifyConstant comparison! Please inform LlamaLad7!");
-            }
-            JumpInsnNode jump = (JumpInsnNode) next;
-            InjectionNode jumpNode = target.addInjectionNode(jump);
-            ComparisonInfo newComparison = new ComparisonInfo(
-                    jump.getOpcode(),
-                    jump,
-                    Type.INT_TYPE,
-                    false,
-                    comparison.jumpOnTrue
-            );
-            newComparison.attach(
-                    jumpNode::decorate,
-                    (k, v) -> InjectorUtils.decorateInjectorSpecific(jumpNode, info, k, v)
-            );
-            return new ComparisonOperation(
-                    target,
-                    jumpNode,
-                    stack,
-                    false,
-                    newComparison
-            );
-        }
         return new ComparisonOperation(
                 target,
                 node,

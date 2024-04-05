@@ -15,40 +15,17 @@ public class ComparisonExpression extends Expression {
     public final Expression left;
     public final Operator operator;
     public final Expression right;
-    private final boolean isWithZero;
-    private final boolean isWithNull;
-    private final boolean isWildcard;
 
     public ComparisonExpression(ExpressionSource src, Expression left, Operator operator, Expression right) {
         super(src);
         this.left = left;
         this.operator = operator;
         this.right = right;
-        this.isWithZero = right instanceof IntLiteralExpression && ((IntLiteralExpression) right).value == 0;
-        this.isWithNull = right instanceof NullLiteralExpression;
-        this.isWildcard = right instanceof WildcardExpression;
     }
 
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
-        boolean matches = matchesImpl(node, ctx, false, false);
-        if (isWithZero || isWildcard) {
-            matches = matches || matchesImpl(node, ctx, true, false);
-        }
-        if (isWithNull || isWildcard) {
-            matches = matches || matchesImpl(node, ctx, false, true);
-        }
-        return matches;
-    }
-
-    private boolean matchesImpl(FlowValue node, ExpressionContext ctx, boolean isWithZero, boolean isWithNull) {
-        if (!operator.matches(node, ctx.sink, isWithZero, isWithNull)) {
-            return false;
-        }
-        if ((isWithZero || isWithNull) && inputsMatch(node, ctx, left)) {
-            return true;
-        }
-        return inputsMatch(node, ctx, left, right);
+        return operator.matches(node, ctx.sink) && inputsMatch(node, ctx, left, right);
     }
 
     public enum Operator implements Opcodes {
@@ -60,7 +37,6 @@ public class ComparisonExpression extends Expression {
         GE(0, IF_ICMPGE, 0, IF_ICMPLT, FCMPL, DCMPL);
 
         private static final int WITH_ZERO_OFFSET = IF_ICMPEQ - IFEQ;
-        private static final int WITH_NULL_OFFSET = IFNULL - IF_ACMPEQ;
 
         private final int directObject;
         private final int directInt;
@@ -78,25 +54,10 @@ public class ComparisonExpression extends Expression {
             this.dcmp = dcmp;
         }
 
-        public boolean matches(FlowValue node, OutputSink sink, boolean isWithZero, boolean isWithNull) {
+        public boolean matches(FlowValue node, OutputSink sink) {
             AbstractInsnNode insn = node.getInsn();
             int opcode = insn.getOpcode();
-            boolean needsExpanding = false;
-            if (node.inputCount() == 1) {
-                needsExpanding = true;
-                if (isWithZero) {
-                    opcode += WITH_ZERO_OFFSET;
-                } else if (isWithNull) {
-                    opcode -= WITH_NULL_OFFSET;
-                } else {
-                    return false;
-                }
-                if (isComplexComparison(node.getInput(0))) {
-                    // Complex comparisons are similar to `lcmp(a, b) == 0`, for example, but the comparison with zero
-                    // should not be considered.
-                    return false;
-                }
-            } else if (node.inputCount() != 2) {
+            if (node.inputCount() != 2) {
                 return false;
             }
             Type input;
@@ -104,11 +65,7 @@ public class ComparisonExpression extends Expression {
             if (opcode == directObject || opcode == invertedObject) {
                 input = TypeUtils.OBJECT_TYPE;
             } else if (opcode == directInt || opcode == invertedInt) {
-                if (node.inputCount() == 1) {
-                    input = node.getInput(0).getType();
-                } else {
-                    input = TypeUtils.getCommonSupertype(node.getInput(0).getType(), node.getInput(1).getType());
-                }
+                input = TypeUtils.getCommonSupertype(node.getInput(0).getType(), node.getInput(1).getType());
             } else if (opcode == LCMP) {
                 input = Type.LONG_TYPE;
                 isComplex = true;
@@ -119,9 +76,6 @@ public class ComparisonExpression extends Expression {
                 input = Type.DOUBLE_TYPE;
                 isComplex = true;
             } else {
-                return false;
-            }
-            if (isWithZero && input != Type.INT_TYPE || isWithNull && input != TypeUtils.OBJECT_TYPE) {
                 return false;
             }
             ComparisonInfo info;
@@ -138,28 +92,13 @@ public class ComparisonExpression extends Expression {
                 JumpInsnNode jump = (JumpInsnNode) next;
                 info = new ComplexComparisonInfo(opcode, insn, input, jump, jump.getOpcode() == zeroDirect);
             } else {
-                info = new ComparisonInfo(opcode, insn, input, needsExpanding, opcode == directObject || opcode == directInt);
+                info = new ComparisonInfo(opcode, insn, input, opcode == directObject || opcode == directInt);
             }
             info.attach(
                     (k, v) -> sink.decorate(insn, k, v),
                     (k, v) -> sink.decorateInjectorSpecific(insn, k, v)
             );
             return true;
-        }
-
-        private boolean isComplexComparison(FlowValue node) {
-            if (node.isComplex()) {
-                return false;
-            }
-            switch (node.getInsn().getOpcode()) {
-                case LCMP:
-                case FCMPL:
-                case FCMPG:
-                case DCMPL:
-                case DCMPG:
-                    return true;
-            }
-            return false;
         }
     }
 }

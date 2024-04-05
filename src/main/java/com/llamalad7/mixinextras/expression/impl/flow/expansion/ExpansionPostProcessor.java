@@ -8,7 +8,7 @@ import java.util.List;
 
 public class ExpansionPostProcessor implements FlowPostProcessor {
     private final List<InsnExpander> expanders = Arrays.asList(
-            new IincExpander()
+            new IincExpander(), new UnaryComparisonExpander()
     );
 
     @Override

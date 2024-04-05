@@ -9,7 +9,7 @@ public class ComplexComparisonInfo extends ComparisonInfo {
     private final AbstractInsnNode jumpInsn;
 
     public ComplexComparisonInfo(int comparison, AbstractInsnNode node, Type input, JumpInsnNode jump, boolean jumpOnTrue) {
-        super(comparison, node, input, false, jumpOnTrue);
+        super(comparison, node, input, jumpOnTrue);
         this.jumpInsn = jump;
     }
 
