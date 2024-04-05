@@ -29,6 +29,14 @@ public class ASMUtils {
             false
     );
 
+    public static final Handle ALT_LMF_HANDLE = new Handle(
+            Opcodes.H_INVOKESTATIC,
+            "java/lang/invoke/LambdaMetafactory",
+            "altMetafactory",
+            Bytecode.generateDescriptor(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class, Object[].class),
+            false
+    );
+
     public static String annotationToString(AnnotationNode annotation) {
         StringBuilder builder = new StringBuilder("@").append(typeToString(Type.getType(annotation.desc)));
         List<Object> values = annotation.values;

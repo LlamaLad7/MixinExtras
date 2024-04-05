@@ -21,7 +21,7 @@ public abstract class MethodReferenceExpression extends SimpleExpression {
             return false;
         }
         InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode) node.getInsn();
-        if (!indy.bsm.equals(ASMUtils.LMF_HANDLE)) {
+        if (!indy.bsm.equals(ASMUtils.LMF_HANDLE) && !indy.bsm.equals(ASMUtils.ALT_LMF_HANDLE)) {
             return false;
         }
         Handle impl = (Handle) indy.bsmArgs[1];
