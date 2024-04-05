@@ -10,8 +10,8 @@ import java.util.*;
 
 public class FlowValue implements Value {
     private final Type type;
-    private final AbstractInsnNode insn;
-    protected final FlowValue[] parents;
+    private AbstractInsnNode insn;
+    protected FlowValue[] parents;
     private final Set<Pair<FlowValue, Integer>> next = new HashSet<>(1);
     private Map<String, Object> decorations = null;
 
@@ -54,6 +54,14 @@ public class FlowValue implements Value {
 
     public int inputCount() {
         return parents.length;
+    }
+
+    public void setInsn(AbstractInsnNode insn) {
+        this.insn = insn;
+    }
+
+    public void setParents(FlowValue... parents) {
+        this.parents = parents;
     }
 
     public FlowValue mergeWith(FlowValue other) {

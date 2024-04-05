@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.injector;
 
 import com.llamalad7.mixinextras.expression.impl.flow.ArrayCreationInfo;
+import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.utils.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -19,6 +20,8 @@ public class ModifyExpressionValueInjector extends Injector {
 
     @Override
     protected void inject(Target target, InjectionNode node) {
+        node = InsnExpander.doExpansion(node, target, info);
+
         this.checkTargetReturnsAValue(target, node);
         this.checkTargetModifiers(target, false);
 

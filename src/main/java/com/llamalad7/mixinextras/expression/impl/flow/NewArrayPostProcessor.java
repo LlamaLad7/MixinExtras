@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class NewArrayPostProcessor implements FlowPostProcessor {
@@ -22,7 +21,7 @@ public class NewArrayPostProcessor implements FlowPostProcessor {
     }
 
     @Override
-    public void process(FlowValue node, Consumer<FlowValue> syntheticMarker) {
+    public void process(FlowValue node, OutputSink sink) {
         AbstractInsnNode insn = node.getInsn();
         if (insn.getOpcode() == Opcodes.ANEWARRAY || insn.getOpcode() == Opcodes.NEWARRAY) {
             List<FlowValue> stores = getCreationStores(node);
@@ -30,8 +29,8 @@ public class NewArrayPostProcessor implements FlowPostProcessor {
                 return;
             }
             for (FlowValue store : stores) {
-                syntheticMarker.accept(store);
-                syntheticMarker.accept(store.getInput(1));
+                sink.markAsSynthetic(store);
+                sink.markAsSynthetic(store.getInput(1));
             }
             node.decorate(
                     Decorations.ARRAY_CREATION_INFO,

@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
+import com.llamalad7.mixinextras.expression.impl.flow.expansion.ExpansionPostProcessor;
 import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -9,7 +10,6 @@ import org.objectweb.asm.tree.analysis.Interpreter;
 import org.spongepowered.asm.util.asm.ASM;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -23,7 +23,8 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         super(ASM.API_VERSION);
         this.localTypes = LocalsCalculator.getLocalTypes(classNode, methodNode);
         this.postProcessors = Arrays.asList(
-                new NewArrayPostProcessor(methodNode)
+                new NewArrayPostProcessor(methodNode),
+                new ExpansionPostProcessor()
         );
     }
 
@@ -38,21 +39,38 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
     }
 
     public Map<AbstractInsnNode, FlowValue> finish() {
-        for (Map.Entry<AbstractInsnNode, FlowValue> entry : cache.entrySet()) {
-            entry.getValue().finish();
+        for (FlowValue value : cache.values()) {
+            value.finish();
         }
         Set<AbstractInsnNode> synthetic = Collections.newSetFromMap(new IdentityHashMap<>());
-        Consumer<FlowValue> syntheticMarker = node -> {
-            if (!node.isComplex()) {
-                synthetic.add(node.getInsn());
+        Map<AbstractInsnNode, FlowValue> newFlows = new IdentityHashMap<>();
+        FlowPostProcessor.OutputSink sink = new FlowPostProcessor.OutputSink() {
+            @Override
+            public void markAsSynthetic(FlowValue node) {
+                if (!node.isComplex()) {
+                    synthetic.add(node.getInsn());
+                }
+            }
+
+            @Override
+            public void registerFlow(FlowValue... nodes) {
+                for (FlowValue node : nodes) {
+                    if (!node.isComplex()) {
+                        newFlows.put(node.getInsn(), node);
+                    }
+                }
             }
         };
         for (FlowPostProcessor postProcessor : postProcessors) {
             for (FlowValue value : cache.values()) {
-                postProcessor.process(value, syntheticMarker);
+                postProcessor.process(value, sink);
             }
         }
         synthetic.forEach(cache::remove);
+        cache.putAll(newFlows);
+        for (FlowValue value : newFlows.values()) {
+            value.finish();
+        }
         return Collections.unmodifiableMap(cache);
     }
 

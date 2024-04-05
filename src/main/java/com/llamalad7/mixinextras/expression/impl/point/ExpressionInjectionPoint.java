@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.expression.impl.ast.expressions.Expression;
 import com.llamalad7.mixinextras.expression.impl.flow.ComplexDataException;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
@@ -24,6 +25,7 @@ import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Annotations;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @AtCode("MIXINEXTRAS:EXPRESSION")
@@ -65,29 +67,37 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                 Expression.OutputSink sink = new Expression.OutputSink() {
                     @Override
                     public void capture(FlowValue node, Expression expr) {
-                        AbstractInsnNode insn = node.getInsn();
-                        InjectionNode injectionNode = target.addInjectionNode(insn);
-                        Map<String, Object> decorations = genericDecorations.get(insn);
+                        AbstractInsnNode capturedInsn = node.getInsn();
+                        InsnExpander.Expansion expansion = InsnExpander.prepareExpansion(node, target, CURRENT_INFO);
+                        AbstractInsnNode targetInsn;
+                        BiConsumer<String, Object> decorate;
+                        BiConsumer<String, Object> decorateInjectorSpecific;
+                        if (expansion != null) {
+                            targetInsn = expansion.compound;
+                            decorate = (k, v) -> expansion.decorate(CURRENT_INFO, k, v);
+                            decorateInjectorSpecific = (k, v) -> expansion.decorateInjectorSpecific(CURRENT_INFO, k, v);
+                        } else {
+                            targetInsn = node.getInsn();
+                            InjectionNode injectionNode = target.addInjectionNode(capturedInsn);
+                            decorate = injectionNode::decorate;
+                            decorateInjectorSpecific = (k, v) -> InjectorUtils.decorateInjectorSpecific(injectionNode, CURRENT_INFO, k, v);
+                        }
+                        Map<String, Object> decorations = genericDecorations.get(capturedInsn);
                         if (decorations != null) {
                             for (Map.Entry<String, Object> decoration : decorations.entrySet()) {
-                                injectionNode.decorate(decoration.getKey(), decoration.getValue());
+                                decorate.accept(decoration.getKey(), decoration.getValue());
                             }
                         }
-                        Map<String, Object> injectorSpecific = injectorSpecificDecorations.get(insn);
+                        Map<String, Object> injectorSpecific = injectorSpecificDecorations.get(capturedInsn);
                         if (injectorSpecific != null) {
                             for (Map.Entry<String, Object> decoration : injectorSpecific.entrySet()) {
-                                InjectorUtils.decorateInjectorSpecific(
-                                        injectionNode,
-                                        CURRENT_INFO,
-                                        decoration.getKey(),
-                                        decoration.getValue()
-                                );
+                                decorateInjectorSpecific.accept(decoration.getKey(), decoration.getValue());
                             }
                         }
                         for (Map.Entry<String, Object> decoration : node.getDecorations().entrySet()) {
-                            injectionNode.decorate(decoration.getKey(), decoration.getValue());
+                            decorate.accept(decoration.getKey(), decoration.getValue());
                         }
-                        captured.add(insn);
+                        captured.add(targetInsn);
                     }
 
                     @Override
