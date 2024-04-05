@@ -59,7 +59,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         IdentifierPool pool = new IdentifierPool(target, CURRENT_INFO, poolAnnotation);
         Set<AbstractInsnNode> result = new HashSet<>();
         for (Expression expr : parseExpressions()) {
-            for (AbstractInsnNode candidate : target) {
+            for (FlowValue flow : flows.values()) {
                 Map<AbstractInsnNode, Map<String, Object>> genericDecorations = new IdentityHashMap<>();
                 Map<AbstractInsnNode, Map<String, Object>> injectorSpecificDecorations = new IdentityHashMap<>();
                 List<AbstractInsnNode> captured = new ArrayList<>();
@@ -111,10 +111,6 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                     }
                 };
 
-                FlowValue flow = flows.get(candidate);
-                if (flow == null) {
-                    continue;
-                }
                 ExpressionContext ctx = new ExpressionContext(
                         pool,
                         sink,
