@@ -1,5 +1,6 @@
-package com.llamalad7.mixinextras.expression.impl.flow;
+package com.llamalad7.mixinextras.expression.impl.flow.postprocessing;
 
+import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.utils.Decorations;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Opcodes;

@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
-import com.llamalad7.mixinextras.expression.impl.flow.FlowPostProcessor;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.Decorations;

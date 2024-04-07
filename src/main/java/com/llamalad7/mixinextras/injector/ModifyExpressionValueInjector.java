@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.injector;
 
-import com.llamalad7.mixinextras.expression.impl.flow.ArrayCreationInfo;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.ArrayCreationInfo;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.utils.*;
 import org.objectweb.asm.Opcodes;

@@ -1,4 +1,6 @@
-package com.llamalad7.mixinextras.expression.impl.flow;
+package com.llamalad7.mixinextras.expression.impl.flow.postprocessing;
+
+import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 
 public interface FlowPostProcessor {
     void process(FlowValue node, OutputSink sink);
