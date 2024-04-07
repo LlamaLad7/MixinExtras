@@ -63,7 +63,7 @@ public class Decorations {
     /**
      * Stores information about this array creation.
      */
-    public static final String ARRAY_CREATION_INFO = "mixinextras_arrayCreationInfo";
+    public static final String ARRAY_CREATION_INFO = PERSISTENT + "arrayCreationInfo";
 
     /**
      * Stores information about this compound instruction.

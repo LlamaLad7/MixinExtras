@@ -8,10 +8,7 @@ import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
-import com.llamalad7.mixinextras.utils.ASMUtils;
-import com.llamalad7.mixinextras.utils.CompatibilityHelper;
-import com.llamalad7.mixinextras.utils.InjectorUtils;
-import com.llamalad7.mixinextras.utils.TargetDecorations;
+import com.llamalad7.mixinextras.utils.*;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.InsnList;
@@ -95,7 +92,9 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                             }
                         }
                         for (Map.Entry<String, Object> decoration : node.getDecorations().entrySet()) {
-                            decorate.accept(decoration.getKey(), decoration.getValue());
+                            if (decoration.getKey().startsWith(Decorations.PERSISTENT)) {
+                                decorate.accept(decoration.getKey(), decoration.getValue());
+                            }
                         }
                         captured.add(targetInsn);
                     }
