@@ -36,6 +36,10 @@ public class ExpressionInjectionPoint extends InjectionPoint {
     private final String id;
     private final boolean isInSlice;
 
+    private boolean initialized;
+    private IdentifierPool pool;
+    private List<Expression> expressions;
+
     public ExpressionInjectionPoint(InjectionPointData data) {
         super(data);
         this.ordinal = data.getOrdinal();
@@ -50,82 +54,86 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         }
         long startTime = System.currentTimeMillis();
         Target target = getTarget(insns);
+        if (!initialized) {
+            initialize(target);
+        }
         Map<AbstractInsnNode, FlowValue> flows =
                 TargetDecorations.getOrPut(target, "ValueFlow",
                         () -> FlowInterpreter.analyze(CURRENT_INFO.getClassNode(), target.method)
                 );
-        AnnotationNode poolAnnotation = ASMUtils.getRepeatedMEAnnotation(CURRENT_INFO.getMethod(), Definition.class);
-        IdentifierPool pool = new IdentifierPool(target, CURRENT_INFO, poolAnnotation);
         Set<AbstractInsnNode> result = new HashSet<>();
-        for (Expression expr : parseExpressions()) {
+
+        Map<AbstractInsnNode, Map<String, Object>> genericDecorations = new IdentityHashMap<>();
+        Map<AbstractInsnNode, Map<String, Object>> injectorSpecificDecorations = new IdentityHashMap<>();
+        List<AbstractInsnNode> captured = new ArrayList<>();
+        Expression.OutputSink sink = new Expression.OutputSink() {
+            @Override
+            public void capture(FlowValue node, Expression expr, ExpressionContext ctx) {
+                AbstractInsnNode capturedInsn = node.getInsn();
+                InsnExpander.Expansion expansion = InsnExpander.prepareExpansion(node, target, CURRENT_INFO, ctx);
+                AbstractInsnNode targetInsn;
+                BiConsumer<String, Object> decorate;
+                BiConsumer<String, Object> decorateInjectorSpecific;
+                if (expansion != null) {
+                    targetInsn = expansion.compound;
+                    decorate = (k, v) -> expansion.decorate(CURRENT_INFO, k, v);
+                    decorateInjectorSpecific = (k, v) -> expansion.decorateInjectorSpecific(CURRENT_INFO, k, v);
+                } else {
+                    targetInsn = node.getInsn();
+                    InjectionNode injectionNode = target.addInjectionNode(capturedInsn);
+                    decorate = injectionNode::decorate;
+                    decorateInjectorSpecific = (k, v) -> InjectorUtils.decorateInjectorSpecific(injectionNode, CURRENT_INFO, k, v);
+                }
+                Map<String, Object> decorations = genericDecorations.get(capturedInsn);
+                if (decorations != null) {
+                    for (Map.Entry<String, Object> decoration : decorations.entrySet()) {
+                        decorate.accept(decoration.getKey(), decoration.getValue());
+                    }
+                }
+                Map<String, Object> injectorSpecific = injectorSpecificDecorations.get(capturedInsn);
+                if (injectorSpecific != null) {
+                    for (Map.Entry<String, Object> decoration : injectorSpecific.entrySet()) {
+                        decorateInjectorSpecific.accept(decoration.getKey(), decoration.getValue());
+                    }
+                }
+                for (Map.Entry<String, Object> decoration : node.getDecorations().entrySet()) {
+                    if (decoration.getKey().startsWith(Decorations.PERSISTENT)) {
+                        decorate.accept(decoration.getKey(), decoration.getValue());
+                    }
+                }
+                captured.add(targetInsn);
+            }
+
+            @Override
+            public void decorate(AbstractInsnNode insn, String key, Object value) {
+                genericDecorations.computeIfAbsent(insn, k -> new HashMap<>()).put(key, value);
+            }
+
+            @Override
+            public void decorateInjectorSpecific(AbstractInsnNode insn, String key, Object value) {
+                injectorSpecificDecorations.computeIfAbsent(insn, k -> new HashMap<>()).put(key, value);
+            }
+        };
+        ExpressionContext ctx = new ExpressionContext(
+                pool,
+                sink,
+                target.classNode,
+                target.method,
+                ExpressionContext.Type.forContext(CURRENT_INFO, isInSlice),
+                false
+        );
+
+        for (Expression expr : expressions) {
             for (FlowValue flow : flows.values()) {
-                Map<AbstractInsnNode, Map<String, Object>> genericDecorations = new IdentityHashMap<>();
-                Map<AbstractInsnNode, Map<String, Object>> injectorSpecificDecorations = new IdentityHashMap<>();
-                List<AbstractInsnNode> captured = new ArrayList<>();
-
-                Expression.OutputSink sink = new Expression.OutputSink() {
-                    @Override
-                    public void capture(FlowValue node, Expression expr, ExpressionContext ctx) {
-                        AbstractInsnNode capturedInsn = node.getInsn();
-                        InsnExpander.Expansion expansion = InsnExpander.prepareExpansion(node, target, CURRENT_INFO, ctx);
-                        AbstractInsnNode targetInsn;
-                        BiConsumer<String, Object> decorate;
-                        BiConsumer<String, Object> decorateInjectorSpecific;
-                        if (expansion != null) {
-                            targetInsn = expansion.compound;
-                            decorate = (k, v) -> expansion.decorate(CURRENT_INFO, k, v);
-                            decorateInjectorSpecific = (k, v) -> expansion.decorateInjectorSpecific(CURRENT_INFO, k, v);
-                        } else {
-                            targetInsn = node.getInsn();
-                            InjectionNode injectionNode = target.addInjectionNode(capturedInsn);
-                            decorate = injectionNode::decorate;
-                            decorateInjectorSpecific = (k, v) -> InjectorUtils.decorateInjectorSpecific(injectionNode, CURRENT_INFO, k, v);
-                        }
-                        Map<String, Object> decorations = genericDecorations.get(capturedInsn);
-                        if (decorations != null) {
-                            for (Map.Entry<String, Object> decoration : decorations.entrySet()) {
-                                decorate.accept(decoration.getKey(), decoration.getValue());
-                            }
-                        }
-                        Map<String, Object> injectorSpecific = injectorSpecificDecorations.get(capturedInsn);
-                        if (injectorSpecific != null) {
-                            for (Map.Entry<String, Object> decoration : injectorSpecific.entrySet()) {
-                                decorateInjectorSpecific.accept(decoration.getKey(), decoration.getValue());
-                            }
-                        }
-                        for (Map.Entry<String, Object> decoration : node.getDecorations().entrySet()) {
-                            if (decoration.getKey().startsWith(Decorations.PERSISTENT)) {
-                                decorate.accept(decoration.getKey(), decoration.getValue());
-                            }
-                        }
-                        captured.add(targetInsn);
-                    }
-
-                    @Override
-                    public void decorate(AbstractInsnNode insn, String key, Object value) {
-                        genericDecorations.computeIfAbsent(insn, k -> new HashMap<>()).put(key, value);
-                    }
-
-                    @Override
-                    public void decorateInjectorSpecific(AbstractInsnNode insn, String key, Object value) {
-                        injectorSpecificDecorations.computeIfAbsent(insn, k -> new HashMap<>()).put(key, value);
-                    }
-                };
-
-                ExpressionContext ctx = new ExpressionContext(
-                        pool,
-                        sink,
-                        target.classNode,
-                        target.method,
-                        ExpressionContext.Type.forContext(CURRENT_INFO, isInSlice),
-                        false
-                );
                 try {
                     if (expr.matches(flow, ctx)) {
                         result.addAll(captured);
                     }
                 } catch (ComplexDataException ignored) {
                 }
+                genericDecorations.clear();
+                injectorSpecificDecorations.clear();
+                captured.clear();
             }
         }
         int i = 0;
@@ -145,6 +153,13 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         TIME_ON_EXPRESSIONS += System.currentTimeMillis() - startTime;
 
         return found;
+    }
+
+    private void initialize(Target target) {
+        initialized = true;
+        AnnotationNode poolAnnotation = ASMUtils.getRepeatedMEAnnotation(CURRENT_INFO.getMethod(), Definition.class);
+        pool = new IdentifierPool(target, CURRENT_INFO, poolAnnotation);
+        expressions = parseExpressions();
     }
 
     public static void withContext(InjectionInfo info, Runnable runnable) {
