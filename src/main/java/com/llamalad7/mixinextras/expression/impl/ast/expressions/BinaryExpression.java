@@ -27,7 +27,13 @@ public class BinaryExpression extends SimpleExpression {
             return true;
         }
         StringConcatInfo concat = node.getDecoration(Decorations.STRING_CONCAT_INFO);
-        if (operator != Operator.PLUS || concat == null || !right.matches(node.getInput(1), ctx)) {
+        if (operator != Operator.PLUS || concat == null) {
+            return false;
+        }
+        if (node == concat.toStringCall) {
+            node = node.getInput(0);
+        }
+        if (!right.matches(node.getInput(1), ctx)) {
             return false;
         }
         if (concat.isFirstConcat) {
@@ -35,6 +41,9 @@ public class BinaryExpression extends SimpleExpression {
         }
         Expression innerLeft = ExpressionUtil.skipCapturesDown(left);
         if (innerLeft instanceof WildcardExpression) {
+            if (!(left instanceof CapturingExpression)) {
+                return true;
+            }
             // The wildcard will match the concatenation to the left, but won't decorate it as a concat, so we do it
             // ourselves.
             checkSupportsStringConcat(ctx.type);

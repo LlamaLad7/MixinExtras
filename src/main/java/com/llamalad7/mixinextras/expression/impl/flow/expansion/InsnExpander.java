@@ -43,11 +43,11 @@ public abstract class InsnExpander {
     }
 
     public static Expansion prepareExpansion(FlowValue node, Target target, InjectionInfo info, ExpressionContext ctx) {
-        checkSupportsExpansion(info, ctx.type);
         InsnExpander expander = node.getDecoration(INSN_EXPANDER);
         if (expander == null) {
             return null;
         }
+        checkSupportsExpansion(info, ctx.type);
         AbstractInsnNode compoundInsn = node.getDecoration(COMPOUND_INSN);
         InjectionNode compoundNode = target.addInjectionNode(compoundInsn);
         Expansion expansion = compoundNode.getDecoration(Decorations.EXPANSION_INFO);

@@ -45,17 +45,26 @@ public class StringConcatPostProcessor implements FlowPostProcessor {
             return;
         }
         FlowValue initialComponent = appendCalls.get(0).getInput(1);
-        for (int i = 1; i < appendCalls.size(); i++) {
+        for (int i = 1; i < appendCalls.size() - 1; i++) {
             appendCalls.get(i).decorate(
                     Decorations.STRING_CONCAT_INFO,
                     new StringConcatInfo(
                             i == 1,
-                            i == appendCalls.size() - 1,
+                            false,
                             initialComponent,
                             toStringCall
                     )
             );
         }
+        toStringCall.decorate(
+                Decorations.STRING_CONCAT_INFO,
+                new StringConcatInfo(
+                        false,
+                        true,
+                        initialComponent,
+                        toStringCall
+                )
+        );
     }
 
     private FlowValue getFirstAppend(FlowValue node) {
