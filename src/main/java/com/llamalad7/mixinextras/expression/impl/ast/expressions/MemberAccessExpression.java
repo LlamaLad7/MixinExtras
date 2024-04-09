@@ -31,12 +31,12 @@ public class MemberAccessExpression extends SimpleExpression {
     }
 
     @Override
-    public void capture(FlowValue node, OutputSink sink) {
+    public void capture(FlowValue node, ExpressionContext ctx) {
         if (node.getInsn().getOpcode() == Opcodes.ARRAYLENGTH) {
-            sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{node.getInput(0).getType()});
-            sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.INT_TYPE);
-            sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index"});
+            ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{node.getInput(0).getType()});
+            ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.INT_TYPE);
+            ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index"});
         }
-        super.capture(node, sink);
+        super.capture(node, ctx);
     }
 }

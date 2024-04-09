@@ -1,6 +1,5 @@
 package com.llamalad7.mixinextras.injector.wrapoperation;
 
-import com.llamalad7.mixinextras.expression.impl.flow.expansion.SupportsInsnExpansion;
 import com.llamalad7.mixinextras.injector.MixinExtrasLateInjectionInfo;
 import com.llamalad7.mixinextras.utils.*;
 import org.objectweb.asm.Opcodes;
@@ -22,7 +21,7 @@ import java.util.Map;
 
 @InjectionInfo.AnnotationType(WrapOperation.class)
 @HandlerPrefix("wrapOperation")
-public class WrapOperationInjectionInfo extends MixinExtrasLateInjectionInfo implements SupportsInsnExpansion {
+public class WrapOperationInjectionInfo extends MixinExtrasLateInjectionInfo {
     private static final MixinExtrasLogger LOGGER = MixinExtrasLogger.get("WrapOperation");
 
     public WrapOperationInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {

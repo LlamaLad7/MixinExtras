@@ -1,6 +1,5 @@
 package com.llamalad7.mixinextras.injector;
 
-import com.llamalad7.mixinextras.expression.impl.flow.expansion.SupportsInsnExpansion;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -11,7 +10,7 @@ import org.spongepowered.asm.mixin.transformer.MixinTargetContext;
 
 @InjectionInfo.AnnotationType(ModifyExpressionValue.class)
 @HandlerPrefix("modifyExpressionValue")
-public class ModifyExpressionValueInjectionInfo extends MixinExtrasLateInjectionInfo implements SupportsInsnExpansion {
+public class ModifyExpressionValueInjectionInfo extends MixinExtrasLateInjectionInfo {
     public ModifyExpressionValueInjectionInfo(MixinTargetContext mixin, MethodNode method, AnnotationNode annotation) {
         super(mixin, method, annotation);
     }

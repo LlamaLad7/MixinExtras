@@ -63,7 +63,7 @@ public class ModifyExpressionValueInjector extends Injector {
 
     private void injectValueModifier(Target target, AbstractInsnNode valueNode, Type valueType, TargetInfo info, boolean shouldPop, StackExtension stack) {
         final InsnList after = new InsnList();
-        this.invokeHandler(valueType, target, after, stack);
+        info.invokeHandler(valueType, target, after, stack);
         if (shouldPop) {
             after.add(new InsnNode(Opcodes.POP));
         }
@@ -102,6 +102,9 @@ public class ModifyExpressionValueInjector extends Injector {
     }
 
     private Type getReturnType(InjectionNode node) {
+        if (node.hasDecoration(Decorations.IS_STRING_CONCAT_EXPRESSION)) {
+            return Type.getType(String.class);
+        }
         if (node.hasDecoration(Decorations.SIMPLE_EXPRESSION_TYPE)) {
             return node.getDecoration(Decorations.SIMPLE_EXPRESSION_TYPE);
         }
@@ -132,16 +135,18 @@ public class ModifyExpressionValueInjector extends Injector {
         return null;
     }
 
-    private static class TargetInfo {
+    private class TargetInfo {
         private final boolean isDupedFactoryRedirect;
         private final boolean isDynamicInstanceofRedirect;
         private final ArrayCreationInfo arrayCreationInfo;
+        private final boolean isStringConcat;
 
 
         public TargetInfo(InjectionNode node) {
             this.isDupedFactoryRedirect = InjectorUtils.isDupedFactoryRedirect(node);
             this.isDynamicInstanceofRedirect = InjectorUtils.isDynamicInstanceofRedirect(node);
             this.arrayCreationInfo = node.getDecoration(Decorations.ARRAY_CREATION_INFO);
+            this.isStringConcat = node.hasDecoration(Decorations.IS_STRING_CONCAT_EXPRESSION);
         }
 
         public AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode) {
@@ -155,6 +160,34 @@ public class ModifyExpressionValueInjector extends Injector {
                 return arrayCreationInfo.initialized;
             }
             return valueNode;
+        }
+
+        public void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
+            if (isStringConcat) {
+                // We copy the StringBuilder, build it, let the user modify the String, and then replace the
+                // contents of the StringBuilder with what they returned.
+                after.add(new InsnNode(Opcodes.DUP));
+                stack.extra(1);
+                after.add(new MethodInsnNode(
+                        Opcodes.INVOKEVIRTUAL,
+                        Type.getInternalName(StringBuilder.class),
+                        "toString",
+                        Bytecode.generateDescriptor(String.class),
+                        false
+                ));
+            }
+            ModifyExpressionValueInjector.this.invokeHandler(valueType, target, after, stack);
+            if (isStringConcat) {
+                after.add(
+                        new MethodInsnNode(
+                                Opcodes.INVOKESTATIC,
+                                Type.getInternalName(MixinExtrasHooks.class),
+                                "replaceContents",
+                                Bytecode.generateDescriptor(StringBuilder.class, StringBuilder.class, String.class),
+                                false
+                        )
+                );
+            }
         }
     }
 }

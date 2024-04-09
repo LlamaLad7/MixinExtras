@@ -25,7 +25,7 @@ public class ComparisonExpression extends Expression {
 
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
-        return operator.matches(node, ctx.sink) && inputsMatch(node, ctx, left, right);
+        return operator.matches(node, ctx) && inputsMatch(node, ctx, left, right);
     }
 
     public enum Operator implements Opcodes {
@@ -54,7 +54,7 @@ public class ComparisonExpression extends Expression {
             this.dcmp = dcmp;
         }
 
-        public boolean matches(FlowValue node, OutputSink sink) {
+        public boolean matches(FlowValue node, ExpressionContext ctx) {
             AbstractInsnNode insn = node.getInsn();
             int opcode = insn.getOpcode();
             if (node.inputCount() != 2) {
@@ -95,8 +95,8 @@ public class ComparisonExpression extends Expression {
                 info = new ComparisonInfo(opcode, insn, input, opcode == directObject || opcode == directInt);
             }
             info.attach(
-                    (k, v) -> sink.decorate(insn, k, v),
-                    (k, v) -> sink.decorateInjectorSpecific(insn, k, v)
+                    (k, v) -> ctx.decorate(insn, k, v),
+                    (k, v) -> ctx.decorateInjectorSpecific(insn, k, v)
             );
             return true;
         }

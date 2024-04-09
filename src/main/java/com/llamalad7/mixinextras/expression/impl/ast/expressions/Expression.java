@@ -20,8 +20,8 @@ public abstract class Expression {
         return false;
     }
 
-    public void capture(FlowValue node, OutputSink sink) {
-        sink.capture(node, this);
+    public void capture(FlowValue node, ExpressionContext ctx) {
+        ctx.capture(node, this);
     }
 
     public boolean inputsMatch(FlowValue node, ExpressionContext ctx, Expression... values) {
@@ -51,7 +51,7 @@ public abstract class Expression {
     }
 
     public interface OutputSink {
-        void capture(FlowValue node, Expression expr);
+        void capture(FlowValue node, Expression expr, ExpressionContext ctx);
 
         void decorate(AbstractInsnNode insn, String key, Object value);
 

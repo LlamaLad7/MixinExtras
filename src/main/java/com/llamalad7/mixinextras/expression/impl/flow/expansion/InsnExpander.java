@@ -1,7 +1,8 @@
 package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
-import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
@@ -9,10 +10,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
-import org.spongepowered.asm.mixin.injection.struct.CallbackInjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
-import org.spongepowered.asm.mixin.injection.struct.ModifyVariableInjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 
 import java.util.*;
@@ -43,8 +42,8 @@ public abstract class InsnExpander {
         target.replaceNode(insn, new InsnNode(Opcodes.NOP));
     }
 
-    public static Expansion prepareExpansion(FlowValue node, Target target, InjectionInfo info) {
-        checkSupportsExpansion(info);
+    public static Expansion prepareExpansion(FlowValue node, Target target, InjectionInfo info, ExpressionContext ctx) {
+        checkSupportsExpansion(info, ctx.type);
         InsnExpander expander = node.getDecoration(INSN_EXPANDER);
         if (expander == null) {
             return null;
@@ -69,20 +68,25 @@ public abstract class InsnExpander {
         return target.addInjectionNode(expansion.getTargetInsn(info));
     }
 
-    private static void checkSupportsExpansion(InjectionInfo info) {
-        if (info instanceof CallbackInjectionInfo || info instanceof ModifyVariableInjectionInfo) {
-            // Tolerate, they don't care about their target instruction and so will just place code before it.
-            return;
+    private static void checkSupportsExpansion(InjectionInfo info, ExpressionContext.Type type) {
+        switch (type) {
+            case SLICE:
+            case INJECT:
+            case MODIFY_VARIABLE:
+                // Tolerate, they don't care about their target instruction.
+                return;
+            case MODIFY_EXPRESSION_VALUE:
+            case WRAP_OPERATION:
+                // Supported.
+                return;
         }
-        if (!(info instanceof SupportsInsnExpansion)) {
-            throw CompatibilityHelper.makeInvalidInjectionException(
-                    info,
-                    String.format(
-                            "Injector %s does not support compound instructions!",
-                            info
-                    )
-            );
-        }
+        throw CompatibilityHelper.makeInvalidInjectionException(
+                info,
+                String.format(
+                        "Expression context type %s does not support compound instructions!",
+                        type
+                )
+        );
     }
 
     public class Expansion {

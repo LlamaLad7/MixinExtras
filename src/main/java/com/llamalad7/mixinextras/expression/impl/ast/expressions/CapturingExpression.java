@@ -16,7 +16,7 @@ public class CapturingExpression extends SimpleExpression {
     public boolean matches(FlowValue node, ExpressionContext ctx) {
         boolean matches = expression.matches(node, ctx);
         if (matches) {
-            expression.capture(node, ctx.sink);
+            expression.capture(node, ctx);
         }
         return matches;
     }

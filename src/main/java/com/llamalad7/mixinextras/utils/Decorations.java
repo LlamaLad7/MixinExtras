@@ -69,4 +69,20 @@ public class Decorations {
      * Stores information about this compound instruction.
      */
     public static final String EXPANSION_INFO = "mixinextras_expansionInfo";
+
+    /**
+     * Stores information about this part of a string concatenation.
+     */
+    public static final String STRING_CONCAT_INFO = "stringConcatInfo";
+
+    /**
+     * Stores that this StringBuilder#append call was targeted as part of a String concatenation expression, and should
+     * therefore be modifiable as though it were a String.
+     */
+    public static final String IS_STRING_CONCAT_EXPRESSION = "mixinextras_isStringConcatExpression";
+
+    /**
+     * Marks that this @At is contained within a @Slice.
+     */
+    public static final String IS_IN_SLICE = "mixinextras_isInSlice";
 }

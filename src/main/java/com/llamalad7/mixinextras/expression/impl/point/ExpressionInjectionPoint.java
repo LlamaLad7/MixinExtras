@@ -34,11 +34,13 @@ public class ExpressionInjectionPoint extends InjectionPoint {
 
     private final int ordinal;
     private final String id;
+    private final boolean isInSlice;
 
     public ExpressionInjectionPoint(InjectionPointData data) {
         super(data);
         this.ordinal = data.getOrdinal();
         this.id = data.getId() != null ? data.getId() : "";
+        this.isInSlice = data.get(Decorations.IS_IN_SLICE, false);
     }
 
     @Override
@@ -63,9 +65,9 @@ public class ExpressionInjectionPoint extends InjectionPoint {
 
                 Expression.OutputSink sink = new Expression.OutputSink() {
                     @Override
-                    public void capture(FlowValue node, Expression expr) {
+                    public void capture(FlowValue node, Expression expr, ExpressionContext ctx) {
                         AbstractInsnNode capturedInsn = node.getInsn();
-                        InsnExpander.Expansion expansion = InsnExpander.prepareExpansion(node, target, CURRENT_INFO);
+                        InsnExpander.Expansion expansion = InsnExpander.prepareExpansion(node, target, CURRENT_INFO, ctx);
                         AbstractInsnNode targetInsn;
                         BiConsumer<String, Object> decorate;
                         BiConsumer<String, Object> decorateInjectorSpecific;
@@ -115,6 +117,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                         sink,
                         target.classNode,
                         target.method,
+                        ExpressionContext.Type.forContext(CURRENT_INFO, isInSlice),
                         false
                 );
                 try {

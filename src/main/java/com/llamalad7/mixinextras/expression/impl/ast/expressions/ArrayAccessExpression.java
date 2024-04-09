@@ -34,10 +34,10 @@ public class ArrayAccessExpression extends SimpleExpression {
     }
 
     @Override
-    public void capture(FlowValue node, OutputSink sink) {
-        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{node.getInput(0).getType(), Type.INT_TYPE});
-        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, node.getType());
-        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index"});
-        super.capture(node, sink);
+    public void capture(FlowValue node, ExpressionContext ctx) {
+        ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{node.getInput(0).getType(), Type.INT_TYPE});
+        ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, node.getType());
+        ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index"});
+        super.capture(node, ctx);
     }
 }

@@ -37,11 +37,11 @@ public class ArrayStoreExpression extends Expression {
     }
 
     @Override
-    public void capture(FlowValue node, OutputSink sink) {
+    public void capture(FlowValue node, ExpressionContext ctx) {
         Type arrayType = node.getInput(0).getType();
-        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, TypeUtils.getInnerType(arrayType)});
-        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.VOID_TYPE);
-        sink.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index", "value"});
-        super.capture(node, sink);
+        ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, TypeUtils.getInnerType(arrayType)});
+        ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.VOID_TYPE);
+        ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index", "value"});
+        super.capture(node, ctx);
     }
 }

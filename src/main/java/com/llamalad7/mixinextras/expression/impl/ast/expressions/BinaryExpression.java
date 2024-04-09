@@ -1,8 +1,11 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionUtil;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.StringConcatInfo;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
+import com.llamalad7.mixinextras.utils.Decorations;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -20,7 +23,66 @@ public class BinaryExpression extends SimpleExpression {
 
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
-        return operator.matches(node.getInsn()) && inputsMatch(node, ctx, left, right);
+        if (operator.matches(node.getInsn()) && inputsMatch(node, ctx, left, right)) {
+            return true;
+        }
+        StringConcatInfo concat = node.getDecoration(Decorations.STRING_CONCAT_INFO);
+        if (operator != Operator.PLUS || concat == null || !right.matches(node.getInput(1), ctx)) {
+            return false;
+        }
+        if (concat.isFirstConcat) {
+            return left.matches(concat.initialComponent, ctx);
+        }
+        Expression innerLeft = ExpressionUtil.skipCapturesDown(left);
+        if (innerLeft instanceof WildcardExpression) {
+            // The wildcard will match the concatenation to the left, but won't decorate it as a concat, so we do it
+            // ourselves.
+            checkSupportsStringConcat(ctx.type);
+            ctx.decorateInjectorSpecific(node.getInput(0).getInsn(), Decorations.IS_STRING_CONCAT_EXPRESSION, true);
+            // Do the capture:
+            return left.matches(node.getInput(0), ctx);
+        }
+        if (innerLeft instanceof BinaryExpression && ((BinaryExpression) innerLeft).operator == Operator.PLUS) {
+            // Continue matching the concat chain.
+            return left.matches(node.getInput(0), ctx);
+        }
+        return false;
+    }
+
+    @Override
+    public void capture(FlowValue node, ExpressionContext ctx) {
+        StringConcatInfo concat = node.getDecoration(Decorations.STRING_CONCAT_INFO);
+        if (concat == null) {
+            super.capture(node, ctx);
+            return;
+        }
+        checkSupportsStringConcat(ctx.type);
+        if (concat.isLastConcat) {
+            // Simple optimization.
+            super.capture(concat.toStringCall, ctx);
+            return;
+        }
+        ctx.decorateInjectorSpecific(node.getInsn(), Decorations.IS_STRING_CONCAT_EXPRESSION, true);
+        super.capture(node, ctx);
+    }
+
+    private void checkSupportsStringConcat(ExpressionContext.Type type) {
+        switch (type) {
+            case SLICE:
+            case INJECT:
+            case MODIFY_VARIABLE:
+                // Tolerate, they don't care about their target instruction.
+                return;
+            case MODIFY_EXPRESSION_VALUE:
+                // Supported.
+                return;
+        }
+        throw new UnsupportedOperationException(
+                String.format(
+                        "Expression context type %s does not support string concat!",
+                        type
+                )
+        );
     }
 
     public enum Operator {
