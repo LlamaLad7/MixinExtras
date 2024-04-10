@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -10,9 +11,9 @@ import org.objectweb.asm.tree.JumpInsnNode;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 
-class UnaryComparisonExpander extends InsnExpander {
+public class UnaryComparisonExpander extends InsnExpander {
     @Override
-    public void expand(FlowValue node, FlowPostProcessor.OutputSink sink) {
+    public void process(FlowValue node, FlowPostProcessor.OutputSink sink) {
         AbstractInsnNode insn = node.getInsn();
         int cstOpcode = getCstOpcode(insn);
         if (cstOpcode == -1) {
@@ -40,7 +41,7 @@ class UnaryComparisonExpander extends InsnExpander {
     }
 
     @Override
-    public void expand(Target target, InjectionNodes.InjectionNode node, Expansion expansion) {
+    public void expand(Target target, InjectionNodes.InjectionNode node, Expansion expansion, StackExtension stack) {
         if (node.isReplaced()) {
             // A @ModifyConstant has been here
             AbstractInsnNode next = node.getCurrentTarget().getNext();
@@ -59,6 +60,7 @@ class UnaryComparisonExpander extends InsnExpander {
         }
         JumpInsnNode jump = (JumpInsnNode) insn;
         int jumpOpcode = getExpandedJumpOpcode(insn);
+        stack.extra(1);
         expandInsn(
                 target, node,
                 expansion.registerInsn(Component.CST, new InsnNode(cstOpcode)),

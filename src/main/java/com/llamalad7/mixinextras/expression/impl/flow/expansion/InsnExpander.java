@@ -3,6 +3,7 @@ package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
+import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
@@ -17,14 +18,15 @@ import org.spongepowered.asm.mixin.injection.struct.Target;
 import java.util.*;
 import java.util.function.Consumer;
 
-public abstract class InsnExpander {
+public abstract class InsnExpander implements FlowPostProcessor {
     private static final String INSN_COMPONENT = "expandedInsnComponent";
     private static final String COMPOUND_INSN = "compoundInsn";
     private static final String INSN_EXPANDER = "insnExpander";
 
-    public abstract void expand(FlowValue node, FlowPostProcessor.OutputSink sink);
+    @Override
+    public abstract void process(FlowValue node, FlowPostProcessor.OutputSink sink);
 
-    public abstract void expand(Target target, InjectionNode node, Expansion expansion);
+    public abstract void expand(Target target, InjectionNode node, Expansion expansion, StackExtension stack);
 
     protected final void registerComponent(FlowValue node, InsnComponent component, AbstractInsnNode compound) {
         node.decorate(INSN_COMPONENT, component);
@@ -115,6 +117,10 @@ public abstract class InsnExpander {
             );
         }
 
+        public Set<InsnComponent> registeredInterests() {
+            return new HashSet<>(interests.values());
+        }
+
         private void addExpansionStep(InsnComponent component, Consumer<InjectionNode> step) {
             expansionSteps.computeIfAbsent(component, k -> new ArrayList<>()).add(step);
         }
@@ -124,7 +130,7 @@ public abstract class InsnExpander {
                 return;
             }
             expanded = true;
-            InsnExpander.this.expand(target, node, this);
+            InsnExpander.this.expand(target, node, this, new StackExtension(target));
             for (Map.Entry<InsnComponent, List<Consumer<InjectionNode>>> steps : expansionSteps.entrySet()) {
                 InjectionNode newNode = target.addInjectionNode(expandedInsns.get(steps.getKey()));
                 for (Consumer<InjectionNode> step : steps.getValue()) {

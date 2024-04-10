@@ -2,15 +2,16 @@ package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.injector.StackExtension;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 
-class IincExpander extends InsnExpander {
+public class IincExpander extends InsnExpander {
     @Override
-    public void expand(FlowValue node, FlowPostProcessor.OutputSink sink) {
+    public void process(FlowValue node, FlowPostProcessor.OutputSink sink) {
         if (node.getInsn().getOpcode() != Opcodes.IINC) {
             return;
         }
@@ -30,8 +31,9 @@ class IincExpander extends InsnExpander {
     }
 
     @Override
-    public void expand(Target target, InjectionNodes.InjectionNode node, Expansion expansion) {
+    public void expand(Target target, InjectionNodes.InjectionNode node, Expansion expansion, StackExtension stack) {
         IincInsnNode iinc = (IincInsnNode) node.getCurrentTarget();
+        stack.extra(2);
         expandInsn(
                 target, node,
                 expansion.registerInsn(Component.LOAD, new VarInsnNode(Opcodes.ILOAD, iinc.var)),

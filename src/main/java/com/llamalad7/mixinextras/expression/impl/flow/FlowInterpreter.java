@@ -1,6 +1,8 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
-import com.llamalad7.mixinextras.expression.impl.flow.expansion.ExpansionPostProcessor;
+import com.llamalad7.mixinextras.expression.impl.flow.expansion.IincExpander;
+import com.llamalad7.mixinextras.expression.impl.flow.expansion.StringConcatFactoryExpander;
+import com.llamalad7.mixinextras.expression.impl.flow.expansion.UnaryComparisonExpander;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.NewArrayPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.StringConcatPostProcessor;
@@ -26,7 +28,9 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         super(ASM.API_VERSION);
         this.localTypes = LocalsCalculator.getLocalTypes(classNode, methodNode);
         this.postProcessors = Arrays.asList(
-                new ExpansionPostProcessor(),
+                new IincExpander(),
+                new UnaryComparisonExpander(),
+                new StringConcatFactoryExpander(),
                 new NewArrayPostProcessor(methodNode),
                 new StringConcatPostProcessor()
         );
@@ -46,34 +50,40 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         for (FlowValue value : cache.values()) {
             value.finish();
         }
-        Set<AbstractInsnNode> synthetic = Collections.newSetFromMap(new IdentityHashMap<>());
-        Map<AbstractInsnNode, FlowValue> newFlows = new IdentityHashMap<>();
-        FlowPostProcessor.OutputSink sink = new FlowPostProcessor.OutputSink() {
-            @Override
-            public void markAsSynthetic(FlowValue node) {
-                if (!node.isComplex()) {
-                    synthetic.add(node.getInsn());
-                }
-            }
-
-            @Override
-            public void registerFlow(FlowValue... nodes) {
-                for (FlowValue node : nodes) {
+        for (FlowValue value : cache.values()) {
+            value.onFinished();
+        }
+        for (FlowPostProcessor postProcessor : postProcessors) {
+            Set<AbstractInsnNode> synthetic = Collections.newSetFromMap(new IdentityHashMap<>());
+            Map<AbstractInsnNode, FlowValue> newFlows = new IdentityHashMap<>();
+            FlowPostProcessor.OutputSink sink = new FlowPostProcessor.OutputSink() {
+                @Override
+                public void markAsSynthetic(FlowValue node) {
                     if (!node.isComplex()) {
-                        newFlows.put(node.getInsn(), node);
+                        synthetic.add(node.getInsn());
                     }
                 }
-            }
-        };
-        for (FlowPostProcessor postProcessor : postProcessors) {
+
+                @Override
+                public void registerFlow(FlowValue... nodes) {
+                    for (FlowValue node : nodes) {
+                        if (!node.isComplex()) {
+                            newFlows.put(node.getInsn(), node);
+                        }
+                    }
+                }
+            };
             for (FlowValue value : cache.values()) {
                 postProcessor.process(value, sink);
             }
-        }
-        synthetic.forEach(cache::remove);
-        cache.putAll(newFlows);
-        for (FlowValue value : newFlows.values()) {
-            value.finish();
+            synthetic.forEach(cache::remove);
+            cache.putAll(newFlows);
+            for (FlowValue value : cache.values()) {
+                value.finish();
+            }
+            for (FlowValue value : cache.values()) {
+                value.onFinished();
+            }
         }
         return Collections.unmodifiableMap(cache);
     }

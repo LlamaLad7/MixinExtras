@@ -13,6 +13,7 @@ public class FlowValue implements Value {
     private AbstractInsnNode insn;
     protected FlowValue[] parents;
     private final Set<Pair<FlowValue, Integer>> next = new HashSet<>(1);
+    private boolean nextIsReady;
     private Map<String, Object> decorations = null;
 
     public FlowValue(Type type, AbstractInsnNode insn, FlowValue... parents) {
@@ -22,6 +23,9 @@ public class FlowValue implements Value {
     }
 
     public void addChild(FlowValue value, int index) {
+        if (nextIsReady) {
+            return;
+        }
         next.add(Pair.of(value, index));
     }
 
@@ -29,6 +33,15 @@ public class FlowValue implements Value {
         for (int i = 0; i < parents.length; i++) {
             parents[i].addChild(this, i);
         }
+    }
+
+    public void onFinished() {
+        nextIsReady = true;
+    }
+
+    private void markNextDirty() {
+        nextIsReady = false;
+        next.clear();
     }
 
     @Override
@@ -61,6 +74,9 @@ public class FlowValue implements Value {
     }
 
     public void setParents(FlowValue... parents) {
+        for (FlowValue parent : this.parents) {
+            parent.markNextDirty();
+        }
         this.parents = parents;
     }
 
