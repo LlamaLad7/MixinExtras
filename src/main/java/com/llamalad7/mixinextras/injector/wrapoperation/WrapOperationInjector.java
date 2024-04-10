@@ -625,7 +625,7 @@ class WrapOperationInjector extends Injector {
     }
 
     private OperationType newComparisonExpression(Target target, InjectionNode node, StackExtension stack) {
-        ComparisonInfo comparison = InjectorUtils.getComparisonInfo(node, info);
+        ComparisonInfo comparison = InjectorUtils.getInjectorSpecificDecoration(node, info, Decorations.COMPARISON_INFO);
         if (comparison == null) {
             return null;
         }

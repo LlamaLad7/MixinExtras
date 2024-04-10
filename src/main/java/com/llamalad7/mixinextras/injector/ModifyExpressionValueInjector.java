@@ -103,7 +103,7 @@ public class ModifyExpressionValueInjector extends Injector {
     }
 
     private Type getReturnType(InjectionNode node) {
-        if (node.hasDecoration(Decorations.IS_STRING_CONCAT_EXPRESSION)) {
+        if (InjectorUtils.hasInjectorSpecificDecoration(node, info, Decorations.IS_STRING_CONCAT_EXPRESSION)) {
             return Type.getType(String.class);
         }
         if (node.hasDecoration(Decorations.SIMPLE_EXPRESSION_TYPE)) {
@@ -148,8 +148,8 @@ public class ModifyExpressionValueInjector extends Injector {
             this.isDupedFactoryRedirect = InjectorUtils.isDupedFactoryRedirect(node);
             this.isDynamicInstanceofRedirect = InjectorUtils.isDynamicInstanceofRedirect(node);
             this.arrayCreationInfo = node.getDecoration(Decorations.ARRAY_CREATION_INFO);
-            this.isStringConcat = node.hasDecoration(Decorations.IS_STRING_CONCAT_EXPRESSION);
-            this.comparison = InjectorUtils.getComparisonInfo(node, info);
+            this.isStringConcat = InjectorUtils.hasInjectorSpecificDecoration(node, info, Decorations.IS_STRING_CONCAT_EXPRESSION);
+            this.comparison = InjectorUtils.getInjectorSpecificDecoration(node, info, Decorations.COMPARISON_INFO);
         }
 
         public AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode) {

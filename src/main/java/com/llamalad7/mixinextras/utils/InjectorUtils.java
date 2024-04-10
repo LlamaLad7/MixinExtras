@@ -1,6 +1,5 @@
 package com.llamalad7.mixinextras.utils;
 
-import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -127,11 +126,19 @@ public class InjectorUtils {
         inner.put(info, value);
     }
 
-    public static ComparisonInfo getComparisonInfo(InjectionNode node, InjectionInfo info) {
-        Map<InjectionInfo, ComparisonInfo> map = node.getDecoration(Decorations.COMPARISON_INFO);
+    public static <T> T getInjectorSpecificDecoration(InjectionNode node, InjectionInfo info, String key) {
+        Map<InjectionInfo, T> map = node.getDecoration(key);
         if (map == null) {
             return null;
         }
         return map.get(info);
+    }
+
+    public static boolean hasInjectorSpecificDecoration(InjectionNode node, InjectionInfo info, String key) {
+        Map<InjectionInfo, ?> map = node.getDecoration(key);
+        if (map == null) {
+            return false;
+        }
+        return map.containsKey(info);
     }
 }
