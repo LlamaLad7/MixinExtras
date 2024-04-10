@@ -20,8 +20,8 @@ public class ComplexComparisonInfo extends ComparisonInfo {
     }
 
     @Override
-    public LabelNode getJumpTarget() {
-        return ((JumpInsnNode) jumpInsn).label;
+    public JumpInsnNode getJumpInsn() {
+        return (JumpInsnNode) jumpInsn;
     }
 
     @Override

@@ -18,6 +18,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ASMUtils {
@@ -150,9 +151,13 @@ public class ASMUtils {
     }
 
     public static void ifElse(InsnList insns, int jumpToSecond, Runnable first, Runnable second) {
+        ifElse(insns, label -> insns.add(new JumpInsnNode(jumpToSecond, label)), first, second);
+    }
+
+    public static void ifElse(InsnList insns, Consumer<LabelNode> addJump, Runnable first, Runnable second) {
         LabelNode secondLabel = new LabelNode();
         LabelNode end = new LabelNode();
-        insns.add(new JumpInsnNode(jumpToSecond, secondLabel));
+        addJump.accept(secondLabel);
         first.run();
         insns.add(new JumpInsnNode(Opcodes.GOTO, end));
         insns.add(secondLabel);

@@ -35,7 +35,11 @@ public class ComparisonInfo {
     }
 
     public LabelNode getJumpTarget() {
-        return ((JumpInsnNode) node).label;
+        return getJumpInsn().label;
+    }
+
+    public JumpInsnNode getJumpInsn() {
+        return (JumpInsnNode) node;
     }
 
     public void cleanup(Target target) {

@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.expression.impl.utils.ComplexComparisonInfo;
+import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -26,6 +27,12 @@ public class ComparisonExpression extends Expression {
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
         return operator.matches(node, ctx) && inputsMatch(node, ctx, left, right);
+    }
+
+    @Override
+    public void capture(FlowValue node, ExpressionContext ctx) {
+        ctx.decorate(node.getInsn(), Decorations.SIMPLE_EXPRESSION_TYPE, Type.BOOLEAN_TYPE);
+        super.capture(node, ctx);
     }
 
     public enum Operator implements Opcodes {

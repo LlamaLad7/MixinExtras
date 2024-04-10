@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.injector;
 
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.ArrayCreationInfo;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
+import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.utils.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -140,6 +141,7 @@ public class ModifyExpressionValueInjector extends Injector {
         private final boolean isDynamicInstanceofRedirect;
         private final ArrayCreationInfo arrayCreationInfo;
         private final boolean isStringConcat;
+        private final ComparisonInfo comparison;
 
 
         public TargetInfo(InjectionNode node) {
@@ -147,6 +149,7 @@ public class ModifyExpressionValueInjector extends Injector {
             this.isDynamicInstanceofRedirect = InjectorUtils.isDynamicInstanceofRedirect(node);
             this.arrayCreationInfo = node.getDecoration(Decorations.ARRAY_CREATION_INFO);
             this.isStringConcat = node.hasDecoration(Decorations.IS_STRING_CONCAT_EXPRESSION);
+            this.comparison = InjectorUtils.getComparisonInfo(node, info);
         }
 
         public AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode) {
@@ -159,10 +162,14 @@ public class ModifyExpressionValueInjector extends Injector {
             if (arrayCreationInfo != null) {
                 return arrayCreationInfo.initialized;
             }
+            if (comparison != null) {
+                return comparison.getJumpInsn();
+            }
             return valueNode;
         }
 
         public void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
+            LabelNode originalJumpTarget = null;
             if (isStringConcat) {
                 // We copy the StringBuilder, build it, let the user modify the String, and then replace the
                 // contents of the StringBuilder with what they returned.
@@ -175,6 +182,14 @@ public class ModifyExpressionValueInjector extends Injector {
                         Bytecode.generateDescriptor(String.class),
                         false
                 ));
+            } else if (comparison != null) {
+                originalJumpTarget = comparison.getJumpTarget();
+                ASMUtils.ifElse(
+                        after,
+                        label -> comparison.getJumpInsn().label = label,
+                        () -> after.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_0 : Opcodes.ICONST_1)),
+                        () -> after.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_1 : Opcodes.ICONST_0))
+                );
             }
             ModifyExpressionValueInjector.this.invokeHandler(valueType, target, after, stack);
             if (isStringConcat) {
@@ -187,6 +202,8 @@ public class ModifyExpressionValueInjector extends Injector {
                                 false
                         )
                 );
+            } else if (comparison != null) {
+                after.add(new JumpInsnNode(comparison.jumpOnTrue ? Opcodes.IFNE : Opcodes.IFEQ, originalJumpTarget));
             }
         }
     }
