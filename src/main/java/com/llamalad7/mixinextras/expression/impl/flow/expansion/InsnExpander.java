@@ -103,7 +103,9 @@ public abstract class InsnExpander implements FlowPostProcessor {
         }
 
         public void registerInterest(InjectionInfo info, InsnComponent component) {
-            interests.put(info, component);
+            if (interests.put(info, component) != null) {
+                throw new UnsupportedOperationException("The same injector should not target multiple parts of a compound instruction!");
+            }
         }
 
         public void decorate(InjectionInfo info, String key, Object value) {
