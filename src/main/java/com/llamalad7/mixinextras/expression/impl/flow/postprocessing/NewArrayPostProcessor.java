@@ -1,12 +1,12 @@
 package com.llamalad7.mixinextras.expression.impl.flow.postprocessing;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.Decorations;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.spongepowered.asm.util.Bytecode;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -71,7 +71,7 @@ public class NewArrayPostProcessor implements FlowPostProcessor {
         if (node.isComplex()) {
             return null;
         }
-        Object cst = Bytecode.getConstant(node.getInsn());
+        Object cst = ASMUtils.getConstant(node.getInsn());
         if (!(cst instanceof Integer)) {
             return null;
         }

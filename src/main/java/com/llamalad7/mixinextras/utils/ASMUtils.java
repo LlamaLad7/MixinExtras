@@ -197,4 +197,12 @@ public class ASMUtils {
         }
         return null;
     }
+
+    public static Object getConstant(AbstractInsnNode insn) {
+        if (insn.getOpcode() == Opcodes.NEWARRAY) {
+            // Mixin incorrectly throws when passed this.
+            return null;
+        }
+        return Bytecode.getConstant(insn);
+    }
 }
