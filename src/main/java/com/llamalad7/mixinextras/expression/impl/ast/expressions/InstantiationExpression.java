@@ -27,4 +27,13 @@ public class InstantiationExpression extends Expression {
         }
         return type.matches(ctx.pool, instantiation.type) && expressionsMatch(instantiation.args, arguments, ctx, ctx.allowIncompleteListInputs);
     }
+
+    @Override
+    protected void capture(FlowValue node, ExpressionContext ctx) {
+        if (ctx.type == ExpressionContext.Type.MODIFY_ARG || ctx.type == ExpressionContext.Type.MODIFY_ARGS) {
+            InstantiationInfo instantiation = node.getDecoration(Decorations.INSTANTIATION_INFO);
+            node = instantiation.initCall;
+        }
+        super.capture(node, ctx);
+    }
 }
