@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.flow.expansion.IincExpander;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.StringConcatFactoryExpander;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.UnaryComparisonExpander;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.InstantiationPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.NewArrayPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.StringConcatPostProcessor;
 import com.llamalad7.mixinextras.utils.TypeUtils;
@@ -31,6 +32,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 new IincExpander(),
                 new UnaryComparisonExpander(),
                 new StringConcatFactoryExpander(),
+                new InstantiationPostProcessor(),
                 new NewArrayPostProcessor(methodNode),
                 new StringConcatPostProcessor()
         );

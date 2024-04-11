@@ -85,4 +85,9 @@ public class Decorations {
      * Marks that this @At is contained within a @Slice.
      */
     public static final String IS_IN_SLICE = "mixinextras_isInSlice";
+
+    /**
+     * Stores information about this object instantiation.
+     */
+    public static final String INSTANTIATION_INFO = "instantiationInfo";
 }

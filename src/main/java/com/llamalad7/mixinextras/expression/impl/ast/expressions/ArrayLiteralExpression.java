@@ -2,8 +2,8 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
-import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.ArrayCreationInfo;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.ArrayCreationInfo;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.TypeUtils;
@@ -35,19 +35,7 @@ public class ArrayLiteralExpression extends SimpleExpression {
         if (newElementType == null || !elementType.matches(ctx.pool, newElementType)) {
             return false;
         }
-        return valuesMatch(creation.values, ctx);
-    }
-
-    private boolean valuesMatch(List<FlowValue> flows, ExpressionContext ctx) {
-        if (!(ctx.allowIncompleteListInputs && values.size() < flows.size()) && flows.size() != values.size()) {
-            return false;
-        }
-        for (int i = 0; i < values.size(); i++) {
-            if (!values.get(i).matches(flows.get(i), ctx)) {
-                return false;
-            }
-        }
-        return true;
+        return expressionsMatch(creation.values, values, ctx, ctx.allowIncompleteListInputs);
     }
 
     private Type getElementType(AbstractInsnNode insn) {
