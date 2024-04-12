@@ -29,6 +29,7 @@ public class NewArrayPostProcessor implements FlowPostProcessor {
             if (stores == null || stores.isEmpty()) {
                 return;
             }
+            sink.markAsSynthetic(node.getInput(0)); // Size
             for (FlowValue store : stores) {
                 sink.markAsSynthetic(store);
                 sink.markAsSynthetic(store.getInput(1));
@@ -36,10 +37,10 @@ public class NewArrayPostProcessor implements FlowPostProcessor {
             node.decorate(
                     Decorations.ARRAY_CREATION_INFO,
                     new ArrayCreationInfo(
-                            stores.stream().map(it -> it.getInput(2)).collect(Collectors.toList()),
                             stores.get(stores.size() - 1).getInsn()
                     )
             );
+            node.setParents(stores.stream().map(it -> it.getInput(2)).toArray(FlowValue[]::new));
         }
     }
 

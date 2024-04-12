@@ -87,16 +87,12 @@ public class ComparisonExpression extends Expression {
             }
             ComparisonInfo info;
             if (isComplex) {
-                if (node.getNext().size() != 1) {
-                    return false;
-                }
                 int zeroDirect = directInt - WITH_ZERO_OFFSET;
                 int zeroInverted = invertedInt - WITH_ZERO_OFFSET;
-                AbstractInsnNode next = node.getNext().iterator().next().getLeft().getInsn();
-                if (next.getOpcode() != zeroDirect && next.getOpcode() != zeroInverted) {
+                JumpInsnNode jump = node.getDecoration(Decorations.COMPLEX_COMPARISON_JUMP);
+                if (jump == null || jump.getOpcode() != zeroDirect && jump.getOpcode() != zeroInverted) {
                     return false;
                 }
-                JumpInsnNode jump = (JumpInsnNode) next;
                 info = new ComplexComparisonInfo(opcode, insn, input, jump, jump.getOpcode() == zeroDirect);
             } else {
                 info = new ComparisonInfo(opcode, insn, input, opcode == directObject || opcode == directInt);

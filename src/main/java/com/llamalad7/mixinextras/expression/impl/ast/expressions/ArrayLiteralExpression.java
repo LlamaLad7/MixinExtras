@@ -35,7 +35,7 @@ public class ArrayLiteralExpression extends SimpleExpression {
         if (newElementType == null || !elementType.matches(ctx.pool, newElementType)) {
             return false;
         }
-        return expressionsMatch(creation.values, values, ctx, ctx.allowIncompleteListInputs);
+        return inputsMatch(node, ctx, ctx.allowIncompleteListInputs, values.toArray(new Expression[0]));
     }
 
     private Type getElementType(AbstractInsnNode insn) {

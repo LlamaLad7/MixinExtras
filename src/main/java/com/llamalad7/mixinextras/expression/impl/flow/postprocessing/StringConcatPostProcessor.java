@@ -7,9 +7,10 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.TypeInsnNode;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class StringConcatPostProcessor implements FlowPostProcessor {
     private static final String STRING_BUILDER = Type.getInternalName(StringBuilder.class);
@@ -68,40 +69,25 @@ public class StringConcatPostProcessor implements FlowPostProcessor {
     }
 
     private FlowValue getFirstAppend(FlowValue node) {
-        AbstractInsnNode insn = node.getInsn();
-        if (insn.getOpcode() != Opcodes.NEW || !((TypeInsnNode) insn).desc.equals(STRING_BUILDER)) {
+        InstantiationInfo instantiation = node.getDecoration(Decorations.INSTANTIATION_INFO);
+        if (instantiation == null || !instantiation.type.getInternalName().equals(STRING_BUILDER)) {
             return null;
         }
-        List<Pair<FlowValue, Integer>> next = new ArrayList<>(node.getNext());
-        boolean foundInit = false;
-        for (Iterator<Pair<FlowValue, Integer>> it = next.iterator(); it.hasNext(); ) {
-            Pair<FlowValue, Integer> child = it.next();
-            if (isEmptyInit(child)) {
-                it.remove();
-                foundInit = true;
-                break;
-            }
-        }
-        if (!foundInit || next.size() != 1) {
+        if (!isEmptyInit(instantiation.initCall)) {
             return null;
         }
-        Pair<FlowValue, Integer> firstAppend = next.get(0);
+        if (node.getNext().size() != 1) {
+            return null;
+        }
+        Pair<FlowValue, Integer> firstAppend = node.getNext().iterator().next();
         if (isAppendCall(firstAppend)) {
             return firstAppend.getLeft();
         }
         return null;
     }
 
-    private boolean isEmptyInit(Pair<FlowValue, Integer> child) {
-        if (child.getRight() != 0) {
-            return false;
-        }
-        AbstractInsnNode insn = child.getLeft().getInsn();
-        if (insn.getOpcode() != Opcodes.INVOKESPECIAL) {
-            return false;
-        }
-        MethodInsnNode call = (MethodInsnNode) insn;
-        return call.name.equals("<init>") && call.desc.equals("()V");
+    private boolean isEmptyInit(FlowValue call) {
+        return ((MethodInsnNode) call.getInsn()).desc.equals("()V");
     }
 
     private boolean isAppendCall(Pair<FlowValue, Integer> child) {

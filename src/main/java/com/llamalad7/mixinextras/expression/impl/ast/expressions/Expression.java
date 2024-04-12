@@ -5,8 +5,6 @@ import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-import java.util.List;
-
 public abstract class Expression {
     protected final ExpressionSource src;
 
@@ -46,19 +44,6 @@ public abstract class Expression {
         for (int i = 0; i < values.length; i++) {
             Expression value = values[i];
             if (!value.matches(node.getInput(i + start), ctx)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    protected static boolean expressionsMatch(List<FlowValue> flows, List<Expression> expressions, ExpressionContext ctx, boolean allowIncomplete) {
-        if (!(allowIncomplete && expressions.size() < flows.size()) && expressions.size() != flows.size()) {
-            return false;
-        }
-        for (int i = 0; i < expressions.size(); i++) {
-            Expression expression = expressions.get(i);
-            if (!expression.matches(flows.get(i), ctx)) {
                 return false;
             }
         }

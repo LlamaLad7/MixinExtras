@@ -10,7 +10,6 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.spongepowered.asm.util.Bytecode;
 
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class InstantiationPostProcessor implements FlowPostProcessor {
@@ -26,11 +25,11 @@ public class InstantiationPostProcessor implements FlowPostProcessor {
                 Decorations.INSTANTIATION_INFO,
                 new InstantiationInfo(
                         newType,
-                        initCall,
-                        IntStream.range(1, initCall.inputCount()).mapToObj(initCall::getInput).collect(Collectors.toList())
+                        initCall
                 )
         );
         sink.markAsSynthetic(initCall);
+        node.setParents(IntStream.range(1, initCall.inputCount()).mapToObj(initCall::getInput).toArray(FlowValue[]::new));
     }
 
     private FlowValue findInitCall(FlowValue newNode) {

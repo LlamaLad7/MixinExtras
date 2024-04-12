@@ -56,13 +56,13 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             value.onFinished();
         }
         for (FlowPostProcessor postProcessor : postProcessors) {
-            Set<AbstractInsnNode> synthetic = Collections.newSetFromMap(new IdentityHashMap<>());
+            Set<FlowValue> synthetic = Collections.newSetFromMap(new IdentityHashMap<>());
             Map<AbstractInsnNode, FlowValue> newFlows = new IdentityHashMap<>();
             FlowPostProcessor.OutputSink sink = new FlowPostProcessor.OutputSink() {
                 @Override
                 public void markAsSynthetic(FlowValue node) {
                     if (!node.isComplex()) {
-                        synthetic.add(node.getInsn());
+                        synthetic.add(node);
                     }
                 }
 
@@ -78,7 +78,10 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             for (FlowValue value : cache.values()) {
                 postProcessor.process(value, sink);
             }
-            synthetic.forEach(cache::remove);
+            for (FlowValue syntheticValue : synthetic) {
+                cache.remove(syntheticValue.getInsn());
+                syntheticValue.setParents(); // Unlink from the graph
+            }
             cache.putAll(newFlows);
             for (FlowValue value : cache.values()) {
                 value.finish();

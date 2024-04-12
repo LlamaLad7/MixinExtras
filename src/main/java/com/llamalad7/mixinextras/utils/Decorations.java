@@ -90,4 +90,9 @@ public class Decorations {
      * Stores information about this object instantiation.
      */
     public static final String INSTANTIATION_INFO = "instantiationInfo";
+
+    /**
+     * Stores the jump instruction for this complex comparison.
+     */
+    public static final String COMPLEX_COMPARISON_JUMP = "complexComparisonJump";
 }

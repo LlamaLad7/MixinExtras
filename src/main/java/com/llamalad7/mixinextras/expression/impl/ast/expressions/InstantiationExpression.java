@@ -22,10 +22,10 @@ public class InstantiationExpression extends Expression {
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
         InstantiationInfo instantiation = node.getDecoration(Decorations.INSTANTIATION_INFO);
-        if (instantiation == null) {
+        if (instantiation == null || !type.matches(ctx.pool, instantiation.type)) {
             return false;
         }
-        return type.matches(ctx.pool, instantiation.type) && expressionsMatch(instantiation.args, arguments, ctx, ctx.allowIncompleteListInputs);
+        return inputsMatch(node, ctx, ctx.allowIncompleteListInputs, arguments.toArray(new Expression[0]));
     }
 
     @Override
