@@ -91,6 +91,10 @@ public abstract class InsnExpander implements FlowPostProcessor {
         );
     }
 
+    public static AbstractInsnNode getRepresentative(FlowValue expanded) {
+        return expanded.getDecoration(COMPOUND_INSN);
+    }
+
     public class Expansion {
         private final Map<InjectionInfo, InsnComponent> interests = new IdentityHashMap<>();
         private final Map<InsnComponent, List<Consumer<InjectionNode>>> expansionSteps = new HashMap<>();
