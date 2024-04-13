@@ -38,26 +38,28 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         );
     }
 
-    public static Map<AbstractInsnNode, FlowValue> analyze(ClassNode classNode, MethodNode methodNode) {
+    public static Collection<FlowValue> analyze(ClassNode classNode, MethodNode methodNode) {
         FlowInterpreter interpreter = new FlowInterpreter(classNode, methodNode);
         try {
             new Analyzer<>(interpreter).analyze(classNode.name, methodNode);
         } catch (AnalyzerException e) {
             throw new RuntimeException("Failed to analyze value flow: ", e);
         }
-        return interpreter.finish();
+        return new ArrayList<>(interpreter.finish());
     }
 
-    public Map<AbstractInsnNode, FlowValue> finish() {
-        for (FlowValue value : cache.values()) {
+    public Collection<FlowValue> finish() {
+        Set<FlowValue> flows = Collections.newSetFromMap(new IdentityHashMap<>());
+        flows.addAll(cache.values());
+        for (FlowValue value : flows) {
             value.finish();
         }
-        for (FlowValue value : cache.values()) {
+        for (FlowValue value : flows) {
             value.onFinished();
         }
         for (FlowPostProcessor postProcessor : postProcessors) {
             Set<FlowValue> synthetic = Collections.newSetFromMap(new IdentityHashMap<>());
-            Map<AbstractInsnNode, FlowValue> newFlows = new IdentityHashMap<>();
+            List<FlowValue> newFlows = new ArrayList<>();
             FlowPostProcessor.OutputSink sink = new FlowPostProcessor.OutputSink() {
                 @Override
                 public void markAsSynthetic(FlowValue node) {
@@ -70,27 +72,27 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 public void registerFlow(FlowValue... nodes) {
                     for (FlowValue node : nodes) {
                         if (!node.isComplex()) {
-                            newFlows.put(node.getInsn(), node);
+                            newFlows.add(node);
                         }
                     }
                 }
             };
-            for (FlowValue value : cache.values()) {
+            for (FlowValue value : flows) {
                 postProcessor.process(value, sink);
             }
+            flows.removeAll(synthetic);
             for (FlowValue syntheticValue : synthetic) {
-                cache.remove(syntheticValue.getInsn());
                 syntheticValue.setParents(); // Unlink from the graph
             }
-            cache.putAll(newFlows);
-            for (FlowValue value : cache.values()) {
+            flows.addAll(newFlows);
+            for (FlowValue value : flows) {
                 value.finish();
             }
-            for (FlowValue value : cache.values()) {
+            for (FlowValue value : flows) {
                 value.onFinished();
             }
         }
-        return Collections.unmodifiableMap(cache);
+        return flows;
     }
 
     @Override

@@ -57,7 +57,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         if (!initialized) {
             initialize(target);
         }
-        Map<AbstractInsnNode, FlowValue> flows =
+        Collection<FlowValue> flows =
                 TargetDecorations.getOrPut(target, "ValueFlow",
                         () -> FlowInterpreter.analyze(CURRENT_INFO.getClassNode(), target.method)
                 );
@@ -124,7 +124,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         );
 
         for (Expression expr : expressions) {
-            for (FlowValue flow : flows.values()) {
+            for (FlowValue flow : flows) {
                 try {
                     if (expr.matches(flow, ctx)) {
                         result.addAll(captured);
