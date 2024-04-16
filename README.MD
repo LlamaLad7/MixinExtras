@@ -19,7 +19,7 @@ want to use a different version than is provided, see below:
 
 ```gradle
 dependencies {
-    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.2.2")))
+    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.3.5")))
 }
 ```
 
