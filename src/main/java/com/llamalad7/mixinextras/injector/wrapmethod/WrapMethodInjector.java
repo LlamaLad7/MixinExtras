@@ -3,11 +3,7 @@ package com.llamalad7.mixinextras.injector.wrapmethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.impl.ShareInfo;
-import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
-import com.llamalad7.mixinextras.utils.OperationUtils;
-import com.llamalad7.mixinextras.utils.UniquenessHelper;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.injection.code.Injector;
@@ -33,54 +29,6 @@ public class WrapMethodInjector extends Injector {
         this.checkSignature(target);
         info.addCallbackInvocation(methodNode);
         WrapMethodApplicatorExtension.offerWrapper(target, methodNode, operationType, shares);
-    }
-
-    private void injectWrapperCall(Target target) {
-        InsnList insns = new InsnList();
-        MethodNode original = moveOriginal(target.method);
-
-        if (!this.isStatic) {
-            // For the handler invocation
-            insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            // To be bound to the operation
-            insns.add(new InsnNode(Opcodes.DUP));
-        }
-
-        this.pushArgs(target.arguments, insns, target.getArgIndices(), 0, target.arguments.length);
-
-        OperationUtils.makeOperation(
-                target.arguments, target.returnType, insns, !target.isStatic, new Type[0],
-                classNode, operationType, target.method.name,
-                (paramArrayIndex, loadArgs) -> {
-                    InsnList call = new InsnList();
-                    loadArgs.accept(call);
-                    call.add(ASMUtils.getInvokeInstruction(classNode, original));
-                    return call;
-                }
-        );
-
-        this.invokeHandler(insns);
-        insns.add(new InsnNode(target.returnType.getOpcode(Opcodes.IRETURN)));
-
-        target.insns.add(insns);
-    }
-
-    private MethodNode moveOriginal(MethodNode original) {
-        MethodNode newMethod = new MethodNode(
-                original.access,
-                UniquenessHelper.getUniqueMethodName(
-                        classNode, original.name + "$mixinextras$wrapped"
-                ),
-                original.desc,
-                original.signature,
-                original.exceptions.toArray(new String[0])
-        );
-        original.accept(newMethod);
-        original.instructions.clear();
-        original.tryCatchBlocks = null;
-        original.localVariables = null;
-        classNode.methods.add(newMethod);
-        return newMethod;
     }
 
     private void checkSignature(Target target) {

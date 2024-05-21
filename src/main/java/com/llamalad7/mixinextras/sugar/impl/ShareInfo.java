@@ -13,15 +13,25 @@ import org.spongepowered.asm.util.Annotations;
 import java.util.*;
 
 public class ShareInfo {
-    private final int lvtIndex;
+    private int lvtIndex;
     private final ShareType shareType;
-    private final MethodNode targetMethod;
     private final Collection<AbstractInsnNode> initialization = new ArrayList<>();
 
-    private ShareInfo(int lvtIndex, Type innerType, MethodNode targetMethod) {
+    private ShareInfo(int lvtIndex, Type innerType) {
         this.lvtIndex = lvtIndex;
         this.shareType = new ShareType(innerType);
-        this.targetMethod = targetMethod;
+    }
+
+    public int getLvtIndex() {
+        return lvtIndex;
+    }
+
+    public void setLvtIndex(int lvtIndex) {
+        this.lvtIndex = lvtIndex;
+    }
+
+    public ShareType getShareType() {
+        return shareType;
     }
 
     public void addToLvt(Target target) {
@@ -38,6 +48,10 @@ public class ShareInfo {
         return new VarInsnNode(Opcodes.ALOAD, lvtIndex);
     }
 
+    public void stripInitializerFrom(MethodNode method) {
+        initialization.forEach(method.instructions::remove);
+    }
+
     public static ShareInfo getOrCreate(Target target, AnnotationNode shareAnnotation, Type paramType, IMixinInfo mixin, StackExtension stack) {
         if (!SugarApplicator.isSugar(shareAnnotation.desc) || !shareAnnotation.desc.endsWith("Share;")) {
             return null;
@@ -47,7 +61,7 @@ public class ShareInfo {
         String id = getId(shareAnnotation, mixin);
         ShareInfo shareInfo = infos.get(id);
         if (shareInfo == null) {
-            shareInfo = new ShareInfo(target.allocateLocal(), innerType, target.method);
+            shareInfo = new ShareInfo(target.allocateLocal(), innerType);
             infos.put(id, shareInfo);
             shareInfo.addToLvt(target);
             target.insns.insert(shareInfo.initialize());

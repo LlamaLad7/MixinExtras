@@ -21,6 +21,10 @@ public class ShareType {
         return innerType;
     }
 
+    public Type getImplType() {
+        return Type.getObjectType(LocalRefClassGenerator.getForType(innerType));
+    }
+
     public InsnList initialize(int lvtIndex) {
         InsnList init = new InsnList();
         LocalRefUtils.generateNew(init, innerType);
