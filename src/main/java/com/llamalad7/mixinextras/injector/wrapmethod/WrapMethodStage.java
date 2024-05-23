@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.utils.UniquenessHelper;
 import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.util.Bytecode;
 
@@ -198,21 +199,36 @@ public abstract class WrapMethodStage {
         }
     }
 
-    protected MethodNode move(ClassNode targetClass, MethodNode original) {
+    protected static MethodNode move(ClassNode targetClass, MethodNode original) {
         MethodNode newMethod = new MethodNode(
                 original.access,
                 UniquenessHelper.getUniqueMethodName(
                         targetClass, original.name + "$mixinextras$wrapped"
                 ),
                 original.desc,
-                original.signature,
-                original.exceptions.toArray(new String[0])
+                null,
+                null
         );
-        original.accept(newMethod);
-        original.instructions.clear();
+        newMethod.instructions = original.instructions;
+        original.instructions = new InsnList();
+        newMethod.tryCatchBlocks = original.tryCatchBlocks;
         original.tryCatchBlocks = null;
+        newMethod.localVariables = original.localVariables;
         original.localVariables = null;
+        stripLocalVariableReferences(original.visibleTypeAnnotations);
+        stripLocalVariableReferences(original.invisibleTypeAnnotations);
+        original.visibleLocalVariableAnnotations = null;
+        original.invisibleLocalVariableAnnotations = null;
         targetClass.methods.add(newMethod);
         return newMethod;
+    }
+
+    private static void stripLocalVariableReferences(List<TypeAnnotationNode> nodes) {
+        if (nodes == null) {
+            return;
+        }
+        nodes.removeIf(
+                it -> new TypeReference(it.typeRef).getSort() == TypeReference.LOCAL_VARIABLE
+        );
     }
 }
