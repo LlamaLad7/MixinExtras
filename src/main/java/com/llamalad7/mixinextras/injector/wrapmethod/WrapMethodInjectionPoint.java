@@ -14,6 +14,9 @@ class WrapMethodInjectionPoint extends InjectionPoint {
 
     @Override
     public boolean find(String desc, InsnList insns, Collection<AbstractInsnNode> nodes) {
+        if (insns.size() == 0) {
+            throw new UnsupportedOperationException("Cannot use @WrapMethod on an abstract method!");
+        }
         return nodes.add(insns.getFirst());
     }
 }
