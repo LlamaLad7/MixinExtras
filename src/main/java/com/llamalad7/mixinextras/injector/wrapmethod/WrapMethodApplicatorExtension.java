@@ -9,16 +9,13 @@ import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 import org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext;
 
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class WrapMethodApplicatorExtension implements IExtension {
     private static final Map<ClassNode, Map<MethodNode, WrapMethodStage>> wrappers = new HashMap<>();
 
     static void offerWrapper(Target target, MethodNode handler, Type operationType, List<ShareInfo> shares) {
-        Map<MethodNode, WrapMethodStage> relevant = wrappers.computeIfAbsent(target.classNode, k -> new HashMap<>());
+        Map<MethodNode, WrapMethodStage> relevant = wrappers.computeIfAbsent(target.classNode, k -> new LinkedHashMap<>());
         WrapMethodStage inner = relevant.computeIfAbsent(target.method, WrapMethodStage.Vanilla::new);
         relevant.put(target.method, new WrapMethodStage.Wrapper(inner, handler, operationType, shares));
     }
