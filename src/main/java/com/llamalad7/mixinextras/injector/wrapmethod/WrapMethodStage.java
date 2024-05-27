@@ -211,6 +211,7 @@ public abstract class WrapMethodStage {
         );
         Bytecode.setVisibility(newMethod, Bytecode.Visibility.PRIVATE);
         newMethod.instructions = original.instructions;
+        newMethod.instructions.resetLabels();
         original.instructions = new InsnList();
         newMethod.tryCatchBlocks = original.tryCatchBlocks;
         original.tryCatchBlocks = null;
