@@ -90,7 +90,10 @@ public class ShareInfo {
     }
 
     private static ShareId getId(AnnotationNode shareAnnotation, IMixinInfo mixin) {
-        return new ShareId(mixin.getClassName(), Annotations.getValue(shareAnnotation));
+        return new ShareId(
+                Annotations.getValue(shareAnnotation, "namespace", mixin.getClassName()),
+                Annotations.getValue(shareAnnotation)
+        );
     }
 
     private static class ShareId {

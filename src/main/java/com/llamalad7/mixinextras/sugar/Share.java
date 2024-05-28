@@ -15,8 +15,8 @@ import java.lang.annotation.Target;
  * The parameter's name is irrelevant and only the ID in the annotation is used to share matching values.
  * <p>
  * The same reference objects will be passed to all handler methods requesting a given ID within a given target method
- * invocation. IDs are per-mixin, and it is impossible to share a value between two mixins, so you don't need to worry
- * about including your modid or anything similar in them.
+ * invocation. By default, IDs are per-mixin, so you don't need to worry about including your modid or anything similar
+ * in them. If you specifically want to share values across mixins, set the {@link Share#namespace()}.
  * <p>
  * Note: If a {@code @Share}d value is read from before it has been written to, no exception is thrown and it will simply return
  * the default value for that type (0, 0f, null, etc), much like a field.
@@ -30,4 +30,11 @@ public @interface Share {
      * The id for this shared value.
      */
     String value();
+
+    /**
+     * The namespace for this shared value. By default, this is the fully-qualified name of the enclosing mixin class
+     * to ensure uniqueness. If you want to share values between mixin classes, you can set this to something else,
+     * e.g. your mod ID.
+     */
+    String namespace() default "";
 }
