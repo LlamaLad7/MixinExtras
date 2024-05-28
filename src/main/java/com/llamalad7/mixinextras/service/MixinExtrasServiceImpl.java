@@ -2,6 +2,8 @@ package com.llamalad7.mixinextras.service;
 
 import com.llamalad7.mixinextras.injector.*;
 import com.llamalad7.mixinextras.injector.v2.WrapWithConditionInjectionInfo;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethodApplicatorExtension;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethodInjectionInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
 import com.llamalad7.mixinextras.sugar.impl.SugarPostProcessingExtension;
 import com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo;
@@ -30,14 +32,16 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     ));
     private final List<IExtension> ownExtensions = Arrays.asList(
             new MixinTransformerExtension(), new ServiceInitializationExtension(this),
-            new LateInjectionApplicatorExtension(), new SugarPostProcessingExtension()
+            new LateInjectionApplicatorExtension(), new SugarPostProcessingExtension(),
+            new WrapMethodApplicatorExtension()
     );
     private final List<Class<? extends InjectionInfo>> ownInjectors = Arrays.asList(
             ModifyExpressionValueInjectionInfo.class, ModifyReceiverInjectionInfo.class, ModifyReturnValueInjectionInfo.class,
             WrapOperationInjectionInfo.class, WrapWithConditionV1InjectionInfo.class
     );
     private final List<Versioned<Class<? extends InjectionInfo>>> ownGatedInjectors = Arrays.asList(
-            new Versioned<>(MixinExtrasVersion.V0_3_4.getNumber(), WrapWithConditionInjectionInfo.class)
+            new Versioned<>(MixinExtrasVersion.V0_3_4.getNumber(), WrapWithConditionInjectionInfo.class),
+            new Versioned<>(MixinExtrasVersion.V0_4_0_BETA_1.getNumber(), WrapMethodInjectionInfo.class)
     );
     private final List<Class<? extends InjectionInfo>> internalInjectors = Arrays.asList(
             SugarWrapperInjectionInfo.class, FactoryRedirectWrapperInjectionInfo.class

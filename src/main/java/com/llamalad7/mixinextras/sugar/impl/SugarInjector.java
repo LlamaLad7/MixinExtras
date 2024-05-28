@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.sugar.impl;
 
 import com.llamalad7.mixinextras.injector.StackExtension;
+import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.impl.handlers.HandlerInfo;
 import com.llamalad7.mixinextras.sugar.impl.handlers.HandlerTransformer;
 import com.llamalad7.mixinextras.utils.ASMUtils;
@@ -101,10 +102,17 @@ class SugarInjector {
         if (injectorAnnotation == null) {
             return;
         }
+        List<AnnotationNode> sugars = stripSugarAnnotations(method);
+        Type annotationType = Type.getType(injectorAnnotation.desc);
+        if (MixinExtrasService.getInstance().isClassOwned(annotationType.getClassName()) && annotationType.getInternalName().endsWith("WrapMethod")) {
+            // It can handle them itself.
+            injectorAnnotation.visit("sugars", sugars);
+            return;
+        }
         AnnotationNode wrapped = new AnnotationNode(Type.getDescriptor(SugarWrapper.class));
         wrapped.visit("original", injectorAnnotation);
         wrapped.visit("signature", method.signature == null ? "" : method.signature);
-        wrapped.visit("sugars", stripSugarAnnotations(method));
+        wrapped.visit("sugars", sugars);
         method.visibleAnnotations.remove(injectorAnnotation);
         method.visibleAnnotations.add(wrapped);
     }
