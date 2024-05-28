@@ -117,5 +117,10 @@ public class ShareInfo {
         public int hashCode() {
             return Objects.hash(namespace, id);
         }
+
+        @Override
+        public String toString() {
+            return namespace + ':' + id;
+        }
     }
 }
