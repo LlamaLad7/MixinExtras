@@ -57,8 +57,8 @@ public class ShareInfo {
             return null;
         }
         Type innerType = getInnerType(paramType);
-        Map<String, ShareInfo> infos = TargetDecorations.getOrPut(target, "ShareSugar_Infos", HashMap::new);
-        String id = getId(shareAnnotation, mixin);
+        Map<ShareId, ShareInfo> infos = TargetDecorations.getOrPut(target, "ShareSugar_Infos", HashMap::new);
+        ShareId id = getId(shareAnnotation, mixin);
         ShareInfo shareInfo = infos.get(id);
         if (shareInfo == null) {
             shareInfo = new ShareInfo(target.allocateLocal(), innerType);
@@ -89,7 +89,30 @@ public class ShareInfo {
         return innerType;
     }
 
-    private static String getId(AnnotationNode shareAnnotation, IMixinInfo mixin) {
-        return mixin.getClassRef() + ':' + Annotations.getValue(shareAnnotation);
+    private static ShareId getId(AnnotationNode shareAnnotation, IMixinInfo mixin) {
+        return new ShareId(mixin.getClassName(), Annotations.getValue(shareAnnotation));
+    }
+
+    private static class ShareId {
+        private final String namespace;
+        private final String id;
+
+        private ShareId(String namespace, String id) {
+            this.namespace = namespace;
+            this.id = id;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ShareId shareId = (ShareId) o;
+            return Objects.equals(namespace, shareId.namespace) && Objects.equals(id, shareId.id);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(namespace, id);
+        }
     }
 }
