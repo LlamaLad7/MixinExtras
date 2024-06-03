@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
@@ -59,6 +60,15 @@ abstract class SugarApplicator {
     abstract void prepare(Target target, InjectionNode node);
 
     abstract void inject(Target target, InjectionNode node, StackExtension stack);
+
+    int postProcessingPriority() {
+        throw new UnsupportedOperationException(
+                String.format(
+                        "Sugar type %s does not support post-processing! Please inform LlamaLad7!",
+                        ASMUtils.annotationToString(sugar)
+                )
+        );
+    }
 
     static SugarApplicator create(InjectionInfo info, SugarParameter parameter) {
         try {

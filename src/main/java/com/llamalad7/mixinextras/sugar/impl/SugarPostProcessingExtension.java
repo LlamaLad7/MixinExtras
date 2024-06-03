@@ -5,16 +5,14 @@ import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 import org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SugarPostProcessingExtension implements IExtension {
-    private static final Map<String, List<Runnable>> POST_PROCESSING_TASKS = new HashMap<>();
+    private static final Map<String, List<Task>> POST_PROCESSING_TASKS = new HashMap<>();
 
     static void enqueuePostProcessing(SugarApplicator applicator, Runnable task) {
-        POST_PROCESSING_TASKS.computeIfAbsent(applicator.info.getClassNode().name, k -> new ArrayList<>()).add(task);
+        POST_PROCESSING_TASKS.computeIfAbsent(applicator.info.getClassNode().name, k -> new ArrayList<>())
+                .add(new Task(applicator.postProcessingPriority(), task));
     }
 
     @Override
@@ -29,14 +27,33 @@ public class SugarPostProcessingExtension implements IExtension {
     @Override
     public void postApply(ITargetClassContext context) {
         String targetName = context.getClassNode().name;
-        List<Runnable> tasks = POST_PROCESSING_TASKS.get(targetName);
+        List<Task> tasks = POST_PROCESSING_TASKS.remove(targetName);
         if (tasks != null) {
-            tasks.forEach(Runnable::run);
-            POST_PROCESSING_TASKS.remove(targetName);
+            Collections.sort(tasks);
+            tasks.forEach(Task::run);
         }
     }
 
     @Override
     public void export(MixinEnvironment env, String name, boolean force, ClassNode classNode) {
+    }
+
+    private static class Task implements Comparable<Task> {
+        private final int priority;
+        private final Runnable body;
+
+        public Task(int priority, Runnable body) {
+            this.priority = priority;
+            this.body = body;
+        }
+
+        public void run() {
+            body.run();
+        }
+
+        @Override
+        public int compareTo(Task o) {
+            return Integer.compare(priority, o.priority);
+        }
     }
 }

@@ -73,6 +73,12 @@ class LocalSugarApplicator extends SugarApplicator {
         }
     }
 
+    @Override
+    int postProcessingPriority() {
+        // Late, we need to be tight around the handler calls to ensure proper initialization and disposal.
+        return 1000;
+    }
+
     private void initAndLoadLocalRef(Target target, InjectionNode node, int index, StackExtension stack) {
         String refName = LocalRefClassGenerator.getForType(targetLocalType);
         int refIndex = getOrCreateRef(target, node, index, refName, stack);
