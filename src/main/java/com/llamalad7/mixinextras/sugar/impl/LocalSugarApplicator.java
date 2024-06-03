@@ -108,7 +108,6 @@ class LocalSugarApplicator extends SugarApplicator {
             initialization.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ILOAD), index));
             LocalRefUtils.generateInitialization(initialization, targetLocalType);
             target.insertBefore(node, initialization);
-            stack.extra(targetLocalType.getSize() + 1);
 
             InsnList after = new InsnList();
             after.add(new VarInsnNode(Opcodes.ALOAD, refIndex));
@@ -116,6 +115,10 @@ class LocalSugarApplicator extends SugarApplicator {
             after.add(new VarInsnNode(targetLocalType.getOpcode(Opcodes.ISTORE), index));
             target.insns.insert(node.getCurrentTarget(), after);
         });
+
+        // This covers the init and dispose calls, as well as at least the 2 stack entries for the initialization.
+        stack.extra(targetLocalType.getSize() + 1);
+
         // Tell future injectors where to find the reference.
         refIndices.put(index, refIndex);
         return refIndex;

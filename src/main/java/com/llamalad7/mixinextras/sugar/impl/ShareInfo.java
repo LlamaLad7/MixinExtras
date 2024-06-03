@@ -66,7 +66,7 @@ public class ShareInfo {
             shareInfo.addToLvt(target);
             target.insns.insert(shareInfo.initialize());
             if (stack != null) {
-                stack.ensureAtLeast(innerType.getSize() + 1); // ref and dummy value
+                stack.ensureAtLeast(innerType.getSize() + 2); // duped ref and dummy value
             }
         } else {
             if (!innerType.equals(shareInfo.shareType.getInnerType())) {
