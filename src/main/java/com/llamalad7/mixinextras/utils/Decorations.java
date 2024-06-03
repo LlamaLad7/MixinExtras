@@ -33,4 +33,9 @@ public class Decorations {
      * Stores that this node has been wrapped by a {@link WrapOperation}.
      */
     public static final String WRAPPED = "mixinextras_wrappedOperation";
+
+    /**
+     * Stores the shared CallbackInfo local index for this target instruction.
+     */
+    public static final String CANCELLABLE_CI_INDEX = "mixinextras_cancellableCiIndex";
 }
