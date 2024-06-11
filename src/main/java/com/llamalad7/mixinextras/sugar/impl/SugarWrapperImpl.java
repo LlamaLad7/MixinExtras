@@ -49,6 +49,10 @@ public class SugarWrapperImpl extends InjectorWrapperImpl {
         sugarInjector.stripSugar();
         delegate = InjectionInfo.parse(mixin, handler);
         sugarInjector.setTargets(MixinInternals.getTargets(delegate));
+        if (!isValid()) {
+            // The injector is now dropped by mixin, so we must make sure the handler method is in a valid state.
+            sugarInjector.reSugarHandler();
+        }
     }
 
     @Override

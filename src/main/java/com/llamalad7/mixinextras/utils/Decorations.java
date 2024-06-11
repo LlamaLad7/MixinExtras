@@ -36,6 +36,11 @@ public class Decorations {
     public static final String WRAPPED = "mixinextras_wrappedOperation";
 
     /**
+     * Stores the shared CallbackInfo local index for this target instruction.
+     */
+    public static final String CANCELLABLE_CI_INDEX = "mixinextras_cancellableCiIndex";
+
+    /**
      * Stores the type of a simple expression targeted by an {@link Expression}.
      */
     public static final String SIMPLE_EXPRESSION_TYPE = "mixinextras_simpleExpressionType";
