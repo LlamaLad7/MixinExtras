@@ -206,3 +206,11 @@ MethodRef
    : '::'
    ;
 
+Increment
+   : '++'
+   ;
+
+Decrement
+   : '--'
+   ;
+
