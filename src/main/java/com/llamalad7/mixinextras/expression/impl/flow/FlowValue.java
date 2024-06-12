@@ -80,6 +80,11 @@ public class FlowValue implements Value {
         this.parents = parents;
     }
 
+    public void setParent(int index, FlowValue value) {
+        parents[index].markNextDirty();
+        parents[index] = value;
+    }
+
     public FlowValue mergeWith(FlowValue other) {
         if (this.equals(other)) {
             return this;

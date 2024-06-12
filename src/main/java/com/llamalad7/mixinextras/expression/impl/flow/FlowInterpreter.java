@@ -3,10 +3,7 @@ package com.llamalad7.mixinextras.expression.impl.flow;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.IincExpander;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.StringConcatFactoryExpander;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.UnaryComparisonExpander;
-import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
-import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.InstantiationPostProcessor;
-import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.NewArrayPostProcessor;
-import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.StringConcatPostProcessor;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.*;
 import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -34,7 +31,8 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 new UnaryComparisonExpander(),
                 new StringConcatFactoryExpander(),
                 new InstantiationPostProcessor(),
-                new StringConcatPostProcessor()
+                new StringConcatPostProcessor(),
+                new SplitNodeRemovalPostProcessor()
         );
     }
 
