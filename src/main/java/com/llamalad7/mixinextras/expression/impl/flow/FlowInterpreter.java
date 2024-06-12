@@ -29,11 +29,11 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         super(ASM.API_VERSION);
         this.localTypes = LocalsCalculator.getLocalTypes(classNode, methodNode);
         this.postProcessors = Arrays.asList(
+                new NewArrayPostProcessor(methodNode), // Must go early because it is sensitive to BCI
                 new IincExpander(),
                 new UnaryComparisonExpander(),
                 new StringConcatFactoryExpander(),
                 new InstantiationPostProcessor(),
-                new NewArrayPostProcessor(methodNode),
                 new StringConcatPostProcessor()
         );
     }
