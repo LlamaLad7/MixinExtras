@@ -30,6 +30,12 @@ public class InstantiationExpression extends Expression {
 
     @Override
     protected void capture(FlowValue node, ExpressionContext ctx) {
+        if (ctx.type == ExpressionContext.Type.REDIRECT) {
+            throw new UnsupportedOperationException(
+                    "Factory redirects are not supported with expressions! Either switch to @WrapOperation or use " +
+                            "the standard NEW injection point."
+            );
+        }
         if (ctx.type == ExpressionContext.Type.MODIFY_ARG || ctx.type == ExpressionContext.Type.MODIFY_ARGS) {
             InstantiationInfo instantiation = node.getDecoration(Decorations.INSTANTIATION_INFO);
             node = instantiation.initCall;
