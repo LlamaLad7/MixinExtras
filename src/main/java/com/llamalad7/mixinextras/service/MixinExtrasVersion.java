@@ -1,5 +1,7 @@
 package com.llamalad7.mixinextras.service;
 
+import com.github.zafarkhaja.semver.Version;
+
 public enum MixinExtrasVersion {
     V0_2_0_BETA_1("0.2.0-beta.1", -9),
     V0_2_0_BETA_2("0.2.0-beta.2", -8),
@@ -19,10 +21,12 @@ public enum MixinExtrasVersion {
 
     private final String prettyName;
     private final int versionNumber;
+    private final Version semver;
 
     MixinExtrasVersion(String prettyName, int versionNumber) {
         this.prettyName = prettyName;
         this.versionNumber = versionNumber;
+        this.semver = Version.parse(prettyName);
     }
 
     @Override
@@ -32,5 +36,9 @@ public enum MixinExtrasVersion {
 
     public int getNumber() {
         return versionNumber;
+    }
+
+    public Version getSemver() {
+        return semver;
     }
 }

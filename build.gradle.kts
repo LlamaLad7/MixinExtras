@@ -58,6 +58,8 @@ dependencies {
     shadeOnly("org.antlr:antlr4-runtime:4.13.1")
     shade("org.apache.commons:commons-lang3:3.3.2")
     shadeOnly(project("mixin-versions"))
+    shade("com.google.code.gson:gson:2.11.0")
+    shade("com.github.zafarkhaja:java-semver:0.10.2")
 }
 
 tasks.withType<AntlrTask> {
@@ -84,7 +86,10 @@ tasks.named<ShadowJar>("shadowJar") {
     archiveClassifier = "fat"
     relocate("org.apache.commons.lang3", "com.llamalad7.mixinextras.lib.apache.commons")
     relocate("org.antlr.v4", "com.llamalad7.mixinextras.lib.antlr")
-    exclude("META-INF/maven/**/*", "META-INF/*.txt")
+    relocate("com.google.gson", "com.llamalad7.mixinextras.lib.gson")
+    relocate("com.google.errorprone", "com.llamalad7.mixinextras.lib.errorprone")
+    relocate("com.github.zafarkhaja.semver", "com.llamalad7.mixinextras.lib.semver")
+    exclude("META-INF/maven/**/*", "META-INF/*.txt", "META-INF/proguard/*", "META-INF/LICENSE")
     from("LICENSE") {
         rename { "${it}_MixinExtras"}
     }
