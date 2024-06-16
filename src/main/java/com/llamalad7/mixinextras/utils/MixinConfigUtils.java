@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public class MixinConfigUtils {
-    private static final String KEY_MIN_VERSION = "minMixinExtrasVersion";
+    public static final String KEY_MIN_VERSION = "minMixinExtrasVersion";
     private static final Map<IMixinConfig, MixinExtrasVersion> MIN_CACHE = new WeakHashMap<>();
 
     public static MixinExtrasVersion minVersionFor(IMixinConfig config) {

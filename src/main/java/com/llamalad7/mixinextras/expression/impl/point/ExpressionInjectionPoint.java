@@ -8,11 +8,13 @@ import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.service.MixinExtrasVersion;
 import com.llamalad7.mixinextras.utils.*;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
+import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
 import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.InjectionPoint.AtCode;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
@@ -156,6 +158,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
     }
 
     private void initialize(Target target) {
+        checkDeclaredMinVersion();
         initialized = true;
         AnnotationNode poolAnnotation = ASMUtils.getRepeatedMEAnnotation(CURRENT_INFO.getMethod(), Definition.class);
         pool = new IdentifierPool(target, CURRENT_INFO, poolAnnotation);
@@ -194,6 +197,20 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         CURRENT_TARGETS.remove(target);
         CURRENT_TARGETS.add(target);
         return target;
+    }
+
+    private void checkDeclaredMinVersion() {
+        IMixinConfig config = CompatibilityHelper.getMixin(CURRENT_INFO).getMixin().getConfig();
+        MixinExtrasVersion min = MixinConfigUtils.minVersionFor(config);
+        if (min.getNumber() < MixinExtrasVersion.V0_5_0_BETA_1.getNumber()) {
+            throw new UnsupportedOperationException(
+                    String.format(
+                            "In order to use Expressions, Mixin Config '%s' needs to declare a \"%s\"" +
+                                    " of at least %s! E.g. `\"%2$s\": \"%s\"`",
+                            config, MixinConfigUtils.KEY_MIN_VERSION, MixinExtrasVersion.V0_5_0_BETA_1, MixinExtrasVersion.LATEST
+                    )
+            );
+        }
     }
 
     private List<Expression> parseExpressions() {
