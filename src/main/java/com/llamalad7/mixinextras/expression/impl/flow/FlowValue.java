@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
 import com.llamalad7.mixinextras.utils.TypeUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -83,6 +84,10 @@ public class FlowValue implements Value {
     public void setParent(int index, FlowValue value) {
         parents[index].markNextDirty();
         parents[index] = value;
+    }
+
+    public void removeParent(int index) {
+        setParents(ArrayUtils.remove(parents, index));
     }
 
     public FlowValue mergeWith(FlowValue other) {

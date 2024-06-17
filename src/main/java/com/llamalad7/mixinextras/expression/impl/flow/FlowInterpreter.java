@@ -32,6 +32,8 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
                 new StringConcatFactoryExpander(),
                 new InstantiationPostProcessor(),
                 new StringConcatPostProcessor(),
+                new CallTaggingPostProcessor(classNode, methodNode),
+
                 new SplitNodeRemovalPostProcessor()
         );
     }

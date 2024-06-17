@@ -100,4 +100,9 @@ public class Decorations {
      * Stores the jump instruction for this complex comparison.
      */
     public static final String COMPLEX_COMPARISON_JUMP = "complexComparisonJump";
+
+    /**
+     * Stores the type of this method call.
+     */
+    public static final String METHOD_CALL_TYPE = "methodCallType";
 }
