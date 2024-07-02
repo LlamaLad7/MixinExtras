@@ -2,7 +2,6 @@ package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
-import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Opcodes;
@@ -65,7 +64,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
     }
 
     @Override
-    public void expand(Target target, InjectionNodes.InjectionNode node, Expansion expansion, StackExtension stack) {
+    public void expand(Target target, InjectionNodes.InjectionNode node, Expansion expansion) {
         InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode) node.getCurrentTarget();
         Set<InsnComponent> interests = expansion.registeredInterests();
         if (interests.size() == 1 && interests.iterator().next() == Component.TO_STRING) {
@@ -79,7 +78,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
 
         insns.add(expansion.registerInsn(Component.NEW_BUILDER, makeNewBuilder()));
         insns.add(new InsnNode(Opcodes.DUP));
-        stack.extra(2);
+        target.method.maxStack += 2;
         insns.add(expansion.registerInsn(Component.BUILDER_INIT, makeBuilderInit()));
 
         int nextArgument = 0;
@@ -99,7 +98,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
                 }
                 AbstractInsnNode componentInsn = expansion.registerInsn(part, new LdcInsnNode(cst));
                 partType = ExpressionASMUtils.getNewType(componentInsn);
-                stack.extra(partType.getSize());
+                target.method.maxStack += partType.getSize();
                 insns.add(componentInsn);
             }
             insns.add(expansion.registerInsn(new PartialResult(finishedParts++), makeAppendCall(partType)));

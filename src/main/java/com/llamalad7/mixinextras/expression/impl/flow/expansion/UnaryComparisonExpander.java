@@ -3,7 +3,6 @@ package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
-import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -43,7 +42,7 @@ public class UnaryComparisonExpander extends InsnExpander {
     }
 
     @Override
-    public void expand(Target target, InjectionNodes.InjectionNode node, Expansion expansion, StackExtension stack) {
+    public void expand(Target target, InjectionNodes.InjectionNode node, Expansion expansion) {
         if (node.isReplaced()) {
             // A @ModifyConstant has been here
             AbstractInsnNode next = node.getCurrentTarget().getNext();
@@ -62,7 +61,7 @@ public class UnaryComparisonExpander extends InsnExpander {
         }
         JumpInsnNode jump = (JumpInsnNode) insn;
         int jumpOpcode = getExpandedJumpOpcode(insn);
-        stack.extra(1);
+        target.method.maxStack++;
         expandInsn(
                 target, node,
                 expansion.registerInsn(Component.CST, new InsnNode(cstOpcode)),

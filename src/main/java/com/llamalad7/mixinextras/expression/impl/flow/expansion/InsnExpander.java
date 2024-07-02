@@ -4,7 +4,6 @@ import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
-import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.objectweb.asm.Opcodes;
@@ -26,7 +25,7 @@ public abstract class InsnExpander implements FlowPostProcessor {
     @Override
     public abstract void process(FlowValue node, FlowPostProcessor.OutputSink sink);
 
-    public abstract void expand(Target target, InjectionNode node, Expansion expansion, StackExtension stack);
+    public abstract void expand(Target target, InjectionNode node, Expansion expansion);
 
     protected final void registerComponent(FlowValue node, InsnComponent component, AbstractInsnNode compound) {
         node.decorate(INSN_COMPONENT, component);
@@ -136,7 +135,7 @@ public abstract class InsnExpander implements FlowPostProcessor {
                 return;
             }
             expanded = true;
-            InsnExpander.this.expand(target, node, this, new StackExtension(target));
+            InsnExpander.this.expand(target, node, this);
             for (Map.Entry<InsnComponent, List<Consumer<InjectionNode>>> steps : expansionSteps.entrySet()) {
                 InjectionNode newNode = target.addInjectionNode(expandedInsns.get(steps.getKey()));
                 for (Consumer<InjectionNode> step : steps.getValue()) {

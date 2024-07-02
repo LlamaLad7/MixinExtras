@@ -2,7 +2,6 @@ package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.injector.StackExtension;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -31,9 +30,9 @@ public class IincExpander extends InsnExpander {
     }
 
     @Override
-    public void expand(Target target, InjectionNodes.InjectionNode node, Expansion expansion, StackExtension stack) {
+    public void expand(Target target, InjectionNodes.InjectionNode node, Expansion expansion) {
         IincInsnNode iinc = (IincInsnNode) node.getCurrentTarget();
-        stack.extra(2);
+        target.method.maxStack += 2;
         expandInsn(
                 target, node,
                 expansion.registerInsn(Component.LOAD, new VarInsnNode(Opcodes.ILOAD, iinc.var)),
