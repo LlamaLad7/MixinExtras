@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostPro
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import com.llamalad7.mixinextras.injector.StackExtension;
-import com.llamalad7.mixinextras.utils.TypeUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnNode;
@@ -32,7 +32,7 @@ public class UnaryComparisonExpander extends InsnExpander {
         }
 
         AbstractInsnNode cstInsn = new InsnNode(cstOpcode);
-        FlowValue cst = new FlowValue(TypeUtils.getNewType(cstInsn), cstInsn);
+        FlowValue cst = new FlowValue(ExpressionASMUtils.getNewType(cstInsn), cstInsn);
         registerComponent(cst, Component.CST, jump);
 
         node.setInsn(new JumpInsnNode(jumpOpcode, jump.label));

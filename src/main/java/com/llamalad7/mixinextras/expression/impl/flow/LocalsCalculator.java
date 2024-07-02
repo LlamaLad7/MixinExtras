@@ -1,6 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.flow;
 
-import com.llamalad7.mixinextras.utils.TypeUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Analyzer;
@@ -34,7 +34,7 @@ class LocalsCalculator extends Interpreter<BasicValue> {
         }
         for (Map.Entry<VarInsnNode, Object> entry : calculator.results.entrySet()) {
             if (entry.getValue() instanceof Set) {
-                entry.setValue(((Set<Type>) entry.getValue()).stream().reduce(TypeUtils::getCommonSupertype).get());
+                entry.setValue(((Set<Type>) entry.getValue()).stream().reduce(ExpressionASMUtils::getCommonSupertype).get());
             }
         }
         return (Map<VarInsnNode, Type>) (Object) calculator.results;
@@ -51,14 +51,14 @@ class LocalsCalculator extends Interpreter<BasicValue> {
             return null;
         }
         if (type == null) {
-            type = TypeUtils.BOTTOM_TYPE;
+            type = ExpressionASMUtils.BOTTOM_TYPE;
         }
         return new BasicValue(type);
     }
 
     @Override
     public BasicValue newOperation(final AbstractInsnNode insn) {
-        return new BasicValue(TypeUtils.getNewType(insn));
+        return new BasicValue(ExpressionASMUtils.getNewType(insn));
     }
 
     @Override
@@ -72,13 +72,13 @@ class LocalsCalculator extends Interpreter<BasicValue> {
 
     @Override
     public BasicValue unaryOperation(final AbstractInsnNode insn, final BasicValue value) {
-        return new BasicValue(TypeUtils.getUnaryType(insn));
+        return new BasicValue(ExpressionASMUtils.getUnaryType(insn));
     }
 
     @Override
     public BasicValue binaryOperation(
             final AbstractInsnNode insn, final BasicValue value1, final BasicValue value2) {
-        return new BasicValue(TypeUtils.getBinaryType(insn, value1.getType()));
+        return new BasicValue(ExpressionASMUtils.getBinaryType(insn, value1.getType()));
     }
 
     @Override
@@ -93,7 +93,7 @@ class LocalsCalculator extends Interpreter<BasicValue> {
     @Override
     public BasicValue naryOperation(
             final AbstractInsnNode insn, final List<? extends BasicValue> values) {
-        return new BasicValue(TypeUtils.getNaryType(insn));
+        return new BasicValue(ExpressionASMUtils.getNaryType(insn));
     }
 
     @Override
@@ -107,7 +107,7 @@ class LocalsCalculator extends Interpreter<BasicValue> {
         if (value1.equals(value2)) {
             return value1;
         }
-        return new BasicValue(TypeUtils.getCommonSupertype(value1.getType(), value2.getType()));
+        return new BasicValue(ExpressionASMUtils.getCommonSupertype(value1.getType(), value2.getType()));
     }
 
     private void recordType(VarInsnNode insn, Type type) {

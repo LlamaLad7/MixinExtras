@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
-import com.llamalad7.mixinextras.utils.TypeUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -39,7 +39,7 @@ public class ArrayStoreExpression extends Expression {
     @Override
     public void capture(FlowValue node, ExpressionContext ctx) {
         Type arrayType = node.getInput(0).getType();
-        ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, TypeUtils.getInnerType(arrayType)});
+        ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, ExpressionASMUtils.getInnerType(arrayType)});
         ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, Type.VOID_TYPE);
         ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index", "value"});
         super.capture(node, ctx);

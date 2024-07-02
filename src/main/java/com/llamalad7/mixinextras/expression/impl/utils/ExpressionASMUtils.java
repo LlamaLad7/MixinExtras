@@ -1,4 +1,4 @@
-package com.llamalad7.mixinextras.utils;
+package com.llamalad7.mixinextras.expression.impl.utils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Handle;
@@ -8,15 +8,33 @@ import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.transformer.ClassInfo;
 import org.spongepowered.asm.util.Bytecode;
 
+import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class TypeUtils {
+public class ExpressionASMUtils {
     public static final Type OBJECT_TYPE = Type.getType(Object.class);
     public static final Type BOTTOM_TYPE = Type.getObjectType("null");
     public static final Type INTLIKE_TYPE = Type.getObjectType("int-like");
+
+    public static final Handle LMF_HANDLE = new Handle(
+            Opcodes.H_INVOKESTATIC,
+            "java/lang/invoke/LambdaMetafactory",
+            "metafactory",
+            Bytecode.generateDescriptor(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class, MethodType.class, MethodHandle.class, MethodType.class),
+            false
+    );
+
+    public static final Handle ALT_LMF_HANDLE = new Handle(
+            Opcodes.H_INVOKESTATIC,
+            "java/lang/invoke/LambdaMetafactory",
+            "altMetafactory",
+            Bytecode.generateDescriptor(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class, Object[].class),
+            false
+    );
 
     public static Type getNewType(AbstractInsnNode insn) {
         switch (insn.getOpcode()) {
@@ -358,5 +376,13 @@ public class TypeUtils {
                 return Type.LONG_TYPE;
         }
         return null;
+    }
+
+    public static Object getConstant(AbstractInsnNode insn) {
+        if (insn.getOpcode() == NEWARRAY) {
+            // Mixin incorrectly throws when passed this.
+            return null;
+        }
+        return Bytecode.getConstant(insn);
     }
 }

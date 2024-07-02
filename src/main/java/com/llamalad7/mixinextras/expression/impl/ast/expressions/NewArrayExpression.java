@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
-import com.llamalad7.mixinextras.utils.TypeUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -53,7 +53,7 @@ public class NewArrayExpression extends SimpleExpression {
                 Type elementType = Type.getObjectType(((TypeInsnNode) insn).desc);
                 return elementType.getSort() == Type.ARRAY ? elementType.getElementType() : elementType;
             case Opcodes.NEWARRAY:
-                return TypeUtils.getNewArrayType((IntInsnNode) insn);
+                return ExpressionASMUtils.getNewArrayType((IntInsnNode) insn);
             case Opcodes.MULTIANEWARRAY:
                 return Type.getType(((MultiANewArrayInsnNode) insn).desc).getElementType();
         }

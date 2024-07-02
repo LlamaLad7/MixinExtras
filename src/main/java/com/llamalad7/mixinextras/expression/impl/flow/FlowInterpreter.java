@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.flow.expansion.IincExpander;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.StringConcatFactoryExpander;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.UnaryComparisonExpander;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.*;
-import com.llamalad7.mixinextras.utils.TypeUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Analyzer;
@@ -108,7 +108,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
 
     @Override
     public FlowValue newOperation(final AbstractInsnNode insn) {
-        Type type = TypeUtils.getNewType(insn);
+        Type type = ExpressionASMUtils.getNewType(insn);
         return recordFlow(type, insn);
     }
 
@@ -138,7 +138,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
 
     @Override
     public FlowValue unaryOperation(final AbstractInsnNode insn, final FlowValue value) {
-        Type type = TypeUtils.getUnaryType(insn);
+        Type type = ExpressionASMUtils.getUnaryType(insn);
         if (insn.getOpcode() == IINC) {
             recordFlow(Type.VOID_TYPE, insn);
             return new DummyFlowValue(type);
@@ -152,9 +152,9 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         if (insn.getOpcode() == AALOAD || insn.getOpcode() == BALOAD) {
             // Can't determine their types without the parent type
             // AALOAD could give any object type, and BALOAD could give a byte or a boolean
-            return recordComputedFlow(1, inputs -> TypeUtils.getInnerType(inputs[0].getType()), insn, value1, value2);
+            return recordComputedFlow(1, inputs -> ExpressionASMUtils.getInnerType(inputs[0].getType()), insn, value1, value2);
         }
-        Type type = TypeUtils.getBinaryType(insn, null);
+        Type type = ExpressionASMUtils.getBinaryType(insn, null);
         return recordFlow(type, insn, value1, value2);
     }
 
@@ -173,7 +173,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         if (insn instanceof MethodInsnNode && Boxing.isBoxing((MethodInsnNode) insn)) {
             return values.get(0);
         }
-        Type type = TypeUtils.getNaryType(insn);
+        Type type = ExpressionASMUtils.getNaryType(insn);
         return recordFlow(type, insn, values.toArray(new FlowValue[0]));
     }
 

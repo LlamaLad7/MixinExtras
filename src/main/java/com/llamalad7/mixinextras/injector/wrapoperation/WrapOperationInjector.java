@@ -215,7 +215,7 @@ class WrapOperationInjector extends Injector {
             }
         }
         if (node.getOpcode() == Opcodes.INSTANCEOF) {
-            return new Type[]{TypeUtils.OBJECT_TYPE};
+            return new Type[]{ASMUtils.OBJECT_TYPE};
         }
 
         throw new UnsupportedOperationException();

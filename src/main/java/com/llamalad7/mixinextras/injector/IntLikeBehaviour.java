@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.injector;
 
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
-import com.llamalad7.mixinextras.utils.TypeUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 
@@ -12,7 +12,7 @@ public abstract class IntLikeBehaviour {
     }
 
     public Type transform(InjectionInfo info, Type expected, Type handler) {
-        if (!expected.getDescriptor().contains(TypeUtils.INTLIKE_TYPE.getDescriptor())) {
+        if (!expected.getDescriptor().contains(ExpressionASMUtils.INTLIKE_TYPE.getDescriptor())) {
             return expected;
         }
         return transformImpl(info, expected, handler);
@@ -21,7 +21,7 @@ public abstract class IntLikeBehaviour {
     protected abstract Type transformImpl(InjectionInfo info, Type expected, Type handler);
 
     protected Type replaceIntLike(InjectionInfo info, Type desc, Type replacement) {
-        if (!TypeUtils.isIntLike(replacement)) {
+        if (!ExpressionASMUtils.isIntLike(replacement)) {
             throw CompatibilityHelper.makeInvalidInjectionException(
                     info,
                     String.format(
@@ -31,11 +31,11 @@ public abstract class IntLikeBehaviour {
             );
         }
         Type returnType = desc.getReturnType();
-        if (returnType.equals(TypeUtils.INTLIKE_TYPE)) {
+        if (returnType.equals(ExpressionASMUtils.INTLIKE_TYPE)) {
             returnType = replacement;
         }
         Type[] args = Arrays.stream(desc.getArgumentTypes())
-                .map(it -> it.equals(TypeUtils.INTLIKE_TYPE) ? replacement : it)
+                .map(it -> it.equals(ExpressionASMUtils.INTLIKE_TYPE) ? replacement : it)
                 .toArray(Type[]::new);
         return Type.getMethodType(returnType, args);
     }

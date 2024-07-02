@@ -3,7 +3,7 @@ package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.injector.StackExtension;
-import com.llamalad7.mixinextras.utils.TypeUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -50,7 +50,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
                     cst = ((ConcatPart.TemplateString) part).value;
                 }
                 AbstractInsnNode componentInsn = new LdcInsnNode(cst);
-                component = new FlowValue(TypeUtils.getNewType(componentInsn), componentInsn);
+                component = new FlowValue(ExpressionASMUtils.getNewType(componentInsn), componentInsn);
                 registerComponent(component, part, indy);
                 sink.registerFlow(component);
             }
@@ -98,7 +98,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
                     cst = ((ConcatPart.TemplateString) part).value;
                 }
                 AbstractInsnNode componentInsn = expansion.registerInsn(part, new LdcInsnNode(cst));
-                partType = TypeUtils.getNewType(componentInsn);
+                partType = ExpressionASMUtils.getNewType(componentInsn);
                 stack.extra(partType.getSize());
                 insns.add(componentInsn);
             }
@@ -144,7 +144,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
 
     private AbstractInsnNode makeAppendCall(Type type) {
         if (type.getSort() == Type.OBJECT) {
-            type = TypeUtils.OBJECT_TYPE;
+            type = ExpressionASMUtils.OBJECT_TYPE;
         }
         return new MethodInsnNode(
                 Opcodes.INVOKEVIRTUAL,

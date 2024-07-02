@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
-import com.llamalad7.mixinextras.utils.TypeUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.objectweb.asm.Type;
 
 public abstract class SimpleExpression extends Expression {
@@ -15,8 +15,8 @@ public abstract class SimpleExpression extends Expression {
     @Override
     public void capture(FlowValue node, ExpressionContext ctx) {
         Type type = node.getType();
-        if (type.equals(TypeUtils.BOTTOM_TYPE)) {
-            type = TypeUtils.OBJECT_TYPE;
+        if (type.equals(ExpressionASMUtils.BOTTOM_TYPE)) {
+            type = ExpressionASMUtils.OBJECT_TYPE;
         }
         if (!type.equals(Type.VOID_TYPE)) {
             ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_EXPRESSION_TYPE, type);

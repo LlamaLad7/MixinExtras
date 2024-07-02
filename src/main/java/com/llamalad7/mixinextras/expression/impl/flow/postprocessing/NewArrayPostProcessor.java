@@ -1,8 +1,8 @@
 package com.llamalad7.mixinextras.expression.impl.flow.postprocessing;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
-import com.llamalad7.mixinextras.utils.ASMUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -72,7 +72,7 @@ public class NewArrayPostProcessor implements FlowPostProcessor {
         if (node.isComplex()) {
             return null;
         }
-        Object cst = ASMUtils.getConstant(node.getInsn());
+        Object cst = ExpressionASMUtils.getConstant(node.getInsn());
         if (!(cst instanceof Integer)) {
             return null;
         }

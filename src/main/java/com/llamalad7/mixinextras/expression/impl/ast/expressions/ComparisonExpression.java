@@ -7,8 +7,7 @@ import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.expression.impl.utils.ComplexComparisonInfo;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
 import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
-import com.llamalad7.mixinextras.utils.Decorations;
-import com.llamalad7.mixinextras.utils.TypeUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -72,9 +71,9 @@ public class ComparisonExpression extends Expression {
             Type input;
             boolean isComplex = false;
             if (opcode == directObject || opcode == invertedObject) {
-                input = TypeUtils.OBJECT_TYPE;
+                input = ExpressionASMUtils.OBJECT_TYPE;
             } else if (opcode == directInt || opcode == invertedInt) {
-                input = TypeUtils.getCommonSupertype(node.getInput(0).getType(), node.getInput(1).getType());
+                input = ExpressionASMUtils.getCommonSupertype(node.getInput(0).getType(), node.getInput(1).getType());
             } else if (opcode == LCMP) {
                 input = Type.LONG_TYPE;
                 isComplex = true;

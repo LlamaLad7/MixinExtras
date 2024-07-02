@@ -22,19 +22,13 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ASMUtils {
+    public static final Type OBJECT_TYPE = Type.getType(Object.class);
+
     public static final Handle LMF_HANDLE = new Handle(
             Opcodes.H_INVOKESTATIC,
             "java/lang/invoke/LambdaMetafactory",
             "metafactory",
             Bytecode.generateDescriptor(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class, MethodType.class, MethodHandle.class, MethodType.class),
-            false
-    );
-
-    public static final Handle ALT_LMF_HANDLE = new Handle(
-            Opcodes.H_INVOKESTATIC,
-            "java/lang/invoke/LambdaMetafactory",
-            "altMetafactory",
-            Bytecode.generateDescriptor(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class, Object[].class),
             false
     );
 
@@ -196,13 +190,5 @@ public class ASMUtils {
             }
         }
         return null;
-    }
-
-    public static Object getConstant(AbstractInsnNode insn) {
-        if (insn.getOpcode() == Opcodes.NEWARRAY) {
-            // Mixin incorrectly throws when passed this.
-            return null;
-        }
-        return Bytecode.getConstant(insn);
     }
 }
