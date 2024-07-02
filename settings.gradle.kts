@@ -1,4 +1,4 @@
-rootProject.name = "mixinextras"
+rootProject.name = "MixinExtras"
 include("platform")
 include("platform:common")
 include("platform:fabric")
