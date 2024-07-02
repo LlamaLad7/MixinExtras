@@ -18,13 +18,15 @@ import java.util.function.Function;
 import static org.objectweb.asm.Opcodes.*;
 
 public class FlowInterpreter extends Interpreter<FlowValue> {
+    private final FlowContext context;
     private final Map<AbstractInsnNode, FlowValue> cache = new IdentityHashMap<>();
     private final Map<VarInsnNode, Type> localTypes;
     private final List<FlowPostProcessor> postProcessors;
 
-    protected FlowInterpreter(ClassNode classNode, MethodNode methodNode) {
+    protected FlowInterpreter(ClassNode classNode, MethodNode methodNode, FlowContext ctx) {
         super(ASM.API_VERSION);
-        this.localTypes = LocalsCalculator.getLocalTypes(classNode, methodNode);
+        this.context = ctx;
+        this.localTypes = LocalsCalculator.getLocalTypes(classNode, methodNode, ctx);
         this.postProcessors = Arrays.asList(
                 new NewArrayPostProcessor(methodNode), // Must go early because it is sensitive to BCI
                 new IincExpander(),
@@ -38,8 +40,8 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
         );
     }
 
-    public static Collection<FlowValue> analyze(ClassNode classNode, MethodNode methodNode) {
-        FlowInterpreter interpreter = new FlowInterpreter(classNode, methodNode);
+    public static Collection<FlowValue> analyze(ClassNode classNode, MethodNode methodNode, FlowContext ctx) {
+        FlowInterpreter interpreter = new FlowInterpreter(classNode, methodNode, ctx);
         try {
             new Analyzer<>(interpreter).analyze(classNode.name, methodNode);
         } catch (AnalyzerException e) {
@@ -185,7 +187,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
 
     @Override
     public FlowValue merge(final FlowValue value1, final FlowValue value2) {
-        return value1.mergeWith(value2);
+        return value1.mergeWith(value2, context);
     }
 
     private FlowValue recordFlow(Type type, AbstractInsnNode insn, FlowValue... inputs) {
@@ -194,7 +196,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             cached = new FlowValue(type, insn, inputs);
             cache.put(insn, cached);
         } else {
-            cached.mergeInputs(inputs);
+            cached.mergeInputs(inputs, context);
         }
         return cached;
     }
@@ -205,7 +207,7 @@ public class FlowInterpreter extends Interpreter<FlowValue> {
             cached = new ComputedFlowValue(size, type, insn, inputs);
             cache.put(insn, cached);
         } else {
-            cached.mergeInputs(inputs);
+            cached.mergeInputs(inputs, context);
         }
         return cached;
     }

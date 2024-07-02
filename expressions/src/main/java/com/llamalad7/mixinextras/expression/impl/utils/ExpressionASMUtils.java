@@ -1,11 +1,12 @@
 package com.llamalad7.mixinextras.expression.impl.utils;
 
+import com.llamalad7.mixinextras.expression.impl.ExpressionService;
+import com.llamalad7.mixinextras.expression.impl.flow.FlowContext;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
-import org.spongepowered.asm.mixin.transformer.ClassInfo;
 import org.spongepowered.asm.util.Bytecode;
 
 import java.lang.invoke.CallSite;
@@ -275,7 +276,7 @@ public class ExpressionASMUtils {
         );
     }
 
-    public static Type getCommonSupertype(Type type1, Type type2) {
+    public static Type getCommonSupertype(FlowContext ctx, Type type1, Type type2) {
         if (type1.equals(type2) || type2.equals(BOTTOM_TYPE)) {
             return type1;
         }
@@ -300,7 +301,7 @@ public class ExpressionASMUtils {
                 if (elem1.equals(elem2)) {
                     commonSupertype = elem1;
                 } else if (elem1.getSort() == Type.OBJECT && elem2.getSort() == Type.OBJECT) {
-                    commonSupertype = getCommonSupertype(elem1, elem2);
+                    commonSupertype = getCommonSupertype(ctx, elem1, elem2);
                 } else {
                     return arrayType(OBJECT_TYPE, dim1 - 1);
                 }
@@ -326,7 +327,7 @@ public class ExpressionASMUtils {
         if (type1.getSort() != type2.getSort()) {
             return BOTTOM_TYPE;
         }
-        return ClassInfo.getCommonSuperClassOrInterface(type1, type2).getType();
+        return ExpressionService.getInstance().getCommonSuperClass(ctx, type1, type2);
     }
 
     public static boolean isIntLike(Type type) {

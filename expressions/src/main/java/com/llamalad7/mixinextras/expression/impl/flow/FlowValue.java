@@ -90,22 +90,22 @@ public class FlowValue implements Value {
         setParents(ArrayUtils.remove(parents, index));
     }
 
-    public FlowValue mergeWith(FlowValue other) {
+    public FlowValue mergeWith(FlowValue other, FlowContext ctx) {
         if (this.equals(other)) {
             return this;
         }
         if (other instanceof ComplexFlowValue) {
-            return other.mergeWith(this);
+            return other.mergeWith(this, ctx);
         }
         if (this.isTypeKnown() && other.isTypeKnown()) {
-            return new DummyFlowValue(ExpressionASMUtils.getCommonSupertype(getType(), other.getType()));
+            return new DummyFlowValue(ExpressionASMUtils.getCommonSupertype(ctx, getType(), other.getType()));
         }
-        return new ComplexFlowValue(getSize(), new HashSet<>(Arrays.asList(this, other)));
+        return new ComplexFlowValue(getSize(), new HashSet<>(Arrays.asList(this, other)), ctx);
     }
 
-    public void mergeInputs(FlowValue[] newInputs) {
+    public void mergeInputs(FlowValue[] newInputs, FlowContext ctx) {
         for (int i = 0; i < parents.length; i++) {
-            parents[i] = parents[i].mergeWith(newInputs[i]);
+            parents[i] = parents[i].mergeWith(newInputs[i], ctx);
         }
     }
 

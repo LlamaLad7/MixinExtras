@@ -73,7 +73,7 @@ public class ComparisonExpression extends Expression {
             if (opcode == directObject || opcode == invertedObject) {
                 input = ExpressionASMUtils.OBJECT_TYPE;
             } else if (opcode == directInt || opcode == invertedInt) {
-                input = ExpressionASMUtils.getCommonSupertype(node.getInput(0).getType(), node.getInput(1).getType());
+                input = ExpressionASMUtils.getCommonSupertype(null, node.getInput(0).getType(), node.getInput(1).getType());
             } else if (opcode == LCMP) {
                 input = Type.LONG_TYPE;
                 isComplex = true;

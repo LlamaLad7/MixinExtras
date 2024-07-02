@@ -18,9 +18,10 @@ import static org.objectweb.asm.Opcodes.ILOAD;
 class LocalsCalculator extends Interpreter<BasicValue> {
     private final Map<VarInsnNode, Object> results = new IdentityHashMap<>();
     private final MethodNode methodNode;
+    private final FlowContext context;
 
-    public static Map<VarInsnNode, Type> getLocalTypes(ClassNode classNode, MethodNode methodNode) {
-        LocalsCalculator calculator = new LocalsCalculator(methodNode);
+    public static Map<VarInsnNode, Type> getLocalTypes(ClassNode classNode, MethodNode methodNode, FlowContext ctx) {
+        LocalsCalculator calculator = new LocalsCalculator(methodNode, ctx);
         try {
             new Analyzer<>(calculator).analyze(classNode.name, methodNode);
         } catch (AnalyzerException e) {
@@ -34,15 +35,16 @@ class LocalsCalculator extends Interpreter<BasicValue> {
         }
         for (Map.Entry<VarInsnNode, Object> entry : calculator.results.entrySet()) {
             if (entry.getValue() instanceof Set) {
-                entry.setValue(((Set<Type>) entry.getValue()).stream().reduce(ExpressionASMUtils::getCommonSupertype).get());
+                entry.setValue(((Set<Type>) entry.getValue()).stream().reduce((type1, type2) -> ExpressionASMUtils.getCommonSupertype(ctx, type1, type2)).get());
             }
         }
         return (Map<VarInsnNode, Type>) (Object) calculator.results;
     }
 
-    private LocalsCalculator(MethodNode methodNode) {
+    private LocalsCalculator(MethodNode methodNode, FlowContext ctx) {
         super(ASM.API_VERSION);
         this.methodNode = methodNode;
+        this.context = ctx;
     }
 
     @Override
@@ -107,7 +109,7 @@ class LocalsCalculator extends Interpreter<BasicValue> {
         if (value1.equals(value2)) {
             return value1;
         }
-        return new BasicValue(ExpressionASMUtils.getCommonSupertype(value1.getType(), value2.getType()));
+        return new BasicValue(ExpressionASMUtils.getCommonSupertype(context, value1.getType(), value2.getType()));
     }
 
     private void recordType(VarInsnNode insn, Type type) {

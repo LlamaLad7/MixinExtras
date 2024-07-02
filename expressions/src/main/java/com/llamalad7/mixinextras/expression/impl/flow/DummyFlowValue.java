@@ -34,7 +34,7 @@ public class DummyFlowValue extends FlowValue {
     }
 
     @Override
-    public void mergeInputs(FlowValue[] newInputs) {
+    public void mergeInputs(FlowValue[] newInputs, FlowContext ctx) {
     }
 
     @Override

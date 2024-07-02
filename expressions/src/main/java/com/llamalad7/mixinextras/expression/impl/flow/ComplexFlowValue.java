@@ -10,11 +10,13 @@ import java.util.Set;
 public class ComplexFlowValue extends FlowValue {
     private final int size;
     private final Set<FlowValue> sources;
+    private final FlowContext context;
 
-    public ComplexFlowValue(int size, Set<FlowValue> sources) {
+    public ComplexFlowValue(int size, Set<FlowValue> sources, FlowContext context) {
         super(null, null, (FlowValue[]) null);
         this.size = size;
         this.sources = sources;
+        this.context = context;
     }
 
     @Override
@@ -41,7 +43,7 @@ public class ComplexFlowValue extends FlowValue {
     }
 
     @Override
-    public void mergeInputs(FlowValue[] newInputs) {
+    public void mergeInputs(FlowValue[] newInputs, FlowContext ctx) {
     }
 
     @Override
@@ -50,7 +52,7 @@ public class ComplexFlowValue extends FlowValue {
     }
 
     @Override
-    public FlowValue mergeWith(FlowValue other) {
+    public FlowValue mergeWith(FlowValue other, FlowContext ctx) {
         if (this == other) {
             return this;
         }
@@ -60,11 +62,11 @@ public class ComplexFlowValue extends FlowValue {
         } else {
             newSources.add(other);
         }
-        return new ComplexFlowValue(size, newSources);
+        return new ComplexFlowValue(size, newSources, ctx);
     }
 
     @Override
     public Type getType() {
-        return sources.stream().map(FlowValue::getType).reduce(ExpressionASMUtils::getCommonSupertype).get();
+        return sources.stream().map(FlowValue::getType).reduce((type1, type2) -> ExpressionASMUtils.getCommonSupertype(context, type1, type2)).get();
     }
 }
