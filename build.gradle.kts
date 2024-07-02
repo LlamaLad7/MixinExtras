@@ -10,8 +10,6 @@ buildscript {
 plugins {
     `java-library`
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    antlr
-    id("com.diffplug.spotless") version "6.22.0"
 }
 
 allprojects {
@@ -37,7 +35,7 @@ allprojects {
     }
 
     tasks.withType<Jar> {
-        dependsOn(":generateGrammarSource")
+        dependsOn(":expressions:generateGrammarSource")
     }
 }
 
@@ -50,31 +48,12 @@ val shadeOnly by configurations.creating
 dependencies {
     compileOnly(mixin())
     compileOnly(asm())
-    antlr("org.antlr:antlr4:4.13.1")
-    shadeOnly("org.antlr:antlr4-runtime:4.13.1")
-    shade("org.apache.commons:commons-lang3:3.3.2")
+    shadeOnly(antlrRuntime())
+    shade(apacheCommons())
     shadeOnly(project("mixin-versions"))
     shade("com.google.code.gson:gson:2.11.0")
     shade("com.github.zafarkhaja:java-semver:0.10.2")
-}
-
-tasks.withType<AntlrTask> {
-    arguments.addAll(listOf("-package", "com.llamalad7.mixinextras.lib.grammar.expressions"))
-}
-
-tasks.withType<JavaCompile> {
-    dependsOn("generateGrammarSource")
-}
-
-spotless {
-    antlr4 {
-        target("src/*/antlr/**/*.g4")
-        antlr4Formatter()
-    }
-}
-
-tasks.getByName("generateGrammarSource") {
-    dependsOn("spotlessAntlr4Apply")
+    shade(project("expressions").also { it.isTransitive = false })
 }
 
 tasks.named<ShadowJar>("shadowJar") {
@@ -98,7 +77,7 @@ val proguardJar = tasks.create<ProGuardTask>("proguardJar") {
     outputs.files(proguardFile)
 
     doFirst {
-        (configurations.compileClasspath.get().resolve() - configurations.antlr.get().resolve()).forEach {
+        configurations.compileClasspath.get().resolve().forEach {
             libraryjars(it)
         }
     }

@@ -5,7 +5,8 @@ plugins {
 }
 
 private val sourceInclusions = listOf(
-    project(":mixin-versions").subprojects.toList()
+    project(":mixin-versions").subprojects.toList(),
+    listOf(project(":expressions"))
 ).flatten()
 
 private val proguardFile: File by rootProject.extra

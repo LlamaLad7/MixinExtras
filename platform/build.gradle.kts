@@ -5,6 +5,7 @@ subprojects {
     dependencies {
         compileOnly(mixin())
         compileOnly(asm())
+        compileOnly(antlrRuntime())
     }
 
     tasks.withType<Jar> {

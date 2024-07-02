@@ -3,10 +3,6 @@ package com.llamalad7.mixinextras.expression.impl.pool;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.AnnotationNode;
-import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
-import org.spongepowered.asm.mixin.injection.struct.Target;
-import org.spongepowered.asm.util.Annotations;
 
 import java.util.ArrayList;
 import java.util.HashMap;

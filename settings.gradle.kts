@@ -1,4 +1,5 @@
 rootProject.name = "MixinExtras"
+include("expressions")
 include("platform")
 include("platform:common")
 include("platform:fabric")

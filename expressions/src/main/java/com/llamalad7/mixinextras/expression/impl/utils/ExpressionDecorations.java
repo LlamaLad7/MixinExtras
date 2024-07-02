@@ -1,10 +1,8 @@
 package com.llamalad7.mixinextras.expression.impl.utils;
 
-import com.llamalad7.mixinextras.expression.Expression;
-
 public class ExpressionDecorations {
     /**
-     * Stores the type of a simple expression targeted by an {@link Expression}.
+     * Stores the type of a simple expression.
      */
     public static final String SIMPLE_EXPRESSION_TYPE = "mixinextras_simpleExpressionType";
 
