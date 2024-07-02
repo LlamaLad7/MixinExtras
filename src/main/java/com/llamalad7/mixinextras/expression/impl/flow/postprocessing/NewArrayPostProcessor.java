@@ -1,8 +1,8 @@
 package com.llamalad7.mixinextras.expression.impl.flow.postprocessing;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import com.llamalad7.mixinextras.utils.ASMUtils;
-import com.llamalad7.mixinextras.utils.Decorations;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -35,7 +35,7 @@ public class NewArrayPostProcessor implements FlowPostProcessor {
                 sink.markAsSynthetic(store.getInput(1));
             }
             node.decorate(
-                    Decorations.ARRAY_CREATION_INFO,
+                    FlowDecorations.ARRAY_CREATION_INFO,
                     new ArrayCreationInfo(
                             stores.get(stores.size() - 1).getInsn()
                     )

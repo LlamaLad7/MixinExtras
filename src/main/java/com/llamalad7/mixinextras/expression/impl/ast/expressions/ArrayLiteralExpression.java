@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.ArrayCreationInfo;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
-import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -27,7 +27,7 @@ public class ArrayLiteralExpression extends SimpleExpression {
 
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
-        ArrayCreationInfo creation = node.getDecoration(Decorations.ARRAY_CREATION_INFO);
+        ArrayCreationInfo creation = node.getDecoration(FlowDecorations.ARRAY_CREATION_INFO);
         if (creation == null) {
             return false;
         }

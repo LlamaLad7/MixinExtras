@@ -1,6 +1,5 @@
 package com.llamalad7.mixinextras.expression.impl.utils;
 
-import com.llamalad7.mixinextras.utils.Decorations;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
@@ -24,10 +23,10 @@ public class ComparisonInfo {
     }
 
     public void attach(BiConsumer<String, Object> decorate, BiConsumer<String, Object> decorateInjectorSpecific) {
-        decorateInjectorSpecific.accept(Decorations.COMPARISON_INFO, this);
-        decorate.accept(Decorations.SIMPLE_OPERATION_ARGS, new Type[]{input, input});
-        decorate.accept(Decorations.SIMPLE_OPERATION_RETURN_TYPE, Type.BOOLEAN_TYPE);
-        decorate.accept(Decorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"left", "right"});
+        decorateInjectorSpecific.accept(ExpressionDecorations.COMPARISON_INFO, this);
+        decorate.accept(ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{input, input});
+        decorate.accept(ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, Type.BOOLEAN_TYPE);
+        decorate.accept(ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"left", "right"});
     }
 
     public int copyJump(InsnList insns) {

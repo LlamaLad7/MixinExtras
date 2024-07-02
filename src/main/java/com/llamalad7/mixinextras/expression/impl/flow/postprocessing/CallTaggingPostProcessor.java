@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.flow.postprocessing;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -25,7 +25,7 @@ public class CallTaggingPostProcessor implements FlowPostProcessor {
         if (type == null) {
             return;
         }
-        node.decorate(Decorations.METHOD_CALL_TYPE, type);
+        node.decorate(FlowDecorations.METHOD_CALL_TYPE, type);
         if (type == MethodCallType.SUPER) {
             sink.markAsSynthetic(node.getInput(0)); // not a real `this`
             node.removeParent(0);

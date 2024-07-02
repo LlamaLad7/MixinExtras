@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValueInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReceiverInjectionInfo;
 import com.llamalad7.mixinextras.injector.ModifyReturnValueInjectionInfo;
@@ -104,7 +105,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                     }
                 }
                 for (Map.Entry<String, Object> decoration : node.getDecorations().entrySet()) {
-                    if (decoration.getKey().startsWith(Decorations.PERSISTENT)) {
+                    if (decoration.getKey().startsWith(FlowDecorations.PERSISTENT)) {
                         decorate.accept(decoration.getKey(), decoration.getValue());
                     }
                 }

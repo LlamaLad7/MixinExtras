@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
-import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -29,7 +29,7 @@ public class NewArrayExpression extends SimpleExpression {
 
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
-        if (node.hasDecoration(Decorations.ARRAY_CREATION_INFO)) {
+        if (node.hasDecoration(FlowDecorations.ARRAY_CREATION_INFO)) {
             // While a creation *is* involved, it's not the kind we're trying to target.
             return false;
         }

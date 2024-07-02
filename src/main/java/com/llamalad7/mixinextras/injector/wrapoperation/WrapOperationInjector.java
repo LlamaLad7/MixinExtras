@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.injector.wrapoperation;
 
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
 import com.llamalad7.mixinextras.injector.IntLikeBehaviour;
 import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.service.MixinExtrasService;
@@ -130,8 +131,8 @@ class WrapOperationInjector extends Injector {
         AbstractInsnNode originalTarget = node.getOriginalTarget();
         AbstractInsnNode currentTarget = node.getCurrentTarget();
 
-        if (node.hasDecoration(Decorations.SIMPLE_OPERATION_RETURN_TYPE)) {
-            return node.getDecoration(Decorations.SIMPLE_OPERATION_RETURN_TYPE);
+        if (node.hasDecoration(ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE)) {
+            return node.getDecoration(ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE);
         }
 
         if (originalTarget.getOpcode() == Opcodes.INSTANCEOF) {
@@ -160,15 +161,15 @@ class WrapOperationInjector extends Injector {
         if (node.hasDecoration(Decorations.NEW_ARG_TYPES)) {
             return node.getDecoration(Decorations.NEW_ARG_TYPES);
         }
-        if (node.hasDecoration(Decorations.SIMPLE_OPERATION_ARGS)) {
-            return cleanIntLikeArgs(node.getDecoration(Decorations.SIMPLE_OPERATION_ARGS));
+        if (node.hasDecoration(ExpressionDecorations.SIMPLE_OPERATION_ARGS)) {
+            return cleanIntLikeArgs(node.getDecoration(ExpressionDecorations.SIMPLE_OPERATION_ARGS));
         }
         return getEffectiveArgTypes(node.getOriginalTarget());
     }
 
     private Type[] getCurrentArgTypes(InjectionNode node) {
-        if (!node.isReplaced() && node.hasDecoration(Decorations.SIMPLE_OPERATION_ARGS)) {
-            return cleanIntLikeArgs(node.getDecoration(Decorations.SIMPLE_OPERATION_ARGS));
+        if (!node.isReplaced() && node.hasDecoration(ExpressionDecorations.SIMPLE_OPERATION_ARGS)) {
+            return cleanIntLikeArgs(node.getDecoration(ExpressionDecorations.SIMPLE_OPERATION_ARGS));
         }
         return getEffectiveArgTypes(node.getCurrentTarget());
     }
@@ -498,8 +499,8 @@ class WrapOperationInjector extends Injector {
         @Override
         boolean validate() {
             return !node.isReplaced() &&
-                    node.hasDecoration(Decorations.SIMPLE_OPERATION_ARGS) &&
-                    node.hasDecoration(Decorations.SIMPLE_OPERATION_RETURN_TYPE);
+                    node.hasDecoration(ExpressionDecorations.SIMPLE_OPERATION_ARGS) &&
+                    node.hasDecoration(ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE);
         }
 
         @Override
@@ -509,7 +510,7 @@ class WrapOperationInjector extends Injector {
     }
 
     private OperationType newComparisonExpression(Target target, InjectionNode node, StackExtension stack) {
-        ComparisonInfo comparison = InjectorUtils.getInjectorSpecificDecoration(node, info, Decorations.COMPARISON_INFO);
+        ComparisonInfo comparison = InjectorUtils.getInjectorSpecificDecoration(node, info, ExpressionDecorations.COMPARISON_INFO);
         if (comparison == null) {
             return null;
         }

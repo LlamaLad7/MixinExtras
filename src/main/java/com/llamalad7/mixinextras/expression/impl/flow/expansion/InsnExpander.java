@@ -3,9 +3,9 @@ package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
 import com.llamalad7.mixinextras.injector.StackExtension;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
-import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -52,17 +52,17 @@ public abstract class InsnExpander implements FlowPostProcessor {
         checkSupportsExpansion(info, ctx.type);
         AbstractInsnNode compoundInsn = node.getDecoration(COMPOUND_INSN);
         InjectionNode compoundNode = target.addInjectionNode(compoundInsn);
-        Expansion expansion = compoundNode.getDecoration(Decorations.EXPANSION_INFO);
+        Expansion expansion = compoundNode.getDecoration(ExpressionDecorations.EXPANSION_INFO);
         if (expansion == null) {
             expansion = expander.new Expansion(compoundInsn);
-            compoundNode.decorate(Decorations.EXPANSION_INFO, expansion);
+            compoundNode.decorate(ExpressionDecorations.EXPANSION_INFO, expansion);
         }
         expansion.registerInterest(info, node.getDecoration(INSN_COMPONENT));
         return expansion;
     }
 
     public static InjectionNode doExpansion(InjectionNode node, Target target, InjectionInfo info) {
-        Expansion expansion = node.getDecoration(Decorations.EXPANSION_INFO);
+        Expansion expansion = node.getDecoration(ExpressionDecorations.EXPANSION_INFO);
         if (expansion == null) {
             return node;
         }

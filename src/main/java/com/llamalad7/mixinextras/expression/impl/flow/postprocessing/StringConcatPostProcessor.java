@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.flow.postprocessing;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -48,7 +48,7 @@ public class StringConcatPostProcessor implements FlowPostProcessor {
         FlowValue initialComponent = appendCalls.get(0).getInput(1);
         for (int i = 1; i < appendCalls.size() - 1; i++) {
             appendCalls.get(i).decorate(
-                    Decorations.STRING_CONCAT_INFO,
+                    FlowDecorations.STRING_CONCAT_INFO,
                     new StringConcatInfo(
                             i == 1,
                             false,
@@ -58,7 +58,7 @@ public class StringConcatPostProcessor implements FlowPostProcessor {
             );
         }
         toStringCall.decorate(
-                Decorations.STRING_CONCAT_INFO,
+                FlowDecorations.STRING_CONCAT_INFO,
                 new StringConcatInfo(
                         false,
                         true,
@@ -69,7 +69,7 @@ public class StringConcatPostProcessor implements FlowPostProcessor {
     }
 
     private FlowValue getFirstAppend(FlowValue node) {
-        InstantiationInfo instantiation = node.getDecoration(Decorations.INSTANTIATION_INFO);
+        InstantiationInfo instantiation = node.getDecoration(FlowDecorations.INSTANTIATION_INFO);
         if (instantiation == null || !instantiation.type.getInternalName().equals(STRING_BUILDER)) {
             return null;
         }

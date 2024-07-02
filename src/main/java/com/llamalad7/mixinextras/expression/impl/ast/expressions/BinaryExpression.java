@@ -1,11 +1,12 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionUtil;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.StringConcatInfo;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
-import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -26,7 +27,7 @@ public class BinaryExpression extends SimpleExpression {
         if (operator.matches(node.getInsn()) && inputsMatch(node, ctx, left, right)) {
             return true;
         }
-        StringConcatInfo concat = node.getDecoration(Decorations.STRING_CONCAT_INFO);
+        StringConcatInfo concat = node.getDecoration(FlowDecorations.STRING_CONCAT_INFO);
         if (operator != Operator.PLUS || concat == null) {
             return false;
         }
@@ -47,7 +48,7 @@ public class BinaryExpression extends SimpleExpression {
             // The wildcard will match the concatenation to the left, but won't decorate it as a concat, so we do it
             // ourselves.
             checkSupportsStringConcat(ctx.type);
-            ctx.decorateInjectorSpecific(node.getInput(0).getInsn(), Decorations.IS_STRING_CONCAT_EXPRESSION, true);
+            ctx.decorateInjectorSpecific(node.getInput(0).getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
             // Do the capture:
             return left.matches(node.getInput(0), ctx);
         }
@@ -60,7 +61,7 @@ public class BinaryExpression extends SimpleExpression {
 
     @Override
     public void capture(FlowValue node, ExpressionContext ctx) {
-        StringConcatInfo concat = node.getDecoration(Decorations.STRING_CONCAT_INFO);
+        StringConcatInfo concat = node.getDecoration(FlowDecorations.STRING_CONCAT_INFO);
         if (concat == null) {
             super.capture(node, ctx);
             return;
@@ -71,7 +72,7 @@ public class BinaryExpression extends SimpleExpression {
             super.capture(concat.toStringCall, ctx);
             return;
         }
-        ctx.decorateInjectorSpecific(node.getInsn(), Decorations.IS_STRING_CONCAT_EXPRESSION, true);
+        ctx.decorateInjectorSpecific(node.getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
         super.capture(node, ctx);
     }
 

@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.flow.postprocessing;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -22,7 +22,7 @@ public class InstantiationPostProcessor implements FlowPostProcessor {
         Type newType = Type.getObjectType(((TypeInsnNode) insn).desc);
         FlowValue initCall = findInitCall(node);
         node.decorate(
-                Decorations.INSTANTIATION_INFO,
+                FlowDecorations.INSTANTIATION_INFO,
                 new InstantiationInfo(
                         newType,
                         initCall

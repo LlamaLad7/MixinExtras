@@ -3,6 +3,8 @@ package com.llamalad7.mixinextras.injector;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.ArrayCreationInfo;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import com.llamalad7.mixinextras.utils.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -103,11 +105,11 @@ public class ModifyExpressionValueInjector extends Injector {
     }
 
     private Type getReturnType(InjectionNode node) {
-        if (InjectorUtils.hasInjectorSpecificDecoration(node, info, Decorations.IS_STRING_CONCAT_EXPRESSION)) {
+        if (InjectorUtils.hasInjectorSpecificDecoration(node, info, ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION)) {
             return Type.getType(String.class);
         }
-        if (node.hasDecoration(Decorations.SIMPLE_EXPRESSION_TYPE)) {
-            return node.getDecoration(Decorations.SIMPLE_EXPRESSION_TYPE);
+        if (node.hasDecoration(ExpressionDecorations.SIMPLE_EXPRESSION_TYPE)) {
+            return node.getDecoration(ExpressionDecorations.SIMPLE_EXPRESSION_TYPE);
         }
         AbstractInsnNode current = node.getCurrentTarget();
 
@@ -147,9 +149,9 @@ public class ModifyExpressionValueInjector extends Injector {
         public TargetInfo(InjectionNode node) {
             this.isDupedFactoryRedirect = InjectorUtils.isDupedFactoryRedirect(node);
             this.isDynamicInstanceofRedirect = InjectorUtils.isDynamicInstanceofRedirect(node);
-            this.arrayCreationInfo = node.getDecoration(Decorations.ARRAY_CREATION_INFO);
-            this.isStringConcat = InjectorUtils.hasInjectorSpecificDecoration(node, info, Decorations.IS_STRING_CONCAT_EXPRESSION);
-            this.comparison = InjectorUtils.getInjectorSpecificDecoration(node, info, Decorations.COMPARISON_INFO);
+            this.arrayCreationInfo = node.getDecoration(FlowDecorations.ARRAY_CREATION_INFO);
+            this.isStringConcat = InjectorUtils.hasInjectorSpecificDecoration(node, info, ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION);
+            this.comparison = InjectorUtils.getInjectorSpecificDecoration(node, info, ExpressionDecorations.COMPARISON_INFO);
         }
 
         public AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode) {

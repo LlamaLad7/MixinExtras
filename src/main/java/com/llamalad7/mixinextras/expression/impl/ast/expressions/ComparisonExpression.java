@@ -5,6 +5,8 @@ import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
 import com.llamalad7.mixinextras.expression.impl.utils.ComplexComparisonInfo;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import com.llamalad7.mixinextras.utils.Decorations;
 import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
@@ -31,7 +33,7 @@ public class ComparisonExpression extends Expression {
 
     @Override
     public void capture(FlowValue node, ExpressionContext ctx) {
-        ctx.decorate(node.getInsn(), Decorations.SIMPLE_EXPRESSION_TYPE, Type.BOOLEAN_TYPE);
+        ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_EXPRESSION_TYPE, Type.BOOLEAN_TYPE);
         super.capture(node, ctx);
     }
 
@@ -89,7 +91,7 @@ public class ComparisonExpression extends Expression {
             if (isComplex) {
                 int zeroDirect = directInt - WITH_ZERO_OFFSET;
                 int zeroInverted = invertedInt - WITH_ZERO_OFFSET;
-                JumpInsnNode jump = node.getDecoration(Decorations.COMPLEX_COMPARISON_JUMP);
+                JumpInsnNode jump = node.getDecoration(FlowDecorations.COMPLEX_COMPARISON_JUMP);
                 if (jump == null || jump.getOpcode() != zeroDirect && jump.getOpcode() != zeroInverted) {
                     return false;
                 }

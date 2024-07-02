@@ -1,7 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.flow.postprocessing;
 
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 
 public enum MethodCallType {
     NORMAL,
@@ -9,6 +9,6 @@ public enum MethodCallType {
     STATIC;
 
     public boolean matches(FlowValue node) {
-        return node.getDecoration(Decorations.METHOD_CALL_TYPE) == this;
+        return node.getDecoration(FlowDecorations.METHOD_CALL_TYPE) == this;
     }
 }

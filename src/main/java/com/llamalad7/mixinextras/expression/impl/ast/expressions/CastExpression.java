@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
-import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
 import com.llamalad7.mixinextras.utils.TypeUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -30,9 +30,9 @@ public class CastExpression extends SimpleExpression {
     @Override
     public void capture(FlowValue node, ExpressionContext ctx) {
         if (node.getInsn().getOpcode() == Opcodes.CHECKCAST) {
-            ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_ARGS, new Type[]{TypeUtils.OBJECT_TYPE});
-            ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_RETURN_TYPE, node.getType());
-            ctx.decorate(node.getInsn(), Decorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"object"});
+            ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{TypeUtils.OBJECT_TYPE});
+            ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, node.getType());
+            ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"object"});
         }
         super.capture(node, ctx);
     }

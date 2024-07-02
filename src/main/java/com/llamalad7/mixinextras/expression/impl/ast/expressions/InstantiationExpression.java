@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.InstantiationInfo;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
-import com.llamalad7.mixinextras.utils.Decorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class InstantiationExpression extends Expression {
 
     @Override
     public boolean matches(FlowValue node, ExpressionContext ctx) {
-        InstantiationInfo instantiation = node.getDecoration(Decorations.INSTANTIATION_INFO);
+        InstantiationInfo instantiation = node.getDecoration(FlowDecorations.INSTANTIATION_INFO);
         if (instantiation == null || !type.matches(ctx.pool, instantiation.type)) {
             return false;
         }
@@ -37,7 +37,7 @@ public class InstantiationExpression extends Expression {
             );
         }
         if (ctx.type == ExpressionContext.Type.MODIFY_ARG || ctx.type == ExpressionContext.Type.MODIFY_ARGS) {
-            InstantiationInfo instantiation = node.getDecoration(Decorations.INSTANTIATION_INFO);
+            InstantiationInfo instantiation = node.getDecoration(FlowDecorations.INSTANTIATION_INFO);
             node = instantiation.initCall;
         }
         super.capture(node, ctx);
