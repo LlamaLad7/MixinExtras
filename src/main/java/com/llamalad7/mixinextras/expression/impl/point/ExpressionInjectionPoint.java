@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.expression.impl.flow.ComplexDataException;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
+import com.llamalad7.mixinextras.expression.impl.pool.BytecodeIdentifierPool;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValueInjectionInfo;
@@ -167,7 +168,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         checkDeclaredMinVersion();
         initialized = true;
         AnnotationNode poolAnnotation = ASMUtils.getRepeatedMEAnnotation(CURRENT_INFO.getMethod(), Definition.class);
-        pool = new IdentifierPool(target, CURRENT_INFO, poolAnnotation);
+        pool = new BytecodeIdentifierPool(target, CURRENT_INFO, poolAnnotation);
         expressions = parseExpressions();
         contextType = selectContextType();
     }

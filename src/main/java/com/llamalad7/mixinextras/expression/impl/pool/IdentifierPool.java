@@ -17,13 +17,6 @@ public class IdentifierPool {
     private final Map<String, List<MemberDefinition>> members = new HashMap<>();
     private final Map<String, List<TypeDefinition>> types = new HashMap<>();
 
-    public IdentifierPool(Target target, InjectionInfo info, AnnotationNode poolAnnotation) {
-        this();
-        for (AnnotationNode entry : Annotations.<AnnotationNode>getValue(poolAnnotation, "value", true)) {
-            parseEntry(entry, target, info);
-        }
-    }
-
     public IdentifierPool() {
         addType("byte", new ExactTypeDef(Type.BYTE_TYPE));
         addType("char", new ExactTypeDef(Type.CHAR_TYPE));
@@ -57,22 +50,6 @@ public class IdentifierPool {
             throw new IllegalStateException("Use of undeclared identifier '" + id + '\'');
         }
         return matching.stream().anyMatch(it -> it.matches(type));
-    }
-
-    private void parseEntry(AnnotationNode entry, Target target, InjectionInfo info) {
-        String id = Annotations.getValue(entry, "id");
-        for (String method : Annotations.<String>getValue(entry, "method", true)) {
-            addMember(id, new MethodDef(method, info));
-        }
-        for (String method : Annotations.<String>getValue(entry, "field", true)) {
-            addMember(id, new FieldDef(method, info));
-        }
-        for (Type type : Annotations.<Type>getValue(entry, "type", true)) {
-            addType(id, new ExactTypeDef(type));
-        }
-        for (AnnotationNode local : Annotations.<AnnotationNode>getValue(entry, "local", true)) {
-            addMember(id, new LocalDef(local, info, target));
-        }
     }
 
     public void addMember(String id, MemberDefinition entry) {
