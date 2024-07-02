@@ -8,8 +8,14 @@ import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValueInjectionInfo;
+import com.llamalad7.mixinextras.injector.ModifyReceiverInjectionInfo;
+import com.llamalad7.mixinextras.injector.ModifyReturnValueInjectionInfo;
+import com.llamalad7.mixinextras.injector.v2.WrapWithConditionInjectionInfo;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperationInjectionInfo;
 import com.llamalad7.mixinextras.service.MixinExtrasVersion;
 import com.llamalad7.mixinextras.utils.*;
+import com.llamalad7.mixinextras.wrapper.WrapperInjectionInfo;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.InsnList;
@@ -17,10 +23,8 @@ import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
 import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.InjectionPoint.AtCode;
-import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
+import org.spongepowered.asm.mixin.injection.struct.*;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
-import org.spongepowered.asm.mixin.injection.struct.InjectionPointData;
-import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Annotations;
 
 import java.util.*;
@@ -41,6 +45,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
     private boolean initialized;
     private IdentifierPool pool;
     private List<Expression> expressions;
+    private ExpressionContext.Type contextType;
 
     public ExpressionInjectionPoint(InjectionPointData data) {
         super(data);
@@ -121,7 +126,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                 sink,
                 target.classNode,
                 target.method,
-                ExpressionContext.Type.forContext(CURRENT_INFO, isInSlice),
+                contextType,
                 false
         );
 
@@ -163,6 +168,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         AnnotationNode poolAnnotation = ASMUtils.getRepeatedMEAnnotation(CURRENT_INFO.getMethod(), Definition.class);
         pool = new IdentifierPool(target, CURRENT_INFO, poolAnnotation);
         expressions = parseExpressions();
+        contextType = selectContextType();
     }
 
     public static void withContext(InjectionInfo info, Runnable runnable) {
@@ -231,5 +237,49 @@ public class ExpressionInjectionPoint extends InjectionPoint {
             throw new IllegalStateException("No expression found " + idText + "on " + CURRENT_INFO);
         }
         return result;
+    }
+
+    private ExpressionContext.Type selectContextType() {
+        if (isInSlice) {
+            return ExpressionContext.Type.SLICE;
+        }
+        InjectionInfo info = CURRENT_INFO;
+        while (info instanceof WrapperInjectionInfo) {
+            info = ((WrapperInjectionInfo) info).getDelegate();
+        }
+        if (info instanceof CallbackInjectionInfo) {
+            return ExpressionContext.Type.INJECT;
+        }
+        if (info instanceof ModifyArgInjectionInfo) {
+            return ExpressionContext.Type.MODIFY_ARG;
+        }
+        if (info instanceof ModifyArgsInjectionInfo) {
+            return ExpressionContext.Type.MODIFY_ARGS;
+        }
+        if (info instanceof ModifyConstantInjectionInfo) {
+            return ExpressionContext.Type.MODIFY_CONSTANT;
+        }
+        if (info instanceof ModifyExpressionValueInjectionInfo) {
+            return ExpressionContext.Type.MODIFY_EXPRESSION_VALUE;
+        }
+        if (info instanceof ModifyReceiverInjectionInfo) {
+            return ExpressionContext.Type.MODIFY_RECEIVER;
+        }
+        if (info instanceof ModifyReturnValueInjectionInfo) {
+            return ExpressionContext.Type.MODIFY_RETURN_VALUE;
+        }
+        if (info instanceof ModifyVariableInjectionInfo) {
+            return ExpressionContext.Type.MODIFY_VARIABLE;
+        }
+        if (info instanceof RedirectInjectionInfo) {
+            return ExpressionContext.Type.REDIRECT;
+        }
+        if (info instanceof WrapOperationInjectionInfo) {
+            return ExpressionContext.Type.WRAP_OPERATION;
+        }
+        if (info instanceof WrapWithConditionInjectionInfo) {
+            return ExpressionContext.Type.WRAP_WITH_CONDITION;
+        }
+        return ExpressionContext.Type.CUSTOM;
     }
 }
