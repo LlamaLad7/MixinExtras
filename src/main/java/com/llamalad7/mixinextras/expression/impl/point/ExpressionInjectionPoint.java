@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.point;
 
 import com.llamalad7.mixinextras.expression.Definition;
 import com.llamalad7.mixinextras.expression.impl.ExpressionParserFacade;
+import com.llamalad7.mixinextras.expression.impl.MEExpressionService;
 import com.llamalad7.mixinextras.expression.impl.ast.expressions.Expression;
 import com.llamalad7.mixinextras.expression.impl.flow.ComplexDataException;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
@@ -48,6 +49,10 @@ public class ExpressionInjectionPoint extends InjectionPoint {
     private IdentifierPool pool;
     private List<Expression> expressions;
     private ExpressionContext.Type contextType;
+
+    static {
+        MEExpressionService.offerInstance(new RuntimeExpressionService());
+    }
 
     public ExpressionInjectionPoint(InjectionPointData data) {
         super(data);

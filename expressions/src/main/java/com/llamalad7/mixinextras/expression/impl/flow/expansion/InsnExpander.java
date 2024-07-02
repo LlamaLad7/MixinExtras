@@ -1,11 +1,10 @@
 package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
+import com.llamalad7.mixinextras.expression.impl.MEExpressionService;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
-import com.llamalad7.mixinextras.utils.CompatibilityHelper;
-import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
@@ -81,7 +80,7 @@ public abstract class InsnExpander implements FlowPostProcessor {
                 // Supported.
                 return;
         }
-        throw CompatibilityHelper.makeInvalidInjectionException(
+        throw MEExpressionService.getInstance().makeInvalidInjectionException(
                 info,
                 String.format(
                         "Expression context type %s does not support compound instructions!",
@@ -118,7 +117,7 @@ public abstract class InsnExpander implements FlowPostProcessor {
         public void decorateInjectorSpecific(InjectionInfo info, String key, Object value) {
             addExpansionStep(
                     interests.get(info),
-                    node -> InjectorUtils.decorateInjectorSpecific(node, info, key, value)
+                    node -> MEExpressionService.getInstance().decorateInjectorSpecific(node, info, key, value)
             );
         }
 
