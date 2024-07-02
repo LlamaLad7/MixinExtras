@@ -1,3 +1,7 @@
+plugins {
+    id("mixinextras.platform")
+}
+
 repositories {
     maven("https://maven.neoforged.net/")
 }

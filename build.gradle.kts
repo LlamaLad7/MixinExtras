@@ -22,12 +22,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven("https://repo.spongepowered.org/maven")
-    }
-
-    dependencies {
-        compileOnly("org.spongepowered:mixin:0.8")
-        compileOnly("org.ow2.asm:asm-debug-all:5.2")
     }
 
     java {
@@ -54,6 +48,8 @@ val shade by configurations.creating {
 val shadeOnly by configurations.creating
 
 dependencies {
+    compileOnly(mixin())
+    compileOnly(asm())
     antlr("org.antlr:antlr4:4.13.1")
     shadeOnly("org.antlr:antlr4-runtime:4.13.1")
     shade("org.apache.commons:commons-lang3:3.3.2")
@@ -91,7 +87,7 @@ tasks.named<ShadowJar>("shadowJar") {
     relocate("com.github.zafarkhaja.semver", "com.llamalad7.mixinextras.lib.semver")
     exclude("META-INF/maven/**/*", "META-INF/*.txt", "META-INF/proguard/*", "META-INF/LICENSE")
     from("LICENSE") {
-        rename { "${it}_MixinExtras"}
+        rename { "${it}_MixinExtras" }
     }
 }
 

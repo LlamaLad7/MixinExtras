@@ -8,6 +8,7 @@ dependencies {
 
 subprojects {
     dependencies {
+        compileOnly(asm())
         compileOnly(rootProject)
     }
 }

@@ -1,3 +1,7 @@
+plugins {
+    id("mixinextras.platform")
+}
+
 tasks.withType<ProcessResources> {
     inputs.property("version", version)
 
