@@ -1,5 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.utils;
 
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.LMFInfo;
+
 public class FlowDecorations {
     /**
      * "Persistent" decorations will be copied to target nodes from flow nodes.
@@ -30,4 +32,9 @@ public class FlowDecorations {
      * Stores the type of this method call.
      */
     public static final String METHOD_CALL_TYPE = "methodCallType";
+
+    /**
+     * Stores the {@link LMFInfo} of this LMF invocation.
+     */
+    public static final String LMF_INFO = "lmfInfo";
 }

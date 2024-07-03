@@ -3,11 +3,11 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.LMFInfo;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.Opcodes;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 
-public class FreeMethodReferenceExpression extends MethodReferenceExpression {
+public class FreeMethodReferenceExpression extends SimpleExpression {
     public final MemberIdentifier name;
 
     public FreeMethodReferenceExpression(ExpressionSource src, MemberIdentifier name) {
@@ -16,20 +16,11 @@ public class FreeMethodReferenceExpression extends MethodReferenceExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, Handle impl, ExpressionContext ctx) {
-        switch (impl.getTag()) {
-            case Opcodes.H_INVOKESPECIAL:
-                if (!impl.getOwner().equals(ctx.classNode.name)) {
-                    return false;
-                }
-            case Opcodes.H_INVOKEVIRTUAL:
-            case Opcodes.H_INVOKEINTERFACE:
-                if (node.inputCount() != 0) {
-                    return false;
-                }
-            case Opcodes.H_INVOKESTATIC:
-                return name.matches(ctx.pool, impl);
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
+        LMFInfo info = node.getDecoration(FlowDecorations.LMF_INFO);
+        if (info == null || info.type != LMFInfo.Type.FREE_METHOD) {
+            return false;
         }
-        return false;
+        return name.matches(ctx.pool, info.impl);
     }
 }

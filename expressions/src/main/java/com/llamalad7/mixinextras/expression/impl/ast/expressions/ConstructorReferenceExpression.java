@@ -3,12 +3,12 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.LMFInfo;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.Opcodes;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import org.objectweb.asm.Type;
 
-public class ConstructorReferenceExpression extends MethodReferenceExpression {
+public class ConstructorReferenceExpression extends SimpleExpression {
     public final TypeIdentifier type;
 
     public ConstructorReferenceExpression(ExpressionSource src, TypeIdentifier type) {
@@ -17,10 +17,11 @@ public class ConstructorReferenceExpression extends MethodReferenceExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, Handle impl, ExpressionContext ctx) {
-        if (impl.getTag() != Opcodes.H_NEWINVOKESPECIAL || node.inputCount() != 0) {
+    public boolean matches(FlowValue node, ExpressionContext ctx) {
+        LMFInfo info = node.getDecoration(FlowDecorations.LMF_INFO);
+        if (info == null || info.type != LMFInfo.Type.INSTANTIATION) {
             return false;
         }
-        return type.matches(ctx.pool, Type.getObjectType(impl.getOwner()));
+        return type.matches(ctx.pool, Type.getObjectType(info.impl.getOwner()));
     }
 }
