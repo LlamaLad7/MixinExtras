@@ -89,8 +89,12 @@ public abstract class InsnExpander implements FlowPostProcessor {
         );
     }
 
-    public static AbstractInsnNode getRepresentative(FlowValue expanded) {
-        return expanded.getDecoration(COMPOUND_INSN);
+    public static AbstractInsnNode getRepresentative(FlowValue node) {
+        AbstractInsnNode compound = node.getDecoration(COMPOUND_INSN);
+        if (compound != null) {
+            return compound;
+        }
+        return node.getInsn();
     }
 
     public class Expansion {

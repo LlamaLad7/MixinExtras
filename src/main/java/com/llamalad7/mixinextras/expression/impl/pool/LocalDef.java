@@ -1,5 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.pool;
 
+import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
 import com.llamalad7.mixinextras.utils.InjectorUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -13,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Annotations;
 
-public class LocalDef implements SimpleMemberDefinition {
+public class LocalDef implements MemberDefinition {
     private final LocalVariableDiscriminator discriminator;
     private final InjectionInfo info;
     private final Type targetLocalType;
@@ -29,17 +31,19 @@ public class LocalDef implements SimpleMemberDefinition {
     }
 
     @Override
-    public boolean matches(AbstractInsnNode insn) {
-        if (!(insn instanceof VarInsnNode)) {
+    public boolean matches(FlowValue node) {
+        AbstractInsnNode virtualInsn = node.getInsn();
+        if (!(virtualInsn instanceof VarInsnNode)) {
             return false;
         }
-        VarInsnNode varInsn = (VarInsnNode) insn;
-        if (insn.getOpcode() >= Opcodes.ISTORE && insn.getOpcode() <= Opcodes.ASTORE) {
-            insn = insn.getNext();
+        VarInsnNode virtualVarInsn = (VarInsnNode) virtualInsn;
+        AbstractInsnNode actualInsn = InsnExpander.getRepresentative(node);
+        if (virtualVarInsn.getOpcode() >= Opcodes.ISTORE && virtualVarInsn.getOpcode() <= Opcodes.ASTORE) {
+            actualInsn = actualInsn.getNext();
         }
-        Context context = InjectorUtils.getOrCreateLocalContext(target, target.addInjectionNode(insn), info, targetLocalType, isArgsOnly);
+        Context context = InjectorUtils.getOrCreateLocalContext(target, target.addInjectionNode(actualInsn), info, targetLocalType, isArgsOnly);
         if (discriminator.printLVT()) {
-            InjectorUtils.printLocals(target, insn, context, discriminator, targetLocalType, isArgsOnly);
+            InjectorUtils.printLocals(target, actualInsn, context, discriminator, targetLocalType, isArgsOnly);
             info.addCallbackInvocation(info.getMethod());
         }
         int index;
@@ -48,6 +52,6 @@ public class LocalDef implements SimpleMemberDefinition {
         } catch (InvalidImplicitDiscriminatorException ignored) {
             return false;
         }
-        return varInsn.var == index;
+        return virtualVarInsn.var == index;
     }
 }
