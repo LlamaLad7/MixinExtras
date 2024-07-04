@@ -21,6 +21,6 @@ public class FreeMethodReferenceExpression extends SimpleExpression {
         if (info == null || info.type != LMFInfo.Type.FREE_METHOD) {
             return false;
         }
-        return name.matches(ctx.pool, info.impl);
+        return name.matches(ctx.pool, node);
     }
 }

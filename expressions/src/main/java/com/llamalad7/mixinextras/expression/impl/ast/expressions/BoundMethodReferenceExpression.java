@@ -23,6 +23,6 @@ public class BoundMethodReferenceExpression extends SimpleExpression {
         if (info == null || info.type != LMFInfo.Type.BOUND_METHOD) {
             return false;
         }
-        return name.matches(ctx.pool, info.impl) && receiver.matches(node.getInput(0), ctx);
+        return name.matches(ctx.pool, node) && receiver.matches(node.getInput(0), ctx);
     }
 }

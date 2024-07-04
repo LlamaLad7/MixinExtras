@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.selectors.MatchResult;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
 
-class MethodDef implements MemberDefinition {
+class MethodDef implements SimpleMemberDefinition {
     private final MemberInfo memberInfo;
 
     public MethodDef(String method, InjectionInfo info) {

@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.selectors.MatchResult;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
 
-class FieldDef implements MemberDefinition {
+class FieldDef implements SimpleMemberDefinition {
     private final MemberInfo memberInfo;
 
     public FieldDef(String field, InjectionInfo info) {

@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Annotations;
 
-public class LocalDef implements MemberDefinition {
+public class LocalDef implements SimpleMemberDefinition {
     private final LocalVariableDiscriminator discriminator;
     private final InjectionInfo info;
     private final Type targetLocalType;

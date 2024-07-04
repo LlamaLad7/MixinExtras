@@ -1,8 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.pool;
 
-import org.objectweb.asm.Handle;
+import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,20 +23,12 @@ public class IdentifierPool {
         addMember("length", new ArrayLengthDef());
     }
 
-    public boolean matchesMember(String id, AbstractInsnNode insn) {
+    public boolean matchesMember(String id, FlowValue node) {
         List<MemberDefinition> matching = members.get(id);
         if (matching == null) {
             throw new IllegalStateException("Use of undeclared identifier '" + id + '\'');
         }
-        return matching.stream().anyMatch(it -> it.matches(insn));
-    }
-
-    public boolean matchesMember(String id, Handle handle) {
-        List<MemberDefinition> matching = members.get(id);
-        if (matching == null) {
-            throw new IllegalStateException("Use of undeclared identifier '" + id + '\'');
-        }
-        return matching.stream().anyMatch(it -> it.matches(handle));
+        return matching.stream().anyMatch(it -> it.matches(node));
     }
 
     public boolean matchesType(String id, Type type) {

@@ -26,7 +26,7 @@ public class MethodCallExpression extends SimpleExpression {
         if (!MethodCallType.NORMAL.matches(node)) {
             return false;
         }
-        if (!name.matches(ctx.pool, node.getInsn())) {
+        if (!name.matches(ctx.pool, node)) {
             return false;
         }
         Expression[] inputs = ArrayUtils.add(arguments.toArray(new Expression[0]), 0, receiver);

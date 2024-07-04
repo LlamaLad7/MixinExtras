@@ -22,7 +22,7 @@ public class IdentifierExpression extends SimpleExpression {
             case Opcodes.DLOAD:
             case Opcodes.ALOAD:
             case Opcodes.GETSTATIC:
-                return ctx.pool.matchesMember(identifier, node.getInsn());
+                return ctx.pool.matchesMember(identifier, node);
         }
         return false;
     }

@@ -23,7 +23,7 @@ public class SuperCallExpression extends SimpleExpression {
         if (!MethodCallType.SUPER.matches(node)) {
             return false;
         }
-        if (!name.matches(ctx.pool, node.getInsn())) {
+        if (!name.matches(ctx.pool, node)) {
             return false;
         }
         return inputsMatch(node, ctx, ctx.allowIncompleteListInputs, arguments.toArray(new Expression[0]));
