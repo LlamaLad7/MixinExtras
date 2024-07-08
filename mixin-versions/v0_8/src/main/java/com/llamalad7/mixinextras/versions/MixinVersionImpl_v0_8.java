@@ -35,4 +35,9 @@ public class MixinVersionImpl_v0_8 extends MixinVersion {
     public AnnotationNode getAnnotation(InjectionInfo info) {
         return info.getAnnotation();
     }
+
+    @Override
+    public int getOrder(InjectionInfo info) {
+        throw new AssertionError("Cannot getOrder until 0.8.7");
+    }
 }

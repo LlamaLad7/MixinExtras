@@ -32,4 +32,8 @@ public class CompatibilityHelper {
     public static AnnotationNode getAnnotation(InjectionInfo info) {
         return MixinVersion.getInstance().getAnnotation(info);
     }
+
+    public static int getOrder(InjectionInfo info) {
+        return MixinVersion.getInstance().getOrder(info);
+    }
 }
