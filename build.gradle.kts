@@ -1,5 +1,4 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import proguard.gradle.ProGuardTask
 
 buildscript {
     dependencies {
@@ -72,28 +71,12 @@ tasks.named<ShadowJar>("shadowJar") {
 
 val proguardFile by extra { file("build/libs/mixinextras-$version.jar") }
 
-val proguardJar = tasks.create<ProGuardTask>("proguardJar") {
-    inputs.files(tasks.shadowJar)
-    outputs.files(proguardFile)
-
-    doFirst {
-        configurations.compileClasspath.get().resolve().forEach {
-            libraryjars(it)
-        }
-    }
-
-    libraryjars(
-        if (JavaVersion.current().isJava9Compatible) {
-            "${System.getProperty("java.home")}/jmods"
-        } else {
-            "${System.getProperty("java.home")}/lib/rt.jar"
-        }
-    )
-
-    injars(tasks.shadowJar.get().archiveFile)
-    outjars(proguardFile)
-    configuration(file("proguard.conf"))
-}
+val proguardJar = createProGuardTask(
+    "proguardJar",
+    tasks.shadowJar.get().archiveFile.get().asFile,
+    proguardFile,
+    "proguard.conf"
+)
 
 proguardJar.dependsOn(tasks.shadowJar)
 tasks.build.get().dependsOn(proguardJar)
