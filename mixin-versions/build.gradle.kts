@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project("v0_8_4"))
+    implementation(project("v0_8_7"))
 }
 
 subprojects {

@@ -53,6 +53,12 @@ public abstract class WrapperInjectionInfo extends MixinExtrasInjectionInfo impl
         return impl.isValid();
     }
 
+    // @Override on 0.8.7+
+    @SuppressWarnings("unused")
+    public int getOrder() {
+        return impl.getOrder();
+    }
+
     @Override
     public void prepare() {
         impl.prepare();

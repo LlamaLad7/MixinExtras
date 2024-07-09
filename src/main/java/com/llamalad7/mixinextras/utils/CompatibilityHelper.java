@@ -38,6 +38,10 @@ public class CompatibilityHelper {
         return MixinVersion.getInstance().getAnnotation(info);
     }
 
+    public static int getOrder(InjectionInfo info) {
+        return MixinVersion.getInstance().getOrder(info);
+    }
+
     public static List<Target> getTargets(InjectionInfo info) {
         if (info instanceof WrapperInjectionInfo) {
             return ((WrapperInjectionInfo) info).getSelectedTargets();

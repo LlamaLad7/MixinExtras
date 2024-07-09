@@ -48,6 +48,10 @@ public abstract class InjectorWrapperImpl {
         return getDelegate().isValid();
     }
 
+    public int getOrder() {
+        return CompatibilityHelper.getOrder(getDelegate());
+    }
+
     protected void prepare() {
         getDelegate().prepare();
         MethodNode handler = getHandler();

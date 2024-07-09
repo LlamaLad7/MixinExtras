@@ -41,6 +41,11 @@ public class MixinVersionImpl_v0_8 extends MixinVersion {
     }
 
     @Override
+    public int getOrder(InjectionInfo info) {
+        throw new AssertionError("Cannot getOrder until 0.8.7");
+    }
+
+    @Override
     public Collection<Target> getTargets(InjectionInfo info) {
         IMixinContext mixin = MixinVersion.getInstance().getMixin(info);
         return info.getTargets().stream().map(mixin::getTargetMethod).collect(Collectors.toList());
