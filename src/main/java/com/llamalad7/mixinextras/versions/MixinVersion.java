@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class MixinVersion {
-    private static final List<String> VERSIONS = Arrays.asList("0.8.7", "0.8.4", "0.8.3", "0.8");
+    private static final List<String> VERSIONS = Arrays.asList("0.8.7", "0.8.6", "0.8.4", "0.8.3", "0.8");
     private static final MixinVersion INSTANCE;
 
     static {

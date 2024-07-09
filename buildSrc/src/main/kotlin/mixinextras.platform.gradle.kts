@@ -4,10 +4,14 @@ plugins {
     signing
 }
 
-private val sourceInclusions = listOf(
-    project(":mixin-versions").subprojects.toList(),
-    listOf(project(":expressions"))
-).flatten()
+private val javadocInclusions = arrayOf(
+    project(":expressions"),
+)
+
+private val sourceInclusions = arrayOf(
+    *javadocInclusions,
+    *project(":mixin-versions").subprojects.toTypedArray(),
+)
 
 private val proguardFile: File by rootProject.extra
 
@@ -29,7 +33,7 @@ tasks.named<Jar>("sourcesJar") {
 tasks.named<Javadoc>("javadoc") {
     classpath += rootProject.configurations.compileClasspath.get()
     source(rootProject.sourceSets.main.get().java)
-    sourceInclusions.forEach {
+    javadocInclusions.forEach {
         source(it.sourceSets.main.get().java)
     }
 }
