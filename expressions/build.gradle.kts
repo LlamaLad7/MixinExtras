@@ -12,7 +12,7 @@ dependencies {
 }
 
 tasks.withType<Jar> {
-    archiveBaseName.set("mixinextras-$name")
+    archiveBaseName.set("mixinextras-expressions")
 }
 
 tasks.withType<JavaCompile> {
