@@ -5,3 +5,9 @@ tasks.withType<ProcessResources> {
         expand("version" to version)
     }
 }
+
+tasks.named<Jar>("jar") {
+    manifest.attributes(
+        "Fabric-Loom-Remap" to "false",
+    )
+}
