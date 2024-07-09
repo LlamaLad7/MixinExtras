@@ -16,7 +16,7 @@ allprojects {
     apply(plugin = "java")
 
     group = "com.llamalad7"
-    version = "0.4.0-beta.2"
+    version = "0.4.0"
 
     repositories {
         mavenCentral()
