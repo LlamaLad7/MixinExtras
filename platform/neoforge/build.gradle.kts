@@ -1,5 +1,6 @@
 plugins {
     id("mixinextras.platform")
+    id("mixinextras.slimjar")
 }
 
 repositories {

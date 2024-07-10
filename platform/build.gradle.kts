@@ -20,5 +20,8 @@ subprojects {
         artifact(tasks.getByName("jar"))
         artifact(tasks.getByName("sourcesJar"))
         artifact(tasks.getByName("javadocJar"))
+        afterEvaluate {
+            tasks.findByName("slimJar")?.let(::artifact)
+        }
     }
 }

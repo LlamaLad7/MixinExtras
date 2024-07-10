@@ -38,6 +38,10 @@ allprojects {
     }
 }
 
+val library by configurations.creating {
+    configurations.compileOnly.get().extendsFrom(this)
+}
+
 val shade by configurations.creating {
     configurations.compileOnly.get().extendsFrom(this)
 }
@@ -45,8 +49,8 @@ val shade by configurations.creating {
 val shadeOnly by configurations.creating
 
 dependencies {
-    compileOnly(mixin())
-    compileOnly(asm())
+    library(mixin())
+    library(asm())
     shadeOnly(antlrRuntime())
     shade(apacheCommons())
     shadeOnly(project("mixin-versions"))
@@ -70,16 +74,29 @@ tasks.named<ShadowJar>("shadowJar") {
 }
 
 val proguardFile by extra { file("build/libs/mixinextras-$version.jar") }
-
 val proguardJar = createProGuardTask(
     "proguardJar",
     tasks.shadowJar.get().archiveFile.get().asFile,
     proguardFile,
     "proguard.conf"
-)
+).apply {
+    dependsOn(tasks.shadowJar)
+    tasks.build.get().dependsOn(this)
+}
 
-proguardJar.dependsOn(tasks.shadowJar)
-tasks.build.get().dependsOn(proguardJar)
+val shrunkProguardFile by extra { file("build/libs/mixinextras-$version-shrunk.jar") }
+val shrunkProguardJar = createProGuardTask(
+    "shrunkJar",
+    proguardFile,
+    shrunkProguardFile,
+    "proguard-shrink.conf"
+).apply {
+    dependsOn(proguardJar)
+    tasks.build.get().dependsOn(this)
+    doLast {
+        decompressJar(shrunkProguardFile)
+    }
+}
 
 tasks.named<Jar>("jar") {
     archiveClassifier = "slim"

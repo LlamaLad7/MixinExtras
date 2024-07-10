@@ -1,4 +1,3 @@
-import gradle.kotlin.dsl.accessors._c5ed198e191f30f39ee46d0abbbd888f.compileClasspath
 import gradle.kotlin.dsl.accessors._c5ed198e191f30f39ee46d0abbbd888f.javaToolchains
 import org.gradle.api.Project
 import org.gradle.jvm.toolchain.JavaLanguageVersion
@@ -12,7 +11,7 @@ fun Project.createProGuardTask(name: String, input: File, output: File, configFi
         outputs.files(output)
 
         doFirst {
-            configurations.compileClasspath.get().resolve().forEach {
+            configurations.getByName("library").resolve().forEach {
                 libraryjars(it)
             }
         }
