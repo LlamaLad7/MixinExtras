@@ -42,8 +42,6 @@ public class ExpressionInjectionPoint extends InjectionPoint {
     private static List<Target> CURRENT_TARGETS;
     private static InjectionInfo CURRENT_INFO;
 
-    public static long TIME_ON_EXPRESSIONS = 0;
-
     private final int ordinal;
     private final String id;
     private final boolean isInSlice;
@@ -69,7 +67,6 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         if (insns.size() == 0) {
             return false;
         }
-        long startTime = System.currentTimeMillis();
         Target target = getTarget(insns);
         if (!initialized) {
             initialize(target);
@@ -166,8 +163,6 @@ public class ExpressionInjectionPoint extends InjectionPoint {
                 i++;
             }
         }
-
-        TIME_ON_EXPRESSIONS += System.currentTimeMillis() - startTime;
 
         return found;
     }

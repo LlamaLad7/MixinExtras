@@ -40,6 +40,5 @@ public class ExpressionInjectorWrapperImpl extends InjectorWrapperImpl {
             inner = ((WrapperInjectionInfo) inner).getDelegate();
         }
         ExpressionInjectionPoint.withContext(inner, super::prepare);
-        System.out.println("Spent " + ExpressionInjectionPoint.TIME_ON_EXPRESSIONS);
     }
 }
