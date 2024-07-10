@@ -34,6 +34,9 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
+/**
+ * See {@link com.llamalad7.mixinextras.expression.Expression @Expression}.
+ */
 @AtCode("MIXINEXTRAS:EXPRESSION")
 public class ExpressionInjectionPoint extends InjectionPoint {
     private static List<Target> CURRENT_TARGETS;

@@ -8,6 +8,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * <b>These docs are for using @Local as a <i>sugar</i>. For its use in expressions, see {@link Definition}.</b>
+ * <p>
  * Allows you to capture local variables wherever you need them. The annotated parameter's type must either match the
  * target variable's type, or be the corresponding
  * {@link com.llamalad7.mixinextras.sugar.ref.LocalRef LocalRef}
@@ -54,7 +56,7 @@ public @interface Local {
     boolean argsOnly() default false;
 
     /**
-     * Only for use in {@link Definition}s.
+     * Specifies the type of this local. Only for use in {@link Definition}s.
      */
     Class<?> type() default void.class;
 }
