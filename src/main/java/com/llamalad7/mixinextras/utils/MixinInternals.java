@@ -130,7 +130,7 @@ public class MixinInternals {
         return INJECTION_INFO_INJECTOR.get(info);
     }
 
-    public static ClassNode getClassNode(IMixinInfo mixin) {
+    private static ClassNode getClassNode(IMixinInfo mixin) {
         return STATE_CLASS_NODE.get(MIXIN_INFO_GET_STATE.call(mixin));
     }
 
