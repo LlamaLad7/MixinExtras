@@ -30,6 +30,3 @@ run
 Thumbs.db
 
 versions/*/tmp.srg
-
-src/main/gen
-src/main/antlr/gen
