@@ -9,23 +9,11 @@ import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.util.Bytecode;
 import org.spongepowered.asm.util.asm.ASM;
 
-import java.lang.invoke.CallSite;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class OperationUtils {
-    private static final Handle LMF_HANDLE = new Handle(
-            Opcodes.H_INVOKESTATIC,
-            "java/lang/invoke/LambdaMetafactory",
-            "metafactory",
-            Bytecode.generateDescriptor(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class, MethodType.class, MethodHandle.class, MethodType.class),
-            false
-    );
-
     public static void makeOperation(Type[] argTypes, Type returnType, InsnList insns, boolean virtual,
                                      Type[] trailingParams, ClassNode classNode, Type operationType,
                                      String name, OperationContents contents) {
@@ -40,7 +28,7 @@ public class OperationUtils {
                 // The generated lambda will implement `Operation` and have any trailing parameters bound to it
                 Type.getMethodDescriptor(operationType, descriptorArgs),
                 // We want to generate the impl with LMF
-                LMF_HANDLE,
+                ASMUtils.LMF_HANDLE,
                 // The SAM method will take an array of args and return an `Object` (the return value of the wrapped call)
                 Type.getMethodType(Type.getType(Object.class), Type.getType(Object[].class)),
                 // The implementation method will be generated for us to handle array unpacking

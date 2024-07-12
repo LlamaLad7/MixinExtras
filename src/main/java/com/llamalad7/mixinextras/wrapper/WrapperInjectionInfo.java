@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.wrapper;
 
 import com.llamalad7.mixinextras.injector.LateApplyingInjectorInfo;
 import com.llamalad7.mixinextras.injector.MixinExtrasInjectionInfo;
+import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.MixinInternals;
 import com.llamalad7.mixinextras.utils.ProxyUtils;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -74,7 +75,7 @@ public abstract class WrapperInjectionInfo extends MixinExtrasInjectionInfo impl
         if (lateApply) {
             delegate.inject();
         } else {
-            impl.inject();
+            impl.doInject();
         }
     }
 
@@ -92,7 +93,7 @@ public abstract class WrapperInjectionInfo extends MixinExtrasInjectionInfo impl
 
     @Override
     public void lateInject() {
-        impl.inject();
+        impl.doInject();
     }
 
     @Override
@@ -129,5 +130,13 @@ public abstract class WrapperInjectionInfo extends MixinExtrasInjectionInfo impl
 
     public Map<Target, List<InjectionNode>> getTargetMap() {
         return MixinInternals.getTargets(delegate);
+    }
+
+    public List<Target> getSelectedTargets() {
+        return CompatibilityHelper.getTargets(delegate);
+    }
+
+    public InjectionInfo getDelegate() {
+        return delegate;
     }
 }

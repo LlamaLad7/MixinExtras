@@ -17,10 +17,36 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-val proguardFile: File by rootProject.extra
+private val proguardFile: File by rootProject.extra
 
 tasks.named<Jar>("jar") {
-    from(proguardFile) {
+    setupForgeJar(proguardFile)
+}
+
+private val shrunkProguardFile: File by rootProject.extra
+private val shrunkProguardJar = rootProject.tasks.getByName("shrunkJar")
+
+val slimJar by tasks.creating(Jar::class) {
+    archiveClassifier = "slim"
+    from(sourceSets.main.get().output)
+    setupForgeJar(shrunkProguardFile)
+    dependsOn(shrunkProguardJar)
+}
+
+tasks.build {
+    dependsOn(slimJar)
+}
+
+tasks.withType<ProcessResources> {
+    inputs.property("version", version)
+
+    filesMatching(listOf("META-INF/mods.toml", "META-INF/jarjar/metadata.json")) {
+        expand("version" to version)
+    }
+}
+
+fun Jar.setupForgeJar(rootFile: File) {
+    from(rootFile) {
         rename { "META-INF/jars/MixinExtras-${project.version}.jar" }
     }
     from(rootProject.file("LICENSE")) {
@@ -30,12 +56,4 @@ tasks.named<Jar>("jar") {
         "MixinConfigs" to "mixinextras.init.mixins.json",
         "FMLModType" to "GAMELIBRARY",
     )
-}
-
-tasks.withType<ProcessResources> {
-    inputs.property("version", version)
-
-    filesMatching(listOf("META-INF/mods.toml", "META-INF/jarjar/metadata.json")) {
-        expand("version" to version)
-    }
 }

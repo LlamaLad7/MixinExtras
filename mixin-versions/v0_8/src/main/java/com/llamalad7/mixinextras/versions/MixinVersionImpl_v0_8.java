@@ -5,9 +5,13 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
+import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException;
 import org.spongepowered.asm.mixin.refmap.IMixinContext;
+
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class MixinVersionImpl_v0_8 extends MixinVersion {
@@ -39,5 +43,16 @@ public class MixinVersionImpl_v0_8 extends MixinVersion {
     @Override
     public int getOrder(InjectionInfo info) {
         throw new AssertionError("Cannot getOrder until 0.8.7");
+    }
+
+    @Override
+    public Collection<Target> getTargets(InjectionInfo info) {
+        IMixinContext mixin = MixinVersion.getInstance().getMixin(info);
+        return info.getTargets().stream().map(mixin::getTargetMethod).collect(Collectors.toList());
+    }
+
+    @Override
+    public MemberInfo parseMemberInfo(String targetSelector, InjectionInfo info) {
+        return MemberInfo.parse(targetSelector, info.getContext().getReferenceMapper(), info.getContext().getClassRef());
     }
 }

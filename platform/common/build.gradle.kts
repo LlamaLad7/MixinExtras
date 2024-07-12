@@ -1,0 +1,3 @@
+plugins {
+    id("mixinextras.platform")
+}

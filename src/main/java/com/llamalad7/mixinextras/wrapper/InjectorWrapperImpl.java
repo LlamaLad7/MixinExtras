@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.wrapper;
 
+import com.llamalad7.mixinextras.injector.LateApplyingInjectorInfo;
 import com.llamalad7.mixinextras.sugar.impl.SingleIterationList;
 import com.llamalad7.mixinextras.utils.CompatibilityHelper;
 import com.llamalad7.mixinextras.utils.MixinInternals;
@@ -61,12 +62,16 @@ public abstract class InjectorWrapperImpl {
         CompatibilityHelper.preInject(getDelegate());
     }
 
-    protected void inject() {
+    protected void doInject() {
         if (useGranularInject) {
             granularInject((target, node, call) -> {});
             return;
         }
-        getDelegate().inject();
+        if (getDelegate() instanceof LateApplyingInjectorInfo) {
+            ((LateApplyingInjectorInfo) getDelegate()).lateInject();
+        } else {
+            getDelegate().inject();
+        }
     }
 
     protected void granularInject(HandlerCallCallback callback) {

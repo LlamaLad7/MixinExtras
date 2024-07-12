@@ -1,5 +1,4 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import proguard.gradle.ProGuardTask
 
 buildscript {
     dependencies {
@@ -8,24 +7,18 @@ buildscript {
 }
 
 plugins {
-    java
+    `java-library`
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 allprojects {
-    apply(plugin = "java")
+    apply(plugin = "java-library")
 
     group = "com.llamalad7"
-    version = "0.4.0"
+    version = "0.5.0-beta.1"
 
     repositories {
         mavenCentral()
-        maven("https://repo.spongepowered.org/maven")
-    }
-
-    dependencies {
-        compileOnly("org.spongepowered:mixin:0.8")
-        compileOnly("org.ow2.asm:asm-debug-all:5.2")
     }
 
     java {
@@ -39,6 +32,14 @@ allprojects {
     tasks.withType<Javadoc> {
         (options as CoreJavadocOptions).addStringOption("Xdoclint:none", "-quiet")
     }
+
+    tasks.withType<Jar> {
+        dependsOn(":expressions:generateGrammarSource")
+    }
+}
+
+val library by configurations.creating {
+    configurations.compileOnly.get().extendsFrom(this)
 }
 
 val shade by configurations.creating {
@@ -48,47 +49,54 @@ val shade by configurations.creating {
 val shadeOnly by configurations.creating
 
 dependencies {
-    shade("org.apache.commons:commons-lang3:3.3.2")
+    library(mixin())
+    library(asm())
+    shadeOnly(antlrRuntime())
+    shade(apacheCommons())
     shadeOnly(project("mixin-versions"))
+    shade("com.google.code.gson:gson:2.11.0")
+    shade("com.github.zafarkhaja:java-semver:0.10.2")
+    shade(project("expressions").also { it.isTransitive = false })
 }
 
 tasks.named<ShadowJar>("shadowJar") {
     configurations = listOf(shade, shadeOnly)
     archiveClassifier = "fat"
     relocate("org.apache.commons.lang3", "com.llamalad7.mixinextras.lib.apache.commons")
-    exclude("META-INF/maven/**/*", "META-INF/*.txt")
+    relocate("org.antlr.v4", "com.llamalad7.mixinextras.lib.antlr")
+    relocate("com.google.gson", "com.llamalad7.mixinextras.lib.gson")
+    relocate("com.google.errorprone", "com.llamalad7.mixinextras.lib.errorprone")
+    relocate("com.github.zafarkhaja.semver", "com.llamalad7.mixinextras.lib.semver")
+    exclude("META-INF/maven/**/*", "META-INF/*.txt", "META-INF/proguard/*", "META-INF/LICENSE")
     from("LICENSE") {
-        rename { "${it}_MixinExtras"}
+        rename { "${it}_MixinExtras" }
     }
 }
 
 val proguardFile by extra { file("build/libs/mixinextras-$version.jar") }
-
-val proguardJar = tasks.create<ProGuardTask>("proguardJar") {
-    inputs.files(tasks.shadowJar)
-    outputs.files(proguardFile)
-
-    doFirst {
-        configurations.compileClasspath.get().resolve().forEach {
-            libraryjars(it)
-        }
-    }
-
-    libraryjars(
-        if (JavaVersion.current().isJava9Compatible) {
-            "${System.getProperty("java.home")}/jmods"
-        } else {
-            "${System.getProperty("java.home")}/lib/rt.jar"
-        }
-    )
-
-    injars(tasks.shadowJar.get().archiveFile)
-    outjars(proguardFile)
-    configuration(file("proguard.conf"))
+val proguardJar = createProGuardTask(
+    "proguardJar",
+    tasks.shadowJar.get().archiveFile.get().asFile,
+    proguardFile,
+    "proguard.conf"
+).apply {
+    dependsOn(tasks.shadowJar)
+    tasks.build.get().dependsOn(this)
 }
 
-proguardJar.dependsOn(tasks.shadowJar)
-tasks.build.get().dependsOn(proguardJar)
+val shrunkProguardFile by extra { file("build/libs/mixinextras-$version-shrunk.jar") }
+val shrunkProguardJar = createProGuardTask(
+    "shrunkJar",
+    proguardFile,
+    shrunkProguardFile,
+    "proguard-shrink.conf"
+).apply {
+    dependsOn(proguardJar)
+    tasks.build.get().dependsOn(this)
+    doLast {
+        decompressJar(shrunkProguardFile)
+    }
+}
 
 tasks.named<Jar>("jar") {
     archiveClassifier = "slim"

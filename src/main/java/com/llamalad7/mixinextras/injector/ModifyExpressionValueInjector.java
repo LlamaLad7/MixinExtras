@@ -1,5 +1,10 @@
 package com.llamalad7.mixinextras.injector;
 
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.ArrayCreationInfo;
+import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
+import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import com.llamalad7.mixinextras.utils.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -10,10 +15,7 @@ import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.util.Bytecode;
 
-import java.util.function.Supplier;
-
 public class ModifyExpressionValueInjector extends Injector {
-    private static final MixinExtrasLogger LOGGER = MixinExtrasLogger.get("ModifyExpressionValue");
 
     public ModifyExpressionValueInjector(InjectionInfo info) {
         super(info, "@ModifyExpressionValue");
@@ -21,12 +23,14 @@ public class ModifyExpressionValueInjector extends Injector {
 
     @Override
     protected void inject(Target target, InjectionNode node) {
+        node = InsnExpander.doExpansion(node, target, info);
+
         this.checkTargetReturnsAValue(target, node);
         this.checkTargetModifiers(target, false);
 
         StackExtension stack = new StackExtension(target);
         AbstractInsnNode valueNode = node.getCurrentTarget();
-        Type valueType = getReturnType(valueNode);
+        Type valueType = getReturnType(node);
 
         boolean shouldPop = false;
         if (valueNode instanceof TypeInsnNode && valueNode.getOpcode() == Opcodes.NEW) {
@@ -39,11 +43,13 @@ public class ModifyExpressionValueInjector extends Injector {
             valueNode = ASMUtils.findInitNodeFor(target, (TypeInsnNode) valueNode);
         }
 
-        this.injectValueModifier(target, valueNode, valueType, InjectorUtils.isDupedFactoryRedirect(node), shouldPop, stack);
+        TargetInfo info = new TargetInfo(node);
+
+        this.injectValueModifier(target, valueNode, valueType, info, shouldPop, stack);
     }
 
     private void checkTargetReturnsAValue(Target target, InjectionNode node) {
-        Type returnType = getReturnType(node.getCurrentTarget());
+        Type returnType = getReturnType(node);
         if (returnType == Type.VOID_TYPE) {
             throw CompatibilityHelper.makeInvalidInjectionException(this.info,
                     String.format(
@@ -58,18 +64,24 @@ public class ModifyExpressionValueInjector extends Injector {
         }
     }
 
-    private void injectValueModifier(Target target, AbstractInsnNode valueNode, Type valueType, boolean isDupedFactoryRedirect, boolean shouldPop, StackExtension stack) {
+    private void injectValueModifier(Target target, AbstractInsnNode valueNode, Type valueType, TargetInfo info, boolean shouldPop, StackExtension stack) {
         final InsnList after = new InsnList();
-        this.invokeHandler(valueType, target, after, stack);
+        info.invokeHandler(valueType, target, after, stack);
         if (shouldPop) {
             after.add(new InsnNode(Opcodes.POP));
         }
-        target.insns.insert(getInsertionPoint(valueNode, target, isDupedFactoryRedirect), after);
+        target.insns.insert(info.getInsertionPoint(valueNode), after);
     }
 
     private void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
         InjectorData handler = new InjectorData(target, "expression value modifier");
-        this.validateParams(handler, valueType, valueType);
+
+        Type expectedDesc = IntLikeBehaviour.MatchReturnType.INSTANCE.transform(
+                info,
+                Type.getMethodType(valueType, valueType),
+                Type.getMethodType(returnType, methodArgs)
+        );
+        this.validateParams(handler, expectedDesc.getReturnType(), expectedDesc.getArgumentTypes());
 
         if (!this.isStatic) {
             after.add(new VarInsnNode(Opcodes.ALOAD, 0));
@@ -92,51 +104,109 @@ public class ModifyExpressionValueInjector extends Injector {
         this.invokeHandler(after);
     }
 
-    private AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode, Target target, boolean isDupedFactoryRedirect) {
-        if (!isDupedFactoryRedirect) {
-            return valueNode;
+    private Type getReturnType(InjectionNode node) {
+        if (InjectorUtils.hasInjectorSpecificDecoration(node, info, ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION)) {
+            return Type.getType(String.class);
         }
-        AbstractInsnNode node = InjectorUtils.findFactoryRedirectThrowString(target, valueNode);
-        if (node == null) {
-            return valueNode;
+        if (node.hasDecoration(ExpressionDecorations.SIMPLE_EXPRESSION_TYPE)) {
+            return node.getDecoration(ExpressionDecorations.SIMPLE_EXPRESSION_TYPE);
         }
-        String message = ((String) ((LdcInsnNode) node).cst);
-        Supplier<AbstractInsnNode> failed = () -> {
-            LOGGER.warn(
-                    "Please inform LlamaLad7! Failed to find end of factory redirect throw for '{}'",
-                    message
-            );
-            return valueNode;
-        };
-        if ((node = node.getNext()).getOpcode() != Opcodes.INVOKESPECIAL) return failed.get();
-        if ((node = node.getNext()).getOpcode() != Opcodes.ATHROW) return failed.get();
-        if (!((node = node.getNext()) instanceof LabelNode)) return failed.get();
-        return node;
-    }
+        AbstractInsnNode current = node.getCurrentTarget();
 
-    private Type getReturnType(AbstractInsnNode node) {
-        if (node instanceof MethodInsnNode) {
-            MethodInsnNode methodInsnNode = (MethodInsnNode) node;
+        if (current instanceof MethodInsnNode) {
+            MethodInsnNode methodInsnNode = (MethodInsnNode) current;
             return Type.getReturnType(methodInsnNode.desc);
         }
 
-        if (node instanceof FieldInsnNode) {
-            FieldInsnNode fieldInsnNode = (FieldInsnNode) node;
+        if (current instanceof FieldInsnNode) {
+            FieldInsnNode fieldInsnNode = (FieldInsnNode) current;
             if (fieldInsnNode.getOpcode() == Opcodes.GETFIELD || fieldInsnNode.getOpcode() == Opcodes.GETSTATIC) {
                 return Type.getType(fieldInsnNode.desc);
             }
             return Type.VOID_TYPE;
         }
 
-        if (Bytecode.isConstant(node)) {
-            return Bytecode.getConstantType(node);
+        if (Bytecode.isConstant(current)) {
+            return Bytecode.getConstantType(current);
         }
 
-        if (node instanceof TypeInsnNode && node.getOpcode() == Opcodes.NEW) {
-            TypeInsnNode typeInsnNode = ((TypeInsnNode) node);
+        if (current instanceof TypeInsnNode && current.getOpcode() == Opcodes.NEW) {
+            TypeInsnNode typeInsnNode = ((TypeInsnNode) current);
             return Type.getObjectType(typeInsnNode.desc);
         }
 
         return null;
+    }
+
+    private class TargetInfo {
+        private final boolean isDupedFactoryRedirect;
+        private final boolean isDynamicInstanceofRedirect;
+        private final ArrayCreationInfo arrayCreationInfo;
+        private final boolean isStringConcat;
+        private final ComparisonInfo comparison;
+
+
+        public TargetInfo(InjectionNode node) {
+            this.isDupedFactoryRedirect = InjectorUtils.isDupedFactoryRedirect(node);
+            this.isDynamicInstanceofRedirect = InjectorUtils.isDynamicInstanceofRedirect(node);
+            this.arrayCreationInfo = node.getDecoration(FlowDecorations.ARRAY_CREATION_INFO);
+            this.isStringConcat = InjectorUtils.hasInjectorSpecificDecoration(node, info, ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION);
+            this.comparison = InjectorUtils.getInjectorSpecificDecoration(node, info, ExpressionDecorations.COMPARISON_INFO);
+        }
+
+        public AbstractInsnNode getInsertionPoint(AbstractInsnNode valueNode) {
+            if (isDupedFactoryRedirect) {
+                return PreviousInjectorInsns.DUPED_FACTORY_REDIRECT.getLast(valueNode);
+            }
+            if (isDynamicInstanceofRedirect) {
+                return PreviousInjectorInsns.DYNAMIC_INSTANCEOF_REDIRECT.getLast(valueNode);
+            }
+            if (arrayCreationInfo != null) {
+                return arrayCreationInfo.initialized;
+            }
+            if (comparison != null) {
+                return comparison.getJumpInsn();
+            }
+            return valueNode;
+        }
+
+        public void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
+            LabelNode originalJumpTarget = null;
+            if (isStringConcat) {
+                // We copy the StringBuilder, build it, let the user modify the String, and then replace the
+                // contents of the StringBuilder with what they returned.
+                after.add(new InsnNode(Opcodes.DUP));
+                stack.extra(1);
+                after.add(new MethodInsnNode(
+                        Opcodes.INVOKEVIRTUAL,
+                        Type.getInternalName(StringBuilder.class),
+                        "toString",
+                        Bytecode.generateDescriptor(String.class),
+                        false
+                ));
+            } else if (comparison != null) {
+                originalJumpTarget = comparison.getJumpTarget();
+                ASMUtils.ifElse(
+                        after,
+                        label -> comparison.getJumpInsn().label = label,
+                        () -> after.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_0 : Opcodes.ICONST_1)),
+                        () -> after.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_1 : Opcodes.ICONST_0))
+                );
+            }
+            ModifyExpressionValueInjector.this.invokeHandler(valueType, target, after, stack);
+            if (isStringConcat) {
+                after.add(
+                        new MethodInsnNode(
+                                Opcodes.INVOKESTATIC,
+                                Type.getInternalName(MixinExtrasHooks.class),
+                                "replaceContents",
+                                Bytecode.generateDescriptor(StringBuilder.class, StringBuilder.class, String.class),
+                                false
+                        )
+                );
+            } else if (comparison != null) {
+                after.add(new JumpInsnNode(comparison.jumpOnTrue ? Opcodes.IFNE : Opcodes.IFEQ, originalJumpTarget));
+            }
+        }
     }
 }

@@ -109,6 +109,6 @@ public class LocalRefUtils {
     }
 
     private static Type getErasedType(Type actual) {
-        return ASMUtils.isPrimitive(actual) ? actual : Type.getType(Object.class);
+        return ASMUtils.isPrimitive(actual) ? actual : ASMUtils.OBJECT_TYPE;
     }
 }

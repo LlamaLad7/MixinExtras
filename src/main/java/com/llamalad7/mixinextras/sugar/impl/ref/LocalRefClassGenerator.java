@@ -4,9 +4,13 @@ import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.service.MixinExtrasVersion;
 import com.llamalad7.mixinextras.sugar.impl.ref.generated.GeneratedImplDummy;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import com.llamalad7.mixinextras.utils.ASMUtils;
 import com.llamalad7.mixinextras.utils.ClassGenUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.objectweb.asm.*;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.InstructionAdapter;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -47,7 +51,7 @@ public class LocalRefClassGenerator {
     }
 
     private static void generateClass(ClassNode node, String owner, String innerDesc, String interfaceName) {
-        Type objectType = Type.getType(Object.class);
+        Type objectType = ASMUtils.OBJECT_TYPE;
         Type innerType = Type.getType(innerDesc);
 
         for (String name : MixinExtrasService.getInstance().getAllClassNamesAtLeast(interfaceName, MixinExtrasVersion.V0_2_0_BETA_5)) {

@@ -6,16 +6,18 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
+import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 import org.spongepowered.asm.mixin.refmap.IMixinContext;
 import org.spongepowered.asm.util.VersionNumber;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class MixinVersion {
-    private static final List<String> VERSIONS = Arrays.asList("0.8.7", "0.8.4", "0.8.3", "0.8");
+    private static final List<String> VERSIONS = Arrays.asList("0.8.7", "0.8.6", "0.8.4", "0.8.3", "0.8");
     private static final MixinVersion INSTANCE;
 
     static {
@@ -54,4 +56,8 @@ public abstract class MixinVersion {
     public abstract AnnotationNode getAnnotation(InjectionInfo info);
 
     public abstract int getOrder(InjectionInfo info);
+
+    public abstract Collection<Target> getTargets(InjectionInfo info);
+
+    public abstract MemberInfo parseMemberInfo(String targetSelector, InjectionInfo info);
 }

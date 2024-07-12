@@ -10,20 +10,24 @@ public class Decorations {
      * This should be used as a prefix to an existing decoration key.
      */
     public static final String PERSISTENT = "mixinextras_persistent_";
+
     /**
      * Stores that a non-void operation has its result immediately popped and so can be treated as void by someone
      * using {@link WrapWithCondition} on it.
      */
     public static final String POPPED_OPERATION = "mixinextras_operationIsImmediatelyPopped";
+
     /**
      * Stores a map of LVT index of target local -&gt; LVT index of applicable {@link LocalRef}.
      * References should be shared by injectors that wrap/replace the same target instruction.
      */
     public static final String LOCAL_REF_MAP = "mixinextras_localRefMap";
+
     /**
      * Stores that a NEW instruction is immediately DUPed so that {@link WrapOperation} can handle it properly.
      */
     public static final String NEW_IS_DUPED = "mixinextras_newIsDuped";
+
     /**
      * Stores the types that a NEW's &lt;init&gt; takes as its parameters.
      */
@@ -38,4 +42,9 @@ public class Decorations {
      * Stores the shared CallbackInfo local index for this target instruction.
      */
     public static final String CANCELLABLE_CI_INDEX = "mixinextras_cancellableCiIndex";
+
+    /**
+     * Marks that this @At is contained within a @Slice.
+     */
+    public static final String IS_IN_SLICE = "mixinextras_isInSlice";
 }

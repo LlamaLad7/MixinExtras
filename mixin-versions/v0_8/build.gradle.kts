@@ -2,8 +2,6 @@ plugins {
     id("java")
 }
 
-configurations.all {
-    resolutionStrategy {
-        force("org.spongepowered:mixin:0.8")
-    }
+dependencies {
+    compileOnly(mixin("0.8"))
 }

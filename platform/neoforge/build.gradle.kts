@@ -1,3 +1,8 @@
+plugins {
+    id("mixinextras.platform")
+    id("mixinextras.slimjar")
+}
+
 repositories {
     maven("https://maven.neoforged.net/")
 }

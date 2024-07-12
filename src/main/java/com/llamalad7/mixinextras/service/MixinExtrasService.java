@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.service;
 
 import com.llamalad7.mixinextras.utils.Blackboard;
 import com.llamalad7.mixinextras.utils.ProxyUtils;
+import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 
@@ -19,6 +20,8 @@ public interface MixinExtrasService {
     void offerExtension(int version, IExtension extension);
 
     void offerInjector(int version, Class<? extends InjectionInfo> injector);
+
+    void offerInjectionPoint(int version, Class<? extends InjectionPoint> point);
 
     void initialize();
 

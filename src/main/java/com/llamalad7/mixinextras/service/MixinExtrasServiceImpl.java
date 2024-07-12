@@ -1,5 +1,7 @@
 package com.llamalad7.mixinextras.service;
 
+import com.llamalad7.mixinextras.expression.impl.point.ExpressionInjectionPoint;
+import com.llamalad7.mixinextras.expression.impl.wrapper.ExpressionInjectorWrapperInjectionInfo;
 import com.llamalad7.mixinextras.injector.*;
 import com.llamalad7.mixinextras.injector.v2.WrapWithConditionInjectionInfo;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethodApplicatorExtension;
@@ -13,6 +15,7 @@ import com.llamalad7.mixinextras.utils.MixinInternals;
 import com.llamalad7.mixinextras.wrapper.factory.FactoryRedirectWrapperInjectionInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Type;
+import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 
@@ -26,6 +29,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     private final List<Versioned<String>> offeredPackages = new ArrayList<>();
     private final List<Versioned<IExtension>> offeredExtensions = new ArrayList<>();
     private final List<Versioned<Class<? extends InjectionInfo>>> offeredInjectors = new ArrayList<>();
+    private final List<Versioned<Class<? extends InjectionPoint>>> offeredPoints = new ArrayList<>();
     private final String ownPackage = StringUtils.substringBefore(getClass().getName(), ".service.");
     private final List<Versioned<String>> allPackages = new ArrayList<>(Collections.singletonList(
             new Versioned<>(getVersion(), ownPackage)
@@ -43,8 +47,12 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
             new Versioned<>(MixinExtrasVersion.V0_3_4.getNumber(), WrapWithConditionInjectionInfo.class),
             new Versioned<>(MixinExtrasVersion.V0_4_0_BETA_1.getNumber(), WrapMethodInjectionInfo.class)
     );
+    private final List<Class<? extends InjectionPoint>> ownPoints = Arrays.asList(
+            ExpressionInjectionPoint.class
+    );
     private final List<Class<? extends InjectionInfo>> internalInjectors = Arrays.asList(
-            SugarWrapperInjectionInfo.class, FactoryRedirectWrapperInjectionInfo.class
+            SugarWrapperInjectionInfo.class, FactoryRedirectWrapperInjectionInfo.class,
+            ExpressionInjectorWrapperInjectionInfo.class
     );
     private final List<String> registeredInjectors = new ArrayList<>();
 
@@ -92,6 +100,9 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
 
         offeredInjectors.forEach(injector -> newService.offerInjector(injector.version, injector.value));
         ownInjectors.forEach(injector -> newService.offerInjector(getVersion(), injector));
+
+        offeredPoints.forEach(point -> newService.offerInjectionPoint(point.version, point.value));
+        ownPoints.forEach(point -> newService.offerInjectionPoint(getVersion(), point));
     }
 
     @Override
@@ -120,6 +131,12 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
     }
 
     @Override
+    public void offerInjectionPoint(int version, Class<? extends InjectionPoint> point) {
+        requireNotInitialized();
+        offeredPoints.add(new Versioned<>(version, point));
+    }
+
+    @Override
     public String toString() {
         return String.format(
                 "%s(version=%s)",
@@ -133,6 +150,7 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
         LOGGER.info("Initializing MixinExtras via {}.", this);
         detectBetaPackages();
         internalInjectors.forEach(InjectionInfo::register);
+        ownPoints.forEach(MixinInternals::registerInjectionPoint);
         initialized = true;
     }
 
@@ -173,6 +191,9 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Returns whether this class belongs to some MixinExtras instance. Accepts a . format name.
+     */
     public boolean isClassOwned(String name) {
         return allPackages.stream().map(it -> it.value).anyMatch(name::startsWith);
     }
