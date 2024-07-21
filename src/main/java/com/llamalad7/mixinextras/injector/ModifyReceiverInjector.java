@@ -82,6 +82,10 @@ public class ModifyReceiverInjector extends Injector {
                 MethodInsnNode methodInsnNode = (MethodInsnNode) node;
                 return ArrayUtils.addAll(new Type[]{Type.getObjectType(classNode.name)}, Type.getArgumentTypes(methodInsnNode.desc));
             }
+            case Opcodes.INVOKESTATIC: {
+                // Has no receiver but could be a static redirect of a call which *does* have one.
+                return Type.getArgumentTypes(((MethodInsnNode) node).desc);
+            }
             case Opcodes.GETFIELD: {
                 FieldInsnNode fieldInsnNode = ((FieldInsnNode) node);
                 return new Type[]{Type.getObjectType(fieldInsnNode.owner)};
