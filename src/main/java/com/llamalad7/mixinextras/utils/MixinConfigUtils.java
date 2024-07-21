@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.utils;
 
 import com.github.zafarkhaja.semver.Version;
+import com.google.gson.Strictness;
 import com.google.gson.stream.JsonReader;
 import com.llamalad7.mixinextras.service.MixinExtrasVersion;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
@@ -65,6 +66,7 @@ public class MixinConfigUtils {
 
     private static <T> T readConfig(IMixinConfig config, JsonProcessor<T> compute) {
         try (JsonReader reader = new JsonReader(new InputStreamReader(MixinService.getService().getResourceAsStream(config.getName())))) {
+            reader.setStrictness(Strictness.LENIENT);
             return compute.process(reader);
         } catch (Exception e) {
             throw new RuntimeException("Failed to read mixin config " + config.getName(), e);
