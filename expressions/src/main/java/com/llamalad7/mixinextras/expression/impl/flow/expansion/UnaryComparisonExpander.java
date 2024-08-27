@@ -1,9 +1,9 @@
 package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
-import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
-import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnNode;
@@ -25,7 +25,7 @@ public class UnaryComparisonExpander extends InsnExpander {
         if (isComplexComparison(node.getInput(0))) {
             // Complex comparisons are similar to `lcmp(a, b) == 0`, for example, but the comparison with zero
             // should not be considered.
-            node.getInput(0).decorate(FlowDecorations.COMPLEX_COMPARISON_JUMP, jump);
+            node.getInput(0).decorate(FlowDecorations.COMPLEX_COMPARISON_JUMP, node);
             sink.markAsSynthetic(node);
             return;
         }

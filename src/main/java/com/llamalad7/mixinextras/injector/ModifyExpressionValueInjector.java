@@ -43,7 +43,7 @@ public class ModifyExpressionValueInjector extends Injector {
             valueNode = ASMUtils.findInitNodeFor(target, (TypeInsnNode) valueNode);
         }
 
-        TargetInfo info = new TargetInfo(node);
+        TargetInfo info = new TargetInfo(target, node);
 
         this.injectValueModifier(target, valueNode, valueType, info, shouldPop, stack);
     }
@@ -66,7 +66,7 @@ public class ModifyExpressionValueInjector extends Injector {
 
     private void injectValueModifier(Target target, AbstractInsnNode valueNode, Type valueType, TargetInfo info, boolean shouldPop, StackExtension stack) {
         final InsnList after = new InsnList();
-        info.invokeHandler(valueType, target, after, stack);
+        info.invokeHandler(valueType, after, stack);
         if (shouldPop) {
             after.add(new InsnNode(Opcodes.POP));
         }
@@ -139,14 +139,15 @@ public class ModifyExpressionValueInjector extends Injector {
     }
 
     private class TargetInfo {
+        private final Target target;
         private final boolean isDupedFactoryRedirect;
         private final boolean isDynamicInstanceofRedirect;
         private final ArrayCreationInfo arrayCreationInfo;
         private final boolean isStringConcat;
         private final ComparisonInfo comparison;
 
-
-        public TargetInfo(InjectionNode node) {
+        public TargetInfo(Target target, InjectionNode node) {
+            this.target = target;
             this.isDupedFactoryRedirect = InjectorUtils.isDupedFactoryRedirect(node);
             this.isDynamicInstanceofRedirect = InjectorUtils.isDynamicInstanceofRedirect(node);
             this.arrayCreationInfo = node.getDecoration(FlowDecorations.ARRAY_CREATION_INFO);
@@ -162,15 +163,15 @@ public class ModifyExpressionValueInjector extends Injector {
                 return PreviousInjectorInsns.DYNAMIC_INSTANCEOF_REDIRECT.getLast(valueNode);
             }
             if (arrayCreationInfo != null) {
-                return arrayCreationInfo.initialized;
+                return arrayCreationInfo.initialized.getNode(target).getCurrentTarget();
             }
             if (comparison != null) {
-                return comparison.getJumpInsn();
+                return comparison.getJumpInsn(target);
             }
             return valueNode;
         }
 
-        public void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
+        public void invokeHandler(Type valueType, InsnList after, StackExtension stack) {
             LabelNode originalJumpTarget = null;
             if (isStringConcat) {
                 // We copy the StringBuilder, build it, let the user modify the String, and then replace the
@@ -185,10 +186,10 @@ public class ModifyExpressionValueInjector extends Injector {
                         false
                 ));
             } else if (comparison != null) {
-                originalJumpTarget = comparison.getJumpTarget();
+                originalJumpTarget = comparison.getJumpTarget(target);
                 ASMUtils.ifElse(
                         after,
-                        label -> comparison.getJumpInsn().label = label,
+                        label -> comparison.getJumpInsn(target).label = label,
                         () -> after.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_0 : Opcodes.ICONST_1)),
                         () -> after.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_1 : Opcodes.ICONST_0))
                 );

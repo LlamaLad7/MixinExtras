@@ -90,13 +90,14 @@ public class ComparisonExpression extends Expression {
             if (isComplex) {
                 int zeroDirect = directInt - WITH_ZERO_OFFSET;
                 int zeroInverted = invertedInt - WITH_ZERO_OFFSET;
-                JumpInsnNode jump = node.getDecoration(FlowDecorations.COMPLEX_COMPARISON_JUMP);
+                FlowValue jumpNode = node.getDecoration(FlowDecorations.COMPLEX_COMPARISON_JUMP);
+                JumpInsnNode jump = (JumpInsnNode) jumpNode.getInsn();
                 if (jump == null || jump.getOpcode() != zeroDirect && jump.getOpcode() != zeroInverted) {
                     return false;
                 }
-                info = new ComplexComparisonInfo(opcode, insn, input, jump, jump.getOpcode() == zeroDirect);
+                info = new ComplexComparisonInfo(opcode, node, input, jumpNode, jump.getOpcode() == zeroDirect);
             } else {
-                info = new ComparisonInfo(opcode, insn, input, opcode == directObject || opcode == directInt);
+                info = new ComparisonInfo(opcode, node, input, opcode == directObject || opcode == directInt);
             }
             info.attach(
                     (k, v) -> ctx.decorate(insn, k, v),

@@ -18,8 +18,9 @@ import java.util.function.Consumer;
 
 public abstract class InsnExpander implements FlowPostProcessor {
     private static final String INSN_COMPONENT = "expandedInsnComponent";
-    private static final String COMPOUND_INSN = "compoundInsn";
-    private static final String INSN_EXPANDER = "insnExpander";
+    private static final String EXPANSION = "expansion";
+
+    private final Map<AbstractInsnNode, Expansion> expansions = new IdentityHashMap<>();
 
     @Override
     public abstract void process(FlowValue node, FlowPostProcessor.OutputSink sink);
@@ -28,8 +29,8 @@ public abstract class InsnExpander implements FlowPostProcessor {
 
     protected final void registerComponent(FlowValue node, InsnComponent component, AbstractInsnNode compound) {
         node.decorate(INSN_COMPONENT, component);
-        node.decorate(COMPOUND_INSN, compound);
-        node.decorate(INSN_EXPANDER, this);
+        expansions.computeIfAbsent(compound, Expansion::new);
+        node.decorate(EXPANSION, expansions.get(compound));
     }
 
     protected final void expandInsn(Target target, InjectionNode node, AbstractInsnNode... insns) {
@@ -43,16 +44,14 @@ public abstract class InsnExpander implements FlowPostProcessor {
     }
 
     public static Expansion prepareExpansion(FlowValue node, Target target, InjectionInfo info, ExpressionContext ctx) {
-        InsnExpander expander = node.getDecoration(INSN_EXPANDER);
-        if (expander == null) {
+        if (!hasExpansion(node)) {
             return null;
         }
         checkSupportsExpansion(info, ctx.type);
-        AbstractInsnNode compoundInsn = node.getDecoration(COMPOUND_INSN);
+        Expansion expansion = node.getDecoration(EXPANSION);
+        AbstractInsnNode compoundInsn = expansion.compound;
         InjectionNode compoundNode = target.addInjectionNode(compoundInsn);
-        Expansion expansion = compoundNode.getDecoration(ExpressionDecorations.EXPANSION_INFO);
-        if (expansion == null) {
-            expansion = expander.new Expansion(compoundInsn);
+        if (!compoundNode.hasDecoration(ExpressionDecorations.EXPANSION_INFO)) {
             compoundNode.decorate(ExpressionDecorations.EXPANSION_INFO, expansion);
         }
         expansion.registerInterest(info, node.getDecoration(INSN_COMPONENT));
@@ -90,11 +89,20 @@ public abstract class InsnExpander implements FlowPostProcessor {
     }
 
     public static AbstractInsnNode getRepresentative(FlowValue node) {
-        AbstractInsnNode compound = node.getDecoration(COMPOUND_INSN);
-        if (compound != null) {
-            return compound;
+        Expansion expansion = node.getDecoration(EXPANSION);
+        if (expansion != null) {
+            return expansion.compound;
         }
         return node.getInsn();
+    }
+
+    public static boolean hasExpansion(FlowValue node) {
+        return node.hasDecoration(EXPANSION);
+    }
+
+    public static void addExpansionStep(FlowValue node, Consumer<InjectionNode> step) {
+        Expansion expansion = node.getDecoration(EXPANSION);
+        expansion.addExpansionStep(node.getDecoration(INSN_COMPONENT), step);
     }
 
     public class Expansion {
@@ -129,7 +137,7 @@ public abstract class InsnExpander implements FlowPostProcessor {
             return new HashSet<>(interests.values());
         }
 
-        private void addExpansionStep(InsnComponent component, Consumer<InjectionNode> step) {
+        void addExpansionStep(InsnComponent component, Consumer<InjectionNode> step) {
             expansionSteps.computeIfAbsent(component, k -> new ArrayList<>()).add(step);
         }
 

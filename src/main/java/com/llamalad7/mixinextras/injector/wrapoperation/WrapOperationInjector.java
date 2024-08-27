@@ -485,7 +485,7 @@ class WrapOperationInjector extends Injector {
                     () -> insns.add(new InsnNode(comparison.jumpOnTrue ? Opcodes.ICONST_1 : Opcodes.ICONST_0))
             );
             if (!isWrapped) {
-                insns.add(new JumpInsnNode(Opcodes.IFNE, comparison.getJumpTarget()));
+                insns.add(new JumpInsnNode(Opcodes.IFNE, comparison.getJumpTarget(target)));
                 comparison.cleanup(target);
             }
         }

@@ -37,7 +37,7 @@ public class NewArrayPostProcessor implements FlowPostProcessor {
             node.decorate(
                     FlowDecorations.ARRAY_CREATION_INFO,
                     new ArrayCreationInfo(
-                            stores.get(stores.size() - 1).getInsn()
+                            stores.get(stores.size() - 1)
                     )
             );
             node.setParents(stores.stream().map(it -> it.getInput(2)).toArray(FlowValue[]::new));
