@@ -186,7 +186,7 @@ public class ExpressionASMUtils {
                 throw errorFor(insn);
         }
     }
-    
+
     public static Type getBinaryType(AbstractInsnNode insn, Type left) {
         switch (insn.getOpcode()) {
             case LALOAD:
@@ -385,5 +385,31 @@ public class ExpressionASMUtils {
             return null;
         }
         return Bytecode.getConstant(insn);
+    }
+
+    public static AbstractInsnNode pushInt(int integer) {
+        switch (integer) {
+            case -1:
+                return new InsnNode(Opcodes.ICONST_M1);
+            case 0:
+                return new InsnNode(Opcodes.ICONST_0);
+            case 1:
+                return new InsnNode(Opcodes.ICONST_1);
+            case 2:
+                return new InsnNode(Opcodes.ICONST_2);
+            case 3:
+                return new InsnNode(Opcodes.ICONST_3);
+            case 4:
+                return new InsnNode(Opcodes.ICONST_4);
+            case 5:
+                return new InsnNode(Opcodes.ICONST_5);
+        }
+        if (Byte.MIN_VALUE <= integer && integer <= Byte.MAX_VALUE) {
+            return new IntInsnNode(Opcodes.BIPUSH, integer);
+        }
+        if (Short.MIN_VALUE <= integer && integer <= Short.MAX_VALUE) {
+            return new IntInsnNode(Opcodes.SIPUSH, integer);
+        }
+        return new LdcInsnNode(integer);
     }
 }

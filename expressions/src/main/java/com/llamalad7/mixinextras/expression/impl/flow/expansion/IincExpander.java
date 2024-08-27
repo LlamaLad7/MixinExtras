@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
+import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -17,7 +18,7 @@ public class IincExpander extends InsnExpander {
         IincInsnNode iinc = (IincInsnNode) node.getInsn();
         FlowValue load = new FlowValue(Type.INT_TYPE, new VarInsnNode(Opcodes.ILOAD, iinc.var));
         registerComponent(load, Component.LOAD, iinc);
-        FlowValue cst = new FlowValue(Type.INT_TYPE, new IntInsnNode(Opcodes.BIPUSH, iinc.incr));
+        FlowValue cst = new FlowValue(Type.INT_TYPE, ExpressionASMUtils.pushInt(iinc.incr));
         registerComponent(cst, Component.CST, iinc);
         FlowValue add = new FlowValue(Type.INT_TYPE, new InsnNode(Opcodes.IADD), load, cst);
         registerComponent(add, Component.ADD, iinc);
@@ -36,7 +37,7 @@ public class IincExpander extends InsnExpander {
         expandInsn(
                 target, node,
                 expansion.registerInsn(Component.LOAD, new VarInsnNode(Opcodes.ILOAD, iinc.var)),
-                expansion.registerInsn(Component.CST, new IntInsnNode(Opcodes.BIPUSH, iinc.incr)),
+                expansion.registerInsn(Component.CST, ExpressionASMUtils.pushInt(iinc.incr)),
                 expansion.registerInsn(Component.ADD, new InsnNode(Opcodes.IADD)),
                 expansion.registerInsn(Component.STORE, new VarInsnNode(Opcodes.ISTORE, iinc.var))
         );
