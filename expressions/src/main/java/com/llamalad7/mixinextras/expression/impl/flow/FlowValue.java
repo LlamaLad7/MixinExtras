@@ -136,4 +136,11 @@ public class FlowValue implements Value {
     public Map<String, Object> getDecorations() {
         return decorations == null ? Collections.emptyMap() : decorations;
     }
+
+    public boolean typeMatches(Type desiredType) {
+        if (ExpressionASMUtils.isIntLike(desiredType) && getType().equals(ExpressionASMUtils.INTLIKE_TYPE)) {
+            return true;
+        }
+        return getType().equals(desiredType);
+    }
 }

@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
+import org.objectweb.asm.Type;
 
 public class StringLiteralExpression extends SimpleExpression {
     public final String value;
@@ -25,6 +26,6 @@ public class StringLiteralExpression extends SimpleExpression {
         if (cst == null) {
             return false;
         }
-        return cst.equals(value) || cst.equals(charValue);
+        return cst.equals(value) || (node.typeMatches(Type.CHAR_TYPE) && cst.equals(charValue));
     }
 }
