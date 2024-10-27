@@ -23,5 +23,6 @@ tasks.named<Jar>("jar") {
     manifest.attributes(
         "MixinConfigs" to "mixinextras.init.mixins.json",
         "FMLModType" to "GAMELIBRARY",
+        "Automatic-Module-Name" to "mixinextras.neoforge",
     )
 }
