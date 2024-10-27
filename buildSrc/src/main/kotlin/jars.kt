@@ -1,3 +1,6 @@
+import org.gradle.api.Project
+import org.gradle.jvm.tasks.Jar
+import org.gradle.kotlin.dsl.named
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.zip.Deflater
@@ -18,5 +21,11 @@ fun decompressJar(jarFile: File) {
                 output.closeEntry()
             }
         }
+    }
+}
+
+fun Project.jarsNamed(vararg names: String, configuration: Jar.() -> Unit) {
+    for (name in names) {
+        tasks.named<Jar>(name, configuration)
     }
 }

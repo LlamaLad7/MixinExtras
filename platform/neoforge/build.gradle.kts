@@ -19,7 +19,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-tasks.named<Jar>("jar") {
+jarsNamed("jar", "slimJar") {
     manifest.attributes(
         "MixinConfigs" to "mixinextras.init.mixins.json",
         "FMLModType" to "GAMELIBRARY",

@@ -11,7 +11,7 @@ tasks.withType<ProcessResources> {
     }
 }
 
-tasks.named<Jar>("jar") {
+jarsNamed("jar", "slimJar") {
     manifest.attributes(
         "Fabric-Loom-Remap" to "false",
     )
