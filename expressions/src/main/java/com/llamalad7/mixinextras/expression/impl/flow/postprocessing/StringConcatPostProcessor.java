@@ -60,7 +60,7 @@ public class StringConcatPostProcessor implements FlowPostProcessor {
         toStringCall.decorate(
                 FlowDecorations.STRING_CONCAT_INFO,
                 new StringConcatInfo(
-                        false,
+                        appendCalls.size() == 2,
                         true,
                         initialComponent,
                         toStringCall
