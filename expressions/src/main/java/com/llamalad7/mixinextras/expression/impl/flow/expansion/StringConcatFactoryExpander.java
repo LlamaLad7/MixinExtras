@@ -40,7 +40,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
         for (ConcatPart part : parts) {
             FlowValue component;
             if (part instanceof ConcatPart.Argument) {
-                component = node.getInput(nextArgument++);
+                component = unwrapConcatArgument(node.getInput(nextArgument++), sink);
             } else {
                 Object cst;
                 if (part instanceof ConcatPart.PooledConstant) {
@@ -66,6 +66,24 @@ public class StringConcatFactoryExpander extends InsnExpander {
         // We decorate the concat explicitly since we used dummy insns for most of its parts to avoid the StringBuilder
         // operations being directly targetable.
         StringConcatPostProcessor.decorateConcat(appendCalls, node);
+    }
+
+    private FlowValue unwrapConcatArgument(FlowValue argument, FlowPostProcessor.OutputSink sink) {
+        if (!argument.isComplex() && isStringValueOf(argument.getInsn())) {
+            sink.markAsSynthetic(argument);
+            return argument.getInput(0);
+        }
+        return argument;
+    }
+
+    private boolean isStringValueOf(AbstractInsnNode insn) {
+        if (insn.getOpcode() != Opcodes.INVOKESTATIC) {
+            return false;
+        }
+        MethodInsnNode call = (MethodInsnNode) insn;
+        return call.owner.equals(STRING.getInternalName()) &&
+                call.name.equals("valueOf") &&
+                call.desc.equals("(Ljava/lang/Object;)Ljava/lang/String;");
     }
 
     @Override
