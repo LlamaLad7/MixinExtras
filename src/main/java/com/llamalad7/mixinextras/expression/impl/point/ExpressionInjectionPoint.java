@@ -212,16 +212,7 @@ public class ExpressionInjectionPoint extends InjectionPoint {
 
     private void checkDeclaredMinVersion() {
         IMixinConfig config = CompatibilityHelper.getMixin(CURRENT_INFO).getMixin().getConfig();
-        MixinExtrasVersion min = MixinConfigUtils.minVersionFor(config);
-        if (min.getNumber() < MixinExtrasVersion.V0_5_0_BETA_1.getNumber()) {
-            throw new UnsupportedOperationException(
-                    String.format(
-                            "In order to use Expressions, Mixin Config '%s' needs to declare a \"%s\"" +
-                                    " of at least %s! E.g. `\"%2$s\": \"%s\"`",
-                            config, MixinConfigUtils.KEY_MIN_VERSION, MixinExtrasVersion.V0_5_0_BETA_1, MixinExtrasVersion.LATEST
-                    )
-            );
-        }
+        MixinConfigUtils.requireMinVersion(config, MixinExtrasVersion.V0_5_0_BETA_1, "@Expression");
     }
 
     private List<Expression> parseExpressions() {

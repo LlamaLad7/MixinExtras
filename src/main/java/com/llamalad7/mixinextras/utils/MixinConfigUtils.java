@@ -1,8 +1,8 @@
 package com.llamalad7.mixinextras.utils;
 
-import com.github.zafarkhaja.semver.Version;
 import com.google.gson.Strictness;
 import com.google.gson.stream.JsonReader;
+import com.llamalad7.mixinextras.config.MixinExtrasConfig;
 import com.llamalad7.mixinextras.service.MixinExtrasVersion;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
 import org.spongepowered.asm.service.MixinService;
@@ -13,52 +13,60 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public class MixinConfigUtils {
-    public static final String KEY_MIN_VERSION = "minMixinExtrasVersion";
-    private static final Map<IMixinConfig, MixinExtrasVersion> MIN_CACHE = new WeakHashMap<>();
+    private static final String KEY_TOP_LEVEL_MIN_VERSION = "minMixinExtrasVersion";
+    private static final String KEY_SUBCONFIG = "mixinextras";
+    private static final String KEY_MIN_VERSION = "minVersion";
+    private static final Map<IMixinConfig, MixinExtrasConfig> CONFIG_CACHE = new WeakHashMap<>();
 
-    public static MixinExtrasVersion minVersionFor(IMixinConfig config) {
-        return MIN_CACHE.computeIfAbsent(config, k -> {
-            Version min = readMin(config);
-            MixinExtrasVersion[] versions = MixinExtrasVersion.values();
-            if (min == null) {
-                return versions[0];
-            }
-            if (min.isHigherThan(MixinExtrasVersion.LATEST.getSemver())) {
-                throw new IllegalArgumentException(
-                        String.format(
-                                "Mixin Config %s requires MixinExtras >=%s but %s is present!",
-                                config.getName(), min, MixinExtrasVersion.LATEST
-                        )
-                );
-            }
-            MixinExtrasVersion result = versions[0];
-            for (MixinExtrasVersion version : versions) {
-                if (version.getSemver().isHigherThan(min)) {
-                    break;
-                }
-                result = version;
-            }
-            return result;
-        });
+    public static void requireMinVersion(IMixinConfig config, MixinExtrasVersion desiredVersion, String featureName) {
+        MixinExtrasVersion min = extraConfigFor(config).minVersion;
+        if (min == null || min.getNumber() < desiredVersion.getNumber()) {
+            throw new UnsupportedOperationException(
+                    String.format(
+                            "In order to use %s, Mixin Config '%s' needs to declare a reliance on " +
+                                    "MixinExtras >=%s! E.g. `\"%s\": {\"%s\": \"%s\"}`",
+                            featureName, config, desiredVersion,
+                            KEY_SUBCONFIG,
+                            KEY_MIN_VERSION,
+                            MixinExtrasVersion.LATEST
+                    )
+            );
+        }
     }
 
-    private static Version readMin(IMixinConfig config) {
+    private static MixinExtrasConfig extraConfigFor(IMixinConfig config) {
+        return CONFIG_CACHE.computeIfAbsent(config, k ->
+                new MixinExtrasConfig(config, readMinString(config))
+        );
+    }
+
+
+
+    private static String readMinString(IMixinConfig config) {
         return readConfig(config, reader -> {
             reader.beginObject();
             while (reader.hasNext()) {
                 String key = reader.nextName();
-                if (key.equals(KEY_MIN_VERSION)) {
-                    String ver = reader.nextString();
-                    return Version.tryParse(ver).orElseThrow(
-                            () -> new IllegalArgumentException(
-                                    String.format(
-                                            "'%s' is not valid SemVer!",
-                                            ver
-                                    )
-                            )
-                    );
+                switch (key) {
+                    case KEY_SUBCONFIG: {
+                        reader.beginObject();
+                        while (reader.hasNext()) {
+                            String innerKey = reader.nextName();
+                            if (innerKey.equals(KEY_MIN_VERSION)) {
+                                return reader.nextString();
+                            }
+                            reader.skipValue();
+                        }
+                        reader.endObject();
+                        break;
+                    }
+                    case KEY_TOP_LEVEL_MIN_VERSION: {
+                        return reader.nextString();
+                    }
+                    default: {
+                        reader.skipValue();
+                    }
                 }
-                reader.skipValue();
             }
             return null;
         });
