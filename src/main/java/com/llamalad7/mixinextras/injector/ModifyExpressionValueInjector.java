@@ -125,9 +125,13 @@ public class ModifyExpressionValueInjector extends Injector {
             }
             return Type.VOID_TYPE;
         }
-        if (current.getOpcode() == Opcodes.NEW) {
+        if (current.getOpcode() == Opcodes.NEW || current.getOpcode() == Opcodes.CHECKCAST) {
             TypeInsnNode typeInsnNode = (TypeInsnNode) current;
             return Type.getObjectType(typeInsnNode.desc);
+        }
+
+        if (current.getOpcode() == Opcodes.INSTANCEOF) {
+            return Type.BOOLEAN_TYPE;
         }
 
         {
