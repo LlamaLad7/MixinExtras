@@ -56,17 +56,7 @@ public class WrapMethodInjector extends Injector {
                         )
                 );
             }
-            Type ourType = methodArgs[argIndex];
-
-            if (!ourType.equals(theirType)) {
-                throw CompatibilityHelper.makeInvalidInjectionException(
-                        info,
-                        String.format(
-                                "%s targeting %s has a mismatching param at index %s! Expected %s but got %s",
-                                description, target, argIndex, theirType, ourType
-                        )
-                );
-            }
+            checkCoerce(argIndex, theirType, description, true);
         }
         if (argIndex >= methodArgs.length || !methodArgs[argIndex++].equals(operationType)) {
             throw CompatibilityHelper.makeInvalidInjectionException(
