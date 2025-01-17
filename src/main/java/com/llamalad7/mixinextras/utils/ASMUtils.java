@@ -191,4 +191,12 @@ public class ASMUtils {
         }
         return null;
     }
+
+    public static Type getConstantType(AbstractInsnNode insn) {
+        if (insn instanceof TypeInsnNode) {
+            // Mixin for some reason decides these are `Class<?>` constants
+            return null;
+        }
+        return Bytecode.getConstantType(insn);
+    }
 }

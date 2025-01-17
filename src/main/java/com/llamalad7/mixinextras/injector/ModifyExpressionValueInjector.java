@@ -125,14 +125,16 @@ public class ModifyExpressionValueInjector extends Injector {
             }
             return Type.VOID_TYPE;
         }
-
-        if (Bytecode.isConstant(current)) {
-            return Bytecode.getConstantType(current);
+        if (current.getOpcode() == Opcodes.NEW) {
+            TypeInsnNode typeInsnNode = (TypeInsnNode) current;
+            return Type.getObjectType(typeInsnNode.desc);
         }
 
-        if (current instanceof TypeInsnNode && current.getOpcode() == Opcodes.NEW) {
-            TypeInsnNode typeInsnNode = ((TypeInsnNode) current);
-            return Type.getObjectType(typeInsnNode.desc);
+        {
+            Type constantType = ASMUtils.getConstantType(current);
+            if (constantType != null) {
+                return constantType;
+            }
         }
 
         return null;
