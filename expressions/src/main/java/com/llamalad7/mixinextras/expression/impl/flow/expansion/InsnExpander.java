@@ -40,7 +40,11 @@ public abstract class InsnExpander implements FlowPostProcessor {
         }
         AbstractInsnNode insn = node.getCurrentTarget();
         target.insns.insert(insn, insnList);
-        target.replaceNode(insn, new InsnNode(Opcodes.NOP));
+        target.replaceNode(insn, dummyInsn());
+    }
+
+    protected static InsnNode dummyInsn() {
+        return new InsnNode(Opcodes.NOP);
     }
 
     public static Expansion prepareExpansion(FlowValue node, Target target, InjectionInfo info, ExpressionContext ctx) {

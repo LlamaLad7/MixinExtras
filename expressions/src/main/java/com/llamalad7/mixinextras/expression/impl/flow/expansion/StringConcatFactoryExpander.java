@@ -1,7 +1,9 @@
 package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
+import com.llamalad7.mixinextras.expression.impl.flow.DummyFlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.StringConcatPostProcessor;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Opcodes;
@@ -29,14 +31,12 @@ public class StringConcatFactoryExpander extends InsnExpander {
             return;
         }
 
-        FlowValue current = new FlowValue(STRING_BUILDER, makeNewBuilder());
-        registerComponent(current, Component.NEW_BUILDER, indy);
-        FlowValue initCall = new FlowValue(Type.VOID_TYPE, makeBuilderInit(), current);
-        registerComponent(initCall, Component.BUILDER_INIT, indy);
-        sink.registerFlow(current, initCall);
+        FlowValue current = new DummyFlowValue(STRING_BUILDER); // New builder
 
+        List<FlowValue> appendCalls = new ArrayList<>();
         int nextArgument = 0;
         int finishedParts = 0;
+
         for (ConcatPart part : parts) {
             FlowValue component;
             if (part instanceof ConcatPart.Argument) {
@@ -53,14 +53,19 @@ public class StringConcatFactoryExpander extends InsnExpander {
                 registerComponent(component, part, indy);
                 sink.registerFlow(component);
             }
-            current = new FlowValue(STRING_BUILDER, makeAppendCall(component.getType()), current, component);
+            current = new FlowValue(STRING_BUILDER, dummyInsn(), current, component); // append call
             registerComponent(current, new PartialResult(finishedParts++), indy);
             sink.registerFlow(current);
+            appendCalls.add(current);
         }
 
-        node.setInsn(makeToStringCall());
+        node.setInsn(dummyInsn());
         node.setParents(current);
         registerComponent(node, Component.TO_STRING, indy);
+
+        // We decorate the concat explicitly since we used dummy insns for most of its parts to avoid the StringBuilder
+        // operations being directly targetable.
+        StringConcatPostProcessor.decorateConcat(appendCalls, node);
     }
 
     @Override
@@ -76,10 +81,10 @@ public class StringConcatFactoryExpander extends InsnExpander {
         Type[] argTypes = Type.getArgumentTypes(indy.desc);
         int[] argMap = storeArgs(target, argTypes, insns::add);
 
-        insns.add(expansion.registerInsn(Component.NEW_BUILDER, makeNewBuilder()));
+        insns.add(makeNewBuilder());
         insns.add(new InsnNode(Opcodes.DUP));
         target.method.maxStack += 2;
-        insns.add(expansion.registerInsn(Component.BUILDER_INIT, makeBuilderInit()));
+        insns.add(makeBuilderInit());
 
         int nextArgument = 0;
         int finishedParts = 0;
@@ -209,7 +214,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
     }
 
     private enum Component implements InsnComponent {
-        NEW_BUILDER, BUILDER_INIT, TO_STRING
+        TO_STRING
     }
 
     private abstract static class ConcatPart implements InsnComponent {
@@ -253,7 +258,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(id);
+            return Objects.hash(getClass(), id);
         }
     }
 
@@ -274,7 +279,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(finishedParts);
+            return Objects.hash(getClass(), finishedParts);
         }
     }
 }
