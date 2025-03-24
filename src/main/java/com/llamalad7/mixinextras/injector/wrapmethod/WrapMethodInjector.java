@@ -35,6 +35,16 @@ public class WrapMethodInjector extends Injector {
         InjectorData handler = new InjectorData(target, "method wrapper");
         String description = String.format("%s %s %s from %s", this.annotationType, handler, this, CompatibilityHelper.getMixin(info));
 
+        if (target.method.name.endsWith("init>")) {
+            throw CompatibilityHelper.makeInvalidInjectionException(
+                    info,
+                    String.format(
+                            "%s tried to target %s but targeting initializer methods is not supported!",
+                            description, target
+                    )
+            );
+        }
+
         if (!returnType.equals(target.returnType)) {
             throw CompatibilityHelper.makeInvalidInjectionException(
                     info,
