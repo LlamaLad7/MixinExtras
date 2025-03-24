@@ -24,6 +24,18 @@ dependencies {
 ```
 
 </details>
+<details><summary>NeoForge with ModDevGradle</summary>
+
+**NeoForge 20.2.84+ includes MixinExtras already.** If you want to maintain compatibility with older versions, or
+want to use a different version than is provided, see below:
+
+```gradle
+dependencies {
+    implementation(jarJar("io.github.llamalad7:mixinextras-neoforge:0.4.1"))
+}
+```
+
+</details>
 <details><summary>NeoForge with NeoGradle</summary>
 
 **NeoForge 20.2.84+ includes MixinExtras already.** If you want to maintain compatibility with older versions, or
@@ -36,6 +48,8 @@ dependencies {
     }
 }
 ```
+
+Make sure to use the `-all` jar when bundling MixinExtras yourself.
 
 </details>
 <details><summary>Forge 1.18.2+ with ForgeGradle</summary>
