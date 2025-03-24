@@ -9,9 +9,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Allows you to modify the receiver of a non-static
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeInvoke method call} or
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeFieldAccess field get/set}.
+ * Allows you to modify the receiver of a non-static method call or field get/set.
+ * <p>
+ * It accepts these injection points:
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeInvoke INVOKE},
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeFieldAccess FIELD} and
+ * {@link com.llamalad7.mixinextras.expression.Expression MIXINEXTRAS:EXPRESSION}.
  * <p>
  * Your handler method receives the targeted instruction's arguments (optionally followed by the enclosing method's
  * parameters), and should return the adjusted receiver for the operation.

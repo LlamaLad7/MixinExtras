@@ -9,10 +9,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Allows you to wrap a
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeInvoke void method call} or
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeFieldAccess field write}
- * with a conditional check.
+ * Allows you to wrap a void method call or field write with a conditional check.
+ * <p>
+ * It accepts these injection points:
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeInvoke INVOKE},
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeFieldAccess FIELD} and
+ * {@link com.llamalad7.mixinextras.expression.Expression MIXINEXTRAS:EXPRESSION}.
  * <p>
  * Your handler method receives the targeted instruction's arguments (optionally followed by the enclosing method's
  * parameters), and should return a boolean indicating whether the operation should go ahead:

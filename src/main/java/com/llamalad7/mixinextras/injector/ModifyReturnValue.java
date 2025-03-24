@@ -9,9 +9,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Allows you to tweak the value being
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeReturn returned}
- * from a method.
+ * Allows you to tweak the value being returned from a method.
+ * <p>
+ * It accepts these injection points:
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeReturn RETURN},
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeFinalReturn TAIL} and
+ * {@link com.llamalad7.mixinextras.expression.Expression MIXINEXTRAS:EXPRESSION}.
  * <p>
  * Your handler method receives the value about to be returned (optionally followed by the enclosing method's
  * parameters), and should return the adjusted value:

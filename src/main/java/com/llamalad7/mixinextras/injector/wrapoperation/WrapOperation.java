@@ -10,11 +10,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Allows you to wrap a
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeInvoke method call},
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeFieldAccess field get/set},
- * {@link org.spongepowered.asm.mixin.injection.Constant <code>instanceof</code> check}, or
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeNew object instantiation}.
+ * Allows you to wrap many kinds of operations.
+ * <p>
+ * It accepts these injection points:
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeInvoke INVOKE},
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeFieldAccess FIELD},
+ * {@link org.spongepowered.asm.mixin.injection.Constant @Constant},
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeNew NEW} and
+ * {@link com.llamalad7.mixinextras.expression.Expression MIXINEXTRAS:EXPRESSION}.
  * <p>
  * Your handler method receives the targeted instruction's arguments and an {@link Operation} representing the operation
  * being wrapped (optionally followed by the enclosing method's parameters).
@@ -65,6 +68,31 @@ import java.lang.annotation.Target;
  *     <td>Object instantiation</td>
  *     <td><code>private (static) <b>ObjectType</b> handler(<b>&lt;params of the original ctor&gt;</b>,
  *     Operation&lt;<b>ObjectType</b>&gt; original)</code></td>
+ *   </tr>
+ *   <tr>
+ *     <td>Primitive comparison</td>
+ *     <td><code>private (static) boolean handler(<b>theType</b> left, <b>theType</b> right,
+ *     Operation&lt;Boolean&gt; original)</code></td>
+ *   </tr>
+ *   <tr>
+ *     <td>Reference comparison</td>
+ *     <td><code>private (static) boolean handler(Object left, Object right,
+ *     Operation&lt;Boolean&gt; original)</code></td>
+ *   </tr>
+ *   <tr>
+ *     <td>Array element get</td>
+ *     <td><code>private (static) <b>ElementType</b> handler(<b>ElementType</b>[] array, int index,
+ *     Operation&lt;<b>ElementType</b>&gt; original)</code></td>
+ *   </tr>
+ *   <tr>
+ *     <td>Array element set</td>
+ *     <td><code>private (static) void handler(<b>ElementType</b>[] array, int index, <b>ElementType</b> value,
+ *     Operation&lt;Void&gt; original)</code></td>
+ *   </tr>
+ *   <tr>
+ *     <td>Object cast</td>
+ *     <td><code>private (static) <b>CastType</b> handler(Object object,
+ *     Operation&lt;<b>CastType</b>&gt; original)</code></td>
  *   </tr>
  * </table>
  * When {@code call}ing the {@code original}, you must pass everything before the {@code original} in your handler's

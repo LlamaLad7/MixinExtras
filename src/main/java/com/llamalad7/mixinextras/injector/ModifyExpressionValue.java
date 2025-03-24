@@ -9,11 +9,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Allows you to tweak the resultant value of a
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeInvoke method call},
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeFieldAccess field get},
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeConstant constant} or
- * {@link org.spongepowered.asm.mixin.injection.points.BeforeNew object instantiation}.
+ * Allows you to tweak the resultant value of nearly any expression.
+ * <p>
+ * It accepts these injection points:
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeInvoke INVOKE},
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeFieldAccess FIELD},
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeConstant CONSTANT},
+ * {@link org.spongepowered.asm.mixin.injection.points.BeforeNew NEW} and
+ * {@link com.llamalad7.mixinextras.expression.Expression MIXINEXTRAS:EXPRESSION}.
  * <p>
  * Your handler method receives the expression's resultant value (optionally followed by the enclosing method's
  * parameters), and should return the adjusted value:
