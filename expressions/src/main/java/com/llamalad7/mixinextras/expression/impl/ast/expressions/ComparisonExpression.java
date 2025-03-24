@@ -37,8 +37,8 @@ public class ComparisonExpression extends Expression {
     }
 
     public enum Operator implements Opcodes {
-        EQ(IF_ACMPEQ, IF_ICMPEQ, IF_ACMPNE, IF_ICMPNE, FCMPL, DCMPL),
-        NE(IF_ACMPNE, IF_ICMPNE, IF_ACMPEQ, IF_ICMPEQ, FCMPL, DCMPL),
+        EQ(IF_ACMPEQ, IF_ICMPEQ, IF_ACMPNE, IF_ICMPNE, FCMPL, DCMPL, FCMPG, DCMPG),
+        NE(IF_ACMPNE, IF_ICMPNE, IF_ACMPEQ, IF_ICMPEQ, FCMPL, DCMPL, FCMPG, DCMPG),
         LT(0, IF_ICMPLT, 0, IF_ICMPGE, FCMPG, DCMPG),
         LE(0, IF_ICMPLE, 0, IF_ICMPGT, FCMPG, DCMPG),
         GT(0, IF_ICMPGT, 0, IF_ICMPLE, FCMPL, DCMPL),
@@ -50,16 +50,24 @@ public class ComparisonExpression extends Expression {
         private final int directInt;
         private final int invertedObject;
         private final int invertedInt;
-        private final int fcmp;
-        private final int dcmp;
+        private final int fcmp1;
+        private final int dcmp1;
+        private final int fcmp2;
+        private final int dcmp2;
 
-        Operator(int directObject, int directInt, int invertedObject, int invertedInt, int fcmp, int dcmp) {
+        Operator(int directObject, int directInt, int invertedObject, int invertedInt, int fcmp1, int dcmp1, int fcmp2, int dcmp2) {
             this.directObject = directObject;
             this.directInt = directInt;
             this.invertedObject = invertedObject;
             this.invertedInt = invertedInt;
-            this.fcmp = fcmp;
-            this.dcmp = dcmp;
+            this.fcmp1 = fcmp1;
+            this.dcmp1 = dcmp1;
+            this.fcmp2 = fcmp2;
+            this.dcmp2 = dcmp2;
+        }
+
+        Operator(int directObject, int directInt, int invertedObject, int invertedInt, int fcmp, int dcmp) {
+            this(directObject, directInt, invertedObject, invertedInt, fcmp, dcmp, fcmp, dcmp);
         }
 
         public boolean matches(FlowValue node, ExpressionContext ctx) {
@@ -77,10 +85,10 @@ public class ComparisonExpression extends Expression {
             } else if (opcode == LCMP) {
                 input = Type.LONG_TYPE;
                 isComplex = true;
-            } else if (opcode == fcmp) {
+            } else if (opcode == fcmp1 || opcode == fcmp2) {
                 input = Type.FLOAT_TYPE;
                 isComplex = true;
-            } else if (opcode == dcmp) {
+            } else if (opcode == dcmp1 || opcode == dcmp2) {
                 input = Type.DOUBLE_TYPE;
                 isComplex = true;
             } else {
