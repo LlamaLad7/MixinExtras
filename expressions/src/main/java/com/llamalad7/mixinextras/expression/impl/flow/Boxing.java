@@ -3,8 +3,8 @@ package com.llamalad7.mixinextras.expression.impl.flow;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodInsnNode;
 
-class Boxing {
-    public static boolean isBoxing(MethodInsnNode call) {
+public class Boxing {
+    static boolean isBoxing(MethodInsnNode call) {
         String unboxingMethod = getUnboxingMethod(call.owner);
         if (unboxingMethod == null) {
             return false;
@@ -15,7 +15,7 @@ class Boxing {
                 call.name.equals("valueOf") && paramTypes.length == 1 && paramTypes[0].equals(unboxedType);
     }
 
-    private static Type getUnboxedType(String boxedType) {
+    public static Type getUnboxedType(String boxedType) {
         switch (boxedType) {
             case "java/lang/Boolean":
                 return Type.BOOLEAN_TYPE;

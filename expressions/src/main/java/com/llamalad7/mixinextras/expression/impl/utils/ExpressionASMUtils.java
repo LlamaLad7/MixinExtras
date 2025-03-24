@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.utils;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionService;
+import com.llamalad7.mixinextras.expression.impl.flow.Boxing;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowContext;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Handle;
@@ -328,6 +329,17 @@ public class ExpressionASMUtils {
             return BOTTOM_TYPE;
         }
         return ExpressionService.getInstance().getCommonSuperClass(ctx, type1, type2);
+    }
+
+    public static Type getCommonIntType(FlowContext ctx, Type type1, Type type2) {
+        Type unboxed1 = Boxing.getUnboxedType(type1.getInternalName());
+        Type unboxed2 = Boxing.getUnboxedType(type2.getInternalName());
+
+        return getCommonSupertype(
+                ctx,
+                unboxed1 != null ? unboxed1 : type1,
+                unboxed2 != null ? unboxed2 : type2
+        );
     }
 
     public static boolean isIntLike(Type type) {
