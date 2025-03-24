@@ -29,8 +29,8 @@ public class ModifyExpressionValueInjector extends Injector {
         this.checkTargetModifiers(target, false);
 
         StackExtension stack = new StackExtension(target);
-        AbstractInsnNode valueNode = node.getCurrentTarget();
         Type valueType = getReturnType(node);
+        AbstractInsnNode valueNode = getValueNode(node, valueType);
 
         boolean shouldPop = false;
         if (valueNode instanceof TypeInsnNode && valueNode.getOpcode() == Opcodes.NEW) {
@@ -62,6 +62,11 @@ public class ModifyExpressionValueInjector extends Injector {
             throw CompatibilityHelper.makeInvalidInjectionException(this.info, String.format("%s annotation is targeting an invalid insn in %s in %s",
                     this.annotationType, target, this));
         }
+    }
+
+    private AbstractInsnNode getValueNode(InjectionNode target, Type expectedType) {
+        AbstractInsnNode coerceCast = InjectorUtils.findCoerce(target, expectedType);
+        return coerceCast != null ? coerceCast : target.getCurrentTarget();
     }
 
     private void injectValueModifier(Target target, AbstractInsnNode valueNode, Type valueType, TargetInfo info, boolean shouldPop, StackExtension stack) {
@@ -112,31 +117,31 @@ public class ModifyExpressionValueInjector extends Injector {
         if (node.hasDecoration(ExpressionDecorations.SIMPLE_EXPRESSION_TYPE)) {
             return node.getDecoration(ExpressionDecorations.SIMPLE_EXPRESSION_TYPE);
         }
-        AbstractInsnNode current = node.getCurrentTarget();
+        AbstractInsnNode original = node.getOriginalTarget();
 
-        if (current instanceof MethodInsnNode) {
-            MethodInsnNode methodInsnNode = (MethodInsnNode) current;
+        if (original instanceof MethodInsnNode) {
+            MethodInsnNode methodInsnNode = (MethodInsnNode) original;
             return Type.getReturnType(methodInsnNode.desc);
         }
 
-        if (current instanceof FieldInsnNode) {
-            FieldInsnNode fieldInsnNode = (FieldInsnNode) current;
+        if (original instanceof FieldInsnNode) {
+            FieldInsnNode fieldInsnNode = (FieldInsnNode) original;
             if (fieldInsnNode.getOpcode() == Opcodes.GETFIELD || fieldInsnNode.getOpcode() == Opcodes.GETSTATIC) {
                 return Type.getType(fieldInsnNode.desc);
             }
             return Type.VOID_TYPE;
         }
-        if (current.getOpcode() == Opcodes.NEW || current.getOpcode() == Opcodes.CHECKCAST) {
-            TypeInsnNode typeInsnNode = (TypeInsnNode) current;
+        if (original.getOpcode() == Opcodes.NEW || original.getOpcode() == Opcodes.CHECKCAST) {
+            TypeInsnNode typeInsnNode = (TypeInsnNode) original;
             return Type.getObjectType(typeInsnNode.desc);
         }
 
-        if (current.getOpcode() == Opcodes.INSTANCEOF) {
+        if (original.getOpcode() == Opcodes.INSTANCEOF) {
             return Type.BOOLEAN_TYPE;
         }
 
         {
-            Type constantType = ASMUtils.getConstantType(current);
+            Type constantType = ASMUtils.getConstantType(original);
             if (constantType != null) {
                 return constantType;
             }

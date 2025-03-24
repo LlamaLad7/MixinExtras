@@ -123,7 +123,7 @@ class WrapOperationInjector extends Injector {
                 argTypes, returnType, insns, hasExtraThis, trailingParams, classNode, operationType, operation.getName(),
                 (paramArrayIndex, loadArgs) -> {
                     InsnList copied = new InsnList();
-                    operation.copyNode(copied, paramArrayIndex, loadArgs);
+                    operation.copyNode(copied, paramArrayIndex, loadArgs, returnType);
                     return copied;
                 }
         );
@@ -131,7 +131,6 @@ class WrapOperationInjector extends Injector {
 
     private Type getReturnType(InjectionNode node) {
         AbstractInsnNode originalTarget = node.getOriginalTarget();
-        AbstractInsnNode currentTarget = node.getCurrentTarget();
 
         if (node.hasDecoration(ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE)) {
             return node.getDecoration(ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE);
@@ -141,19 +140,23 @@ class WrapOperationInjector extends Injector {
             return Type.BOOLEAN_TYPE;
         }
 
-        if (currentTarget instanceof MethodInsnNode) {
-            MethodInsnNode methodInsnNode = (MethodInsnNode) currentTarget;
+        if (originalTarget instanceof MethodInsnNode) {
+            MethodInsnNode methodInsnNode = (MethodInsnNode) originalTarget;
             if (methodInsnNode.name.equals("<init>")) {
                 return Type.getObjectType(methodInsnNode.owner);
             }
             return Type.getReturnType(methodInsnNode.desc);
         }
-        if (currentTarget instanceof FieldInsnNode) {
-            FieldInsnNode fieldInsnNode = (FieldInsnNode) currentTarget;
+        if (originalTarget instanceof FieldInsnNode) {
+            FieldInsnNode fieldInsnNode = (FieldInsnNode) originalTarget;
             if (fieldInsnNode.getOpcode() == Opcodes.GETFIELD || fieldInsnNode.getOpcode() == Opcodes.GETSTATIC) {
                 return Type.getType(fieldInsnNode.desc);
             }
             return Type.VOID_TYPE;
+        }
+        if (originalTarget.getOpcode() == Opcodes.NEW) {
+            TypeInsnNode typeInsnNode = (TypeInsnNode) originalTarget;
+            return Type.getObjectType(typeInsnNode.desc);
         }
 
         throw new UnsupportedOperationException();
@@ -242,9 +245,14 @@ class WrapOperationInjector extends Injector {
 
         abstract String getName();
 
-        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
+        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs, Type returnType) {
             loadArgs.accept(insns);
             insns.add(currentTarget.clone(Collections.emptyMap()));
+            AbstractInsnNode coerceCast = InjectorUtils.findCoerce(node, returnType);
+            if (coerceCast != null) {
+                target.insns.remove(coerceCast);
+                insns.add(coerceCast);
+            }
         }
 
         void afterHandlerCall(InsnList insns, AbstractInsnNode champion) {
@@ -335,10 +343,10 @@ class WrapOperationInjector extends Injector {
         }
 
         @Override
-        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
+        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs, Type returnType) {
             insns.add(new TypeInsnNode(Opcodes.NEW, ((MethodInsnNode) currentTarget).owner));
             insns.add(new InsnNode(Opcodes.DUP));
-            super.copyNode(insns, paramArrayIndex, loadArgs);
+            super.copyNode(insns, paramArrayIndex, loadArgs, returnType);
         }
 
         @Override
@@ -391,8 +399,8 @@ class WrapOperationInjector extends Injector {
         }
 
         @Override
-        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
-            super.copyNode(insns, paramArrayIndex, loadArgs);
+        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs, Type returnType) {
+            super.copyNode(insns, paramArrayIndex, loadArgs, returnType);
             // We have a Class object and need to get it back to a boolean using the first element of the lambda args.
             // The code added by RedirectInjector expects a reference to the checked object already on the stack, so we
             // load the first and only lambda arg, and then swap it with the Class<?> result from the redirector.
@@ -425,8 +433,8 @@ class WrapOperationInjector extends Injector {
         }
 
         @Override
-        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
-            super.copyNode(insns, paramArrayIndex, loadArgs);
+        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs, Type returnType) {
+            super.copyNode(insns, paramArrayIndex, loadArgs, returnType);
             // We need to encompass the null check added by RedirectInjector.
             PreviousInjectorInsns.DUPED_FACTORY_REDIRECT.moveNodes(target.insns, insns, currentTarget);
         }
@@ -454,9 +462,9 @@ class WrapOperationInjector extends Injector {
         }
 
         @Override
-        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs) {
+        void copyNode(InsnList insns, int paramArrayIndex, Consumer<InsnList> loadArgs, Type returnType) {
             if (isWrapped) {
-                super.copyNode(insns, paramArrayIndex, loadArgs);
+                super.copyNode(insns, paramArrayIndex, loadArgs, returnType);
                 // Encompass the extra branching we added ourselves
                 PreviousInjectorInsns.COMPARISON_WRAPPER.moveNodes(target.insns, insns, currentTarget);
                 if (!comparison.jumpOnTrue) {

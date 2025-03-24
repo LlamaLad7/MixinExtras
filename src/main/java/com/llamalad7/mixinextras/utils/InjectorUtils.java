@@ -150,4 +150,33 @@ public class InjectorUtils {
             insns.add(new TypeInsnNode(Opcodes.CHECKCAST, expectedReturnType.getInternalName()));
         }
     }
+
+    public static AbstractInsnNode findCoerce(InjectionNode target, Type expectedType) {
+        if (!target.isReplaced() || InjectorUtils.isDynamicInstanceofRedirect(target)) {
+            return null;
+        }
+        AbstractInsnNode currentTarget = target.getCurrentTarget();
+        if (!(currentTarget instanceof MethodInsnNode)) {
+            return null; // Strange, but we'll leave it.
+        }
+        MethodInsnNode handlerCall = (MethodInsnNode) currentTarget;
+        if (ASMUtils.isPrimitive(expectedType) || Type.getReturnType(handlerCall.desc).equals(expectedType)) {
+            return null; // No Coerce
+        }
+        // Need to find the Coerce CHECKCAST
+        if (handlerCall.getNext().getOpcode() == Opcodes.CHECKCAST) {
+            TypeInsnNode cast = (TypeInsnNode) handlerCall.getNext();
+            if (cast.desc.equals(expectedType.getInternalName())) {
+                return cast; // Found it
+            }
+        }
+
+        throw new AssertionError(
+                String.format(
+                        "Could not find @Coerce CHECKCAST instruction! Expected '%s' but got '%s'! Please inform LlamaLad7!",
+                        "[CHECKCAST] " + expectedType.getInternalName(),
+                        Bytecode.describeNode(handlerCall.getNext())
+                )
+        );
+    }
 }
