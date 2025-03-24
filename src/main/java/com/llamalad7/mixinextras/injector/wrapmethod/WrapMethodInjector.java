@@ -45,15 +45,8 @@ public class WrapMethodInjector extends Injector {
             );
         }
 
-        if (!returnType.equals(target.returnType)) {
-            throw CompatibilityHelper.makeInvalidInjectionException(
-                    info,
-                    String.format(
-                            "%s targeting %s has an incorrect return type Expected %s but got %s!",
-                            description, target, target.returnType, returnType
-                    )
-            );
-        }
+        handler.coerceReturnType = checkCoerce(-1, target.returnType, description, true);
+
         int argIndex = 0;
         for (; argIndex < target.arguments.length; argIndex++) {
             Type theirType = target.arguments[argIndex];

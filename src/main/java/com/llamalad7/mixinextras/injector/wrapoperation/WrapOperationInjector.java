@@ -113,7 +113,9 @@ class WrapOperationInjector extends Injector {
         stack.extra(1); // Operation
         stack.capturedArgs(target.arguments, handler.captureTargetArgs);
 
-        return super.invokeHandler(insns);
+        AbstractInsnNode result = super.invokeHandler(insns);
+        InjectorUtils.coerceReturnType(handler, insns, returnType);
+        return result;
     }
 
     private void makeOperation(OperationType operation, Type[] argTypes, Type returnType, InsnList insns, boolean hasExtraThis, Type[] trailingParams) {

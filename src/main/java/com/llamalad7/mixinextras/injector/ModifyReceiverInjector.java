@@ -66,6 +66,7 @@ public class ModifyReceiverInjector extends Injector {
         stack.capturedArgs(target.arguments, handler.captureTargetArgs);
 
         this.invokeHandlerWithArgs(this.methodArgs, insns, handlerArgMap);
+        InjectorUtils.coerceReturnType(handler, insns, originalArgTypes[0]);
 
         // If this is a virtual redirect, both "this" and the receiver are already on the stack
         this.pushArgs(currentArgTypes, insns, argMap, isVirtualRedirect ? 2 : 1, argMap.length);

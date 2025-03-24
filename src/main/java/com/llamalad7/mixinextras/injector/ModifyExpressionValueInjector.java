@@ -102,6 +102,7 @@ public class ModifyExpressionValueInjector extends Injector {
         stack.capturedArgs(target.arguments, handler.captureTargetArgs);
 
         this.invokeHandler(after);
+        InjectorUtils.coerceReturnType(handler, after, valueType);
     }
 
     private Type getReturnType(InjectionNode node) {

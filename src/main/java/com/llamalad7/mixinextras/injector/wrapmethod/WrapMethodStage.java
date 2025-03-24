@@ -174,6 +174,7 @@ public abstract class WrapMethodStage {
             loadShares(shares, insns);
 
             insns.add(ASMUtils.getInvokeInstruction(targetClass, handler));
+            coerceReturnType(insns, returnType);
             insns.add(new InsnNode(returnType.getOpcode(Opcodes.IRETURN)));
 
             wrapper.instructions.add(insns);
@@ -195,6 +196,13 @@ public abstract class WrapMethodStage {
         private static void loadShares(Collection<ShareInfo> shares, InsnList insns) {
             for (ShareInfo share : shares) {
                 insns.add(share.load());
+            }
+        }
+
+        private void coerceReturnType(InsnList insns, Type expectedReturnType) {
+            Type handlerReturnType = Type.getReturnType(handler.desc);
+            if (expectedReturnType.getSort() >= Type.ARRAY && !expectedReturnType.equals(handlerReturnType)) {
+                insns.add(new TypeInsnNode(Opcodes.CHECKCAST, expectedReturnType.getInternalName()));
             }
         }
     }

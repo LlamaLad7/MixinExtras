@@ -3,7 +3,10 @@ package com.llamalad7.mixinextras.utils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
@@ -140,5 +143,11 @@ public class InjectorUtils {
             return false;
         }
         return map.containsKey(info);
+    }
+
+    public static void coerceReturnType(Injector.InjectorData data, InsnList insns, Type expectedReturnType) {
+        if (data.coerceReturnType && expectedReturnType.getSort() >= Type.ARRAY) {
+            insns.add(new TypeInsnNode(Opcodes.CHECKCAST, expectedReturnType.getInternalName()));
+        }
     }
 }
