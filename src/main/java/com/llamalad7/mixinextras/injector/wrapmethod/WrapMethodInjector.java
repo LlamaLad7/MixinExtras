@@ -50,7 +50,7 @@ public class WrapMethodInjector extends Injector {
         handler.coerceReturnType = checkCoerce(-1, target.returnType, description, true);
 
         int argIndex = 0;
-        for (; argIndex < target.arguments.length; argIndex++) {
+        for (; captureParams && argIndex < target.arguments.length; argIndex++) {
             Type theirType = target.arguments[argIndex];
             if (argIndex >= methodArgs.length) {
                 throw CompatibilityHelper.makeInvalidInjectionException(
@@ -64,9 +64,13 @@ public class WrapMethodInjector extends Injector {
             try {
                 checkCoerce(argIndex, theirType, description, true);
             } catch (InvalidInjectionException e) {
-                if (argIndex == 0 && methodArgs[argIndex].equals(operationType)) {
+                // recheck with captureParams disabled to see if params are omitted
+                // doing this ensures that any weird edge cases where an 'Operation'
+                // is part of the params are handled correctly
+                if (methodArgs[0].equals(operationType)) {
                     captureParams = false;
-                    break;
+                    this.checkSignature(target);
+                    return;
                 }
                 throw e;
             }
