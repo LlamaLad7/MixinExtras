@@ -71,6 +71,11 @@ tasks.named<ShadowJar>("shadowJar") {
     from("LICENSE") {
         rename { "${it}_MixinExtras" }
     }
+
+    manifest.attributes(
+        "Automatic-Module-Name" to "MixinExtras",
+        "Implementation-Version" to "$version",
+    )
 }
 
 val proguardFile by extra { file("build/libs/mixinextras-$version.jar") }

@@ -40,7 +40,7 @@ tasks.build {
 tasks.withType<ProcessResources> {
     inputs.property("version", version)
 
-    filesMatching(listOf("META-INF/mods.toml", "META-INF/jarjar/metadata.json")) {
+    filesMatching(listOf("META-INF/jarjar/metadata.json")) {
         expand("version" to version)
     }
 }
@@ -55,5 +55,7 @@ fun Jar.setupForgeJar(rootFile: File) {
     manifest.attributes(
         "MixinConfigs" to "mixinextras.init.mixins.json",
         "FMLModType" to "GAMELIBRARY",
+        "Automatic-Module-Name" to "mixinextras",
+        "Implementation-Version" to "$version",
     )
 }
