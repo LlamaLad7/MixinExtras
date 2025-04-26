@@ -9,7 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Allows you to wrap a void method call or field write with a conditional check.
+ * Allows you to wrap a void method call, a method call where the return type is ignored, or a field write, with a conditional check.
  * <p>
  * It accepts these injection points:
  * {@link org.spongepowered.asm.mixin.injection.points.BeforeInvoke INVOKE},
