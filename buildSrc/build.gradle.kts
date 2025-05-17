@@ -7,5 +7,5 @@ repositories {
 }
 
 dependencies {
-    implementation("com.guardsquare:proguard-gradle:7.3.2")
+    implementation("com.guardsquare:proguard-gradle:7.7.0")
 }

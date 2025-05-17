@@ -2,7 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 buildscript {
     dependencies {
-        classpath("com.guardsquare:proguard-gradle:7.3.2")
+        classpath("com.guardsquare:proguard-gradle:7.7.0")
     }
 }
 

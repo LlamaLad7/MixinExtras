@@ -1,7 +1,7 @@
-import gradle.kotlin.dsl.accessors._c5ed198e191f30f39ee46d0abbbd888f.javaToolchains
 import org.gradle.api.Project
 import org.gradle.jvm.toolchain.JavaLanguageVersion
-import org.gradle.kotlin.dsl.create
+import org.gradle.jvm.toolchain.JavaToolchainService
+import org.gradle.kotlin.dsl.*
 import proguard.gradle.ProGuardTask
 import java.io.File
 
@@ -15,6 +15,8 @@ fun Project.createProGuardTask(name: String, input: File, output: File, configFi
                 libraryjars(it)
             }
         }
+
+        val javaToolchains = this@createProGuardTask.extensions.getByType<JavaToolchainService>()
 
         val java8 = javaToolchains.launcherFor {
             languageVersion.set(JavaLanguageVersion.of(8))
