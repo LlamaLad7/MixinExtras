@@ -106,3 +106,22 @@ val shrunkProguardJar = createProGuardTask(
 tasks.named<Jar>("jar") {
     archiveClassifier = "slim"
 }
+
+val localStagingDir by extra { layout.buildDirectory.dir("staging-deploy").get() }
+
+configureJReleaser(localStagingDir)
+
+val cleanStagingRepo by tasks.registering(Delete::class) {
+    delete(localStagingDir)
+}
+
+val expressions = project("expressions")
+val platforms = project("platform").subprojects.toTypedArray()
+
+val publishWithoutExpressions by registerUploadTask(
+    *platforms,
+)
+val publishWithExpressions by registerUploadTask(
+    *platforms,
+    expressions,
+)

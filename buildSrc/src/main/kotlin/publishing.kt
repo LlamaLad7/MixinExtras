@@ -1,12 +1,9 @@
 import org.gradle.api.Project
+import org.gradle.api.file.Directory
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.kotlin.dsl.apply
-import org.gradle.kotlin.dsl.assign
-import org.gradle.kotlin.dsl.configure
-import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.getByType
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+import org.gradle.kotlin.dsl.*
 import org.gradle.plugins.signing.SigningExtension
 
 fun Project.configurePublishing(artifactName: String, setup: MavenPublication.() -> Unit) {
@@ -16,18 +13,14 @@ fun Project.configurePublishing(artifactName: String, setup: MavenPublication.()
 
     val isLocal = (properties["isLocal"] as? String).toBoolean()
 
+    val localStagingDir: Directory by rootProject.extra
+
     extensions.configure<PublishingExtension> {
         if (isLocal) {
             repositories {
                 maven {
-                    name = "Sonatype"
-                    url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                    authentication {
-                        credentials {
-                            username = properties["ossrhUsername"] as String
-                            password = properties["ossrhPassword"] as String
-                        }
-                    }
+                    name = "Staging"
+                    url = uri(rootProject.layout.buildDirectory.dir("staging-deploy"))
                 }
             }
         }
@@ -76,6 +69,14 @@ fun Project.configurePublishing(artifactName: String, setup: MavenPublication.()
     if (isLocal) {
         extensions.configure<SigningExtension> {
             sign(extensions.getByType<PublishingExtension>().publications["maven"])
+        }
+
+        afterEvaluate {
+            tasks.withType<PublishToMavenRepository>().configureEach {
+                if (repository.url == uri(localStagingDir)) {
+                    dependsOn(":cleanStagingRepo")
+                }
+            }
         }
     }
 }
