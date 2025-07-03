@@ -39,7 +39,7 @@ public class ComplexFlowValue extends FlowValue {
 
     @Override
     public int inputCount() {
-        throw ComplexDataException.INSTANCE;
+        return 0;
     }
 
     @Override

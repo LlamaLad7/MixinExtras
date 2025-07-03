@@ -30,7 +30,7 @@ public class DummyFlowValue extends FlowValue {
 
     @Override
     public int inputCount() {
-        throw ComplexDataException.INSTANCE;
+        return 0;
     }
 
     @Override

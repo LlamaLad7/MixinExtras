@@ -125,3 +125,6 @@ val publishWithExpressions by registerUploadTask(
     *platforms,
     expressions,
 )
+val publishExpressions by registerUploadTask(
+    expressions,
+)
