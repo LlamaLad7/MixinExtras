@@ -67,11 +67,6 @@ public class BinaryExpression extends SimpleExpression {
             return;
         }
         checkSupportsStringConcat(ctx.type);
-        if (concat.isLastConcat) {
-            // Simple optimization.
-            super.capture(concat.toStringCall, ctx);
-            return;
-        }
         ctx.decorateInjectorSpecific(node.getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
         super.capture(node, ctx);
     }
