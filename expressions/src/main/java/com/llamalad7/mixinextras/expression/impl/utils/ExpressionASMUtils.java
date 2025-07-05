@@ -396,6 +396,10 @@ public class ExpressionASMUtils {
             // Mixin incorrectly throws when passed this.
             return null;
         }
+        if (insn instanceof TypeInsnNode) {
+            // Mixin for some reason decides these are `Class<?>` constants
+            return null;
+        }
         return Bytecode.getConstant(insn);
     }
 
