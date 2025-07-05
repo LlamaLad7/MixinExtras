@@ -1,10 +1,10 @@
 package com.llamalad7.mixinextras.expression.impl.flow.expansion;
 
-import com.llamalad7.mixinextras.expression.impl.flow.DummyFlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.FlowPostProcessor;
-import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.StringConcatPostProcessor;
+import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.StringConcatInfo;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionASMUtils;
+import com.llamalad7.mixinextras.expression.impl.utils.FlowDecorations;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -31,13 +31,15 @@ public class StringConcatFactoryExpander extends InsnExpander {
             return;
         }
 
-        FlowValue current = new DummyFlowValue(STRING_BUILDER); // New builder
+        FlowValue current = null;
+        FlowValue initialComponent = null;
 
         List<FlowValue> appendCalls = new ArrayList<>();
         int nextArgument = 0;
         int finishedParts = 0;
 
-        for (ConcatPart part : parts) {
+        for (int i = 0; i < parts.size(); i++) {
+            ConcatPart part = parts.get(i);
             FlowValue component;
             if (part instanceof ConcatPart.Argument) {
                 component = unwrapConcatArgument(node.getInput(nextArgument++), sink);
@@ -53,19 +55,51 @@ public class StringConcatFactoryExpander extends InsnExpander {
                 registerComponent(component, part, indy);
                 sink.registerFlow(component);
             }
-            current = new FlowValue(STRING_BUILDER, dummyInsn(), current, component); // append call
-            registerComponent(current, new PartialResult(finishedParts++), indy);
-            sink.registerFlow(current);
-            appendCalls.add(current);
+            if (i == 0) {
+                current = initialComponent = component;
+                continue;
+            }
+            AbstractInsnNode newInsn = dummyInsn();
+            FlowValue[] newParents = {current, component};
+            if (i == parts.size() - 1) {
+                // Replace the indy with the final concat
+                node.setInsn(newInsn);
+                node.setParents(newParents);
+                registerComponent(node, Component.TO_STRING, indy);
+            } else {
+                current = new FlowValue(STRING_BUILDER, newInsn, newParents); // append call
+                registerComponent(current, new PartialResult(finishedParts++), indy);
+                sink.registerFlow(current);
+                appendCalls.add(current);
+            }
         }
-
-        node.setInsn(dummyInsn());
-        node.setParents(current);
-        registerComponent(node, Component.TO_STRING, indy);
 
         // We decorate the concat explicitly since we used dummy insns for most of its parts to avoid the StringBuilder
         // operations being directly targetable.
-        StringConcatPostProcessor.decorateConcat(appendCalls, node);
+        decorateConcat(initialComponent, appendCalls, node);
+    }
+
+    private void decorateConcat(FlowValue initialComponent, List<FlowValue> appendCalls, FlowValue toStringCall) {
+        boolean isFirstConcat = true;
+        for (FlowValue append : appendCalls) {
+            append.decorate(
+                    FlowDecorations.STRING_CONCAT_INFO,
+                    new StringConcatInfo(
+                            isFirstConcat,
+                            initialComponent,
+                            null
+                    )
+            );
+            isFirstConcat = false;
+        }
+        toStringCall.decorate(
+                FlowDecorations.STRING_CONCAT_INFO,
+                new StringConcatInfo(
+                        isFirstConcat,
+                        initialComponent,
+                        null
+                )
+        );
     }
 
     private FlowValue unwrapConcatArgument(FlowValue argument, FlowPostProcessor.OutputSink sink) {

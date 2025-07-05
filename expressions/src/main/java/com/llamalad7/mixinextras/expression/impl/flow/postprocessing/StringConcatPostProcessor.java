@@ -48,7 +48,7 @@ public class StringConcatPostProcessor implements FlowPostProcessor {
         decorateConcat(appendCalls, toStringCall);
     }
 
-    public static void decorateConcat(List<FlowValue> appendCalls, FlowValue toStringCall) {
+    private void decorateConcat(List<FlowValue> appendCalls, FlowValue toStringCall) {
         FlowValue initialComponent = appendCalls.get(0).getInput(1);
         for (int i = 1; i < appendCalls.size() - 1; i++) {
             appendCalls.get(i).decorate(
