@@ -19,7 +19,7 @@ public class SuperCallExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         if (!MethodCallType.SUPER.matches(node)) {
             return false;
         }

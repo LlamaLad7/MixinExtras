@@ -15,7 +15,7 @@ public class DecimalLiteralExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         if (!node.typeMatches(Type.FLOAT_TYPE) && !node.typeMatches(Type.DOUBLE_TYPE)) {
             return false;
         }

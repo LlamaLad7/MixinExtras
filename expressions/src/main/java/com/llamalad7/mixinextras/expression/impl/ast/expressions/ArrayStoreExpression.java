@@ -21,7 +21,7 @@ public class ArrayStoreExpression extends Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.IASTORE:
             case Opcodes.LASTORE:

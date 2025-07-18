@@ -10,7 +10,7 @@ public class WildcardExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         return true;
     }
 }

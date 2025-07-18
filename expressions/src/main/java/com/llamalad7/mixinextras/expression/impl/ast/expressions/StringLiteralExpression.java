@@ -21,7 +21,7 @@ public class StringLiteralExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         Object cst = ExpressionASMUtils.getConstant(node.getInsn());
         if (cst == null) {
             return false;

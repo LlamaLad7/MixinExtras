@@ -19,7 +19,7 @@ public class ClassConstantExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         Type cstType = getConstantType(node.getInsn());
         return cstType != null && type.matches(ctx.pool, cstType);
     }

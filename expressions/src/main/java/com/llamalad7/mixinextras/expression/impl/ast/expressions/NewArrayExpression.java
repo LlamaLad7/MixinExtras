@@ -28,7 +28,7 @@ public class NewArrayExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         if (node.hasDecoration(FlowDecorations.ARRAY_CREATION_INFO)) {
             // While a creation *is* involved, it's not the kind we're trying to target.
             return false;

@@ -16,7 +16,12 @@ public abstract class Expression {
         return src;
     }
 
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    public final boolean matches(FlowValue node, ExpressionContext ctx) {
+        boolean result = matchesImpl(node, ctx);
+        return result;
+    }
+
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         return false;
     }
 

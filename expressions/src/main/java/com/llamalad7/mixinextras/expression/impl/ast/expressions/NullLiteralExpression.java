@@ -11,7 +11,7 @@ public class NullLiteralExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         return node.getInsn().getOpcode() == Opcodes.ACONST_NULL;
     }
 }

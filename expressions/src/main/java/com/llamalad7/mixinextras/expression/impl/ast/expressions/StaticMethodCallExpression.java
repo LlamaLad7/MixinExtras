@@ -19,7 +19,7 @@ public class StaticMethodCallExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         return MethodCallType.STATIC.matches(node)
                 && name.matches(ctx.pool, node)
                 && inputsMatch(node, ctx, ctx.allowIncompleteListInputs, arguments.toArray(new Expression[0]));

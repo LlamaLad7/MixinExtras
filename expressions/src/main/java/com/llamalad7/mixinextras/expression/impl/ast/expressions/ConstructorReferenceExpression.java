@@ -17,7 +17,7 @@ public class ConstructorReferenceExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         LMFInfo info = node.getDecoration(FlowDecorations.LMF_INFO);
         if (info == null || info.type != LMFInfo.Type.INSTANTIATION) {
             return false;

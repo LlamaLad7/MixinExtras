@@ -15,7 +15,7 @@ public class BooleanLiteralExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         if (!node.typeMatches(Type.BOOLEAN_TYPE)) {
             return false;
         }

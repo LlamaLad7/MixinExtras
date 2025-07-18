@@ -23,7 +23,7 @@ public class BinaryExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         if (operator.matches(node.getInsn()) && inputsMatch(node, ctx, left, right)) {
             return true;
         }

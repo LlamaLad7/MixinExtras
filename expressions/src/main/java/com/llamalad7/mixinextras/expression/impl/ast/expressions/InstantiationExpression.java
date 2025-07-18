@@ -20,7 +20,7 @@ public class InstantiationExpression extends Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         InstantiationInfo instantiation = node.getDecoration(FlowDecorations.INSTANTIATION_INFO);
         if (instantiation == null || !type.matches(ctx.pool, instantiation.type)) {
             return false;

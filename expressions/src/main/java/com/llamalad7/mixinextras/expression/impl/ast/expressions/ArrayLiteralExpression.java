@@ -26,7 +26,7 @@ public class ArrayLiteralExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         ArrayCreationInfo creation = node.getDecoration(FlowDecorations.ARRAY_CREATION_INFO);
         if (creation == null) {
             return false;

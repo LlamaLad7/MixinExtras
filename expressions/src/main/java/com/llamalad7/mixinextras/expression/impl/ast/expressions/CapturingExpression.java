@@ -13,7 +13,7 @@ public class CapturingExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         boolean matches = expression.matches(node, ctx);
         if (matches) {
             expression.capture(node, ctx);

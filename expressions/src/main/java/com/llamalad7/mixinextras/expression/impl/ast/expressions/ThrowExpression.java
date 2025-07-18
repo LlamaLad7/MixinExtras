@@ -14,7 +14,7 @@ public class ThrowExpression extends Expression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         return node.getInsn().getOpcode() == Opcodes.ATHROW && inputsMatch(node, ctx, value);
     }
 }

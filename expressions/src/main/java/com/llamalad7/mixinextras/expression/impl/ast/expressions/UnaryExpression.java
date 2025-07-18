@@ -17,7 +17,7 @@ public class UnaryExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         switch (operator) {
             case MINUS:
                 switch (node.getInsn().getOpcode()) {
@@ -29,11 +29,11 @@ public class UnaryExpression extends SimpleExpression {
                 }
             case BITWISE_NOT:
                 return new BinaryExpression(
-                        null,
+                        src,
                         expression,
                         BinaryExpression.Operator.BITWISE_XOR,
                         new IntLiteralExpression(null, -1)
-                ).matches(node, ctx);
+                ).matchesImpl(node, ctx);
         }
         return false;
     }

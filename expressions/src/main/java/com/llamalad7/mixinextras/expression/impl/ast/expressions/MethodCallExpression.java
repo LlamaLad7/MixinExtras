@@ -22,7 +22,7 @@ public class MethodCallExpression extends SimpleExpression {
     }
 
     @Override
-    public boolean matches(FlowValue node, ExpressionContext ctx) {
+    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         if (!MethodCallType.NORMAL.matches(node)) {
             return false;
         }
