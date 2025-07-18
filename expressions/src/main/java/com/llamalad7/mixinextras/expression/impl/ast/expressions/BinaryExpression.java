@@ -67,7 +67,9 @@ public class BinaryExpression extends SimpleExpression {
             return;
         }
         checkSupportsStringConcat(ctx.type);
-        ctx.decorateInjectorSpecific(node.getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
+        if (concat.isBuilder) {
+            ctx.decorateInjectorSpecific(node.getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
+        }
         super.capture(node, ctx);
     }
 

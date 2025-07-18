@@ -55,6 +55,7 @@ public class StringConcatPostProcessor implements FlowPostProcessor {
                     FlowDecorations.STRING_CONCAT_INFO,
                     new StringConcatInfo(
                             i == 1,
+                            true,
                             initialComponent,
                             toStringCall
                     )
@@ -64,6 +65,7 @@ public class StringConcatPostProcessor implements FlowPostProcessor {
                 FlowDecorations.STRING_CONCAT_INFO,
                 new StringConcatInfo(
                         appendCalls.size() == 2,
+                        false,
                         initialComponent,
                         toStringCall
                 )

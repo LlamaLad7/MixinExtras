@@ -86,6 +86,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
                     FlowDecorations.STRING_CONCAT_INFO,
                     new StringConcatInfo(
                             isFirstConcat,
+                            true,
                             initialComponent,
                             null
                     )
@@ -96,6 +97,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
                 FlowDecorations.STRING_CONCAT_INFO,
                 new StringConcatInfo(
                         isFirstConcat,
+                        false,
                         initialComponent,
                         null
                 )
