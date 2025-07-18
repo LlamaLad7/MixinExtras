@@ -10,13 +10,16 @@ public class Boxing {
             return false;
         }
         Type[] paramTypes = Type.getArgumentTypes(call.desc);
-        Type unboxedType = getUnboxedType(call.owner);
+        Type unboxedType = getUnboxedType(Type.getObjectType(call.owner));
         return call.name.equals(unboxingMethod) ||
                 call.name.equals("valueOf") && paramTypes.length == 1 && paramTypes[0].equals(unboxedType);
     }
 
-    public static Type getUnboxedType(String boxedType) {
-        switch (boxedType) {
+    public static Type getUnboxedType(Type boxedType) {
+        if (boxedType.getSort() != Type.OBJECT) {
+            return null;
+        }
+        switch (boxedType.getInternalName()) {
             case "java/lang/Boolean":
                 return Type.BOOLEAN_TYPE;
             case "java/lang/Character":

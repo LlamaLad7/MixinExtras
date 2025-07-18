@@ -332,8 +332,8 @@ public class ExpressionASMUtils {
     }
 
     public static Type getCommonIntType(FlowContext ctx, Type type1, Type type2) {
-        Type unboxed1 = Boxing.getUnboxedType(type1.getInternalName());
-        Type unboxed2 = Boxing.getUnboxedType(type2.getInternalName());
+        Type unboxed1 = Boxing.getUnboxedType(type1);
+        Type unboxed2 = Boxing.getUnboxedType(type2);
 
         return getCommonSupertype(
                 ctx,
