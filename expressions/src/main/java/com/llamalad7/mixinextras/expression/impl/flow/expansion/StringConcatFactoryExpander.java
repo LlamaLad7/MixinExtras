@@ -36,7 +36,7 @@ public class StringConcatFactoryExpander extends InsnExpander {
 
         List<FlowValue> appendCalls = new ArrayList<>();
         int nextArgument = 0;
-        int finishedParts = 0;
+        int finishedParts = 1;
 
         for (int i = 0; i < parts.size(); i++) {
             ConcatPart part = parts.get(i);
