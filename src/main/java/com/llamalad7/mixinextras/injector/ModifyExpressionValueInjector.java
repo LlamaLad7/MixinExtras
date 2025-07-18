@@ -30,6 +30,7 @@ public class ModifyExpressionValueInjector extends Injector {
 
         StackExtension stack = new StackExtension(target);
         Type valueType = getReturnType(node);
+        valueType = cleanIntLikeType(valueType);
         AbstractInsnNode valueNode = getValueNode(node, valueType);
 
         boolean shouldPop = false;
@@ -64,6 +65,15 @@ public class ModifyExpressionValueInjector extends Injector {
         }
     }
 
+    private Type cleanIntLikeType(Type valueType) {
+        Type expectedDesc = IntLikeBehaviour.MatchReturnType.INSTANCE.transform(
+                info,
+                Type.getMethodType(valueType, valueType),
+                Type.getMethodType(returnType, methodArgs)
+        );
+        return expectedDesc.getReturnType();
+    }
+
     private AbstractInsnNode getValueNode(InjectionNode target, Type expectedType) {
         AbstractInsnNode coerceCast = InjectorUtils.findCoerce(target, expectedType);
         return coerceCast != null ? coerceCast : target.getCurrentTarget();
@@ -80,13 +90,7 @@ public class ModifyExpressionValueInjector extends Injector {
 
     private void invokeHandler(Type valueType, Target target, InsnList after, StackExtension stack) {
         InjectorData handler = new InjectorData(target, "expression value modifier");
-
-        Type expectedDesc = IntLikeBehaviour.MatchReturnType.INSTANCE.transform(
-                info,
-                Type.getMethodType(valueType, valueType),
-                Type.getMethodType(returnType, methodArgs)
-        );
-        this.validateParams(handler, expectedDesc.getReturnType(), expectedDesc.getArgumentTypes());
+        this.validateParams(handler, valueType, valueType);
 
         if (!this.isStatic) {
             after.add(new VarInsnNode(Opcodes.ALOAD, 0));
