@@ -39,6 +39,14 @@ public class ExpressionContext {
         sink.decorateInjectorSpecific(insn, key, value);
     }
 
+    public void reportMatchStatus(FlowValue node, Expression expr, boolean matched) {
+        sink.reportMatchStatus(node, expr, matched);
+    }
+
+    public void reportPartialMatch(FlowValue node, Expression expr) {
+        sink.reportPartialMatch(node, expr);
+    }
+
     public enum Type {
         CUSTOM,
         INJECT,

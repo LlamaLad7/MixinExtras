@@ -20,9 +20,10 @@ public class BoundMethodReferenceExpression extends SimpleExpression {
     @Override
     protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
         LMFInfo info = node.getDecoration(FlowDecorations.LMF_INFO);
-        if (info == null || info.type != LMFInfo.Type.BOUND_METHOD) {
+        if (info == null || info.type != LMFInfo.Type.BOUND_METHOD || !name.matches(ctx.pool, node)) {
             return false;
         }
-        return name.matches(ctx.pool, node) && receiver.matches(node.getInput(0), ctx);
+        ctx.reportPartialMatch(node, this);
+        return receiver.matches(node.getInput(0), ctx);
     }
 }

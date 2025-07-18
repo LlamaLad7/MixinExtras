@@ -31,6 +31,7 @@ public class BinaryExpression extends SimpleExpression {
         if (operator != Operator.PLUS || concat == null) {
             return false;
         }
+        ctx.reportPartialMatch(node, this);
         if (node == concat.toStringCall) {
             node = node.getInput(0);
         }
@@ -42,14 +43,13 @@ public class BinaryExpression extends SimpleExpression {
         }
         Expression innerLeft = ExpressionUtil.skipCapturesDown(left);
         if (innerLeft instanceof WildcardExpression) {
-            if (!(left instanceof CapturingExpression)) {
-                return true;
+            if (left instanceof CapturingExpression) {
+                // The wildcard will match the concatenation to the left, but won't decorate it as a concat, so we do it
+                // ourselves.
+                checkSupportsStringConcat(ctx.type);
+                ctx.decorateInjectorSpecific(node.getInput(0).getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
             }
-            // The wildcard will match the concatenation to the left, but won't decorate it as a concat, so we do it
-            // ourselves.
-            checkSupportsStringConcat(ctx.type);
-            ctx.decorateInjectorSpecific(node.getInput(0).getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
-            // Do the capture:
+            // Do the match:
             return left.matches(node.getInput(0), ctx);
         }
         if (innerLeft instanceof BinaryExpression && ((BinaryExpression) innerLeft).operator == Operator.PLUS) {

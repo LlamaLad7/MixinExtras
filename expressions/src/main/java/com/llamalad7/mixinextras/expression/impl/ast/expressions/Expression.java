@@ -18,6 +18,7 @@ public abstract class Expression {
 
     public final boolean matches(FlowValue node, ExpressionContext ctx) {
         boolean result = matchesImpl(node, ctx);
+        ctx.reportMatchStatus(node, this, result);
         return result;
     }
 
@@ -29,19 +30,22 @@ public abstract class Expression {
         ctx.capture(node, this);
     }
 
-    protected static boolean inputsMatch(FlowValue node, ExpressionContext ctx, Expression... values) {
+    protected boolean inputsMatch(FlowValue node, ExpressionContext ctx, Expression... values) {
         return inputsMatch(node, ctx, false, values);
     }
 
-    protected static boolean inputsMatch(FlowValue node, ExpressionContext ctx, boolean allowIncomplete, Expression... values) {
+    protected boolean inputsMatch(FlowValue node, ExpressionContext ctx, boolean allowIncomplete, Expression... values) {
         return inputsMatch(0, node, ctx, allowIncomplete, values);
     }
 
-    protected static boolean inputsMatch(int start, FlowValue node, ExpressionContext ctx, Expression... values) {
+    protected boolean inputsMatch(int start, FlowValue node, ExpressionContext ctx, Expression... values) {
         return inputsMatch(start, node, ctx, false, values);
     }
 
-    protected static boolean inputsMatch(int start, FlowValue node, ExpressionContext ctx, boolean allowIncomplete, Expression... values) {
+    protected boolean inputsMatch(int start, FlowValue node, ExpressionContext ctx, boolean allowIncomplete, Expression... values) {
+        // If we're checking inputs, then we must have matched partially
+        ctx.reportPartialMatch(node, this);
+
         int required = node.inputCount() - start;
         if (!(allowIncomplete && values.length < required) && values.length != required) {
             return false;
@@ -61,5 +65,11 @@ public abstract class Expression {
         void decorate(AbstractInsnNode insn, String key, Object value);
 
         void decorateInjectorSpecific(AbstractInsnNode insn, String key, Object value);
+
+        default void reportMatchStatus(FlowValue node, Expression expr, boolean matched) {
+        }
+
+        default void reportPartialMatch(FlowValue node, Expression expr) {
+        }
     }
 }
