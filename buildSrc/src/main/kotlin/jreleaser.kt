@@ -17,6 +17,7 @@ fun Project.configureJReleaser(stagingDir: Directory) {
                 this@release.mustRunAfter(this@stage)
             }
         }
+        outputs.upToDateWhen { false }
     }
 
     extensions.configure<JReleaserExtension> {
