@@ -115,6 +115,21 @@ public class LocalRefClassGenerator {
             code.getfield(owner, "value", innerDesc);
             code.areturn(innerType);
         });
+
+        genMethod(node, "toString", "()Ljava/lang/String;", code -> {
+            code.load(0, objectType);
+            code.getfield(owner, "value", innerDesc);
+            code.invokestatic("java/lang/String", "valueOf", "(" + getToStringArgument(innerDesc) + ")Ljava/lang/String;", false);
+            code.areturn(Type.getType(String.class));
+        });
+    }
+
+    private static String getToStringArgument(String innerDesc) {
+        if ("B".equals(innerDesc) || "S".equals(innerDesc)) {
+            return "I";
+        } else {
+            return innerDesc;
+        }
     }
 
     private static void genMethod(ClassVisitor cv, String name, String desc, Consumer<InstructionAdapter> code) {
