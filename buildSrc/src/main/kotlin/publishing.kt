@@ -11,17 +11,15 @@ fun Project.configurePublishing(artifactName: String, setup: MavenPublication.()
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
 
-    val isLocal = (properties["isLocal"] as? String).toBoolean()
+    val shouldSign = (properties["signMixinExtras"] as? String).toBoolean()
 
     val localStagingDir: Directory by rootProject.extra
 
     extensions.configure<PublishingExtension> {
-        if (isLocal) {
-            repositories {
-                maven {
-                    name = "Staging"
-                    url = uri(rootProject.layout.buildDirectory.dir("staging-deploy"))
-                }
+        repositories {
+            maven {
+                name = "Staging"
+                url = uri(rootProject.layout.buildDirectory.dir("staging-deploy"))
             }
         }
         publications {
@@ -66,17 +64,17 @@ fun Project.configurePublishing(artifactName: String, setup: MavenPublication.()
             }
         }
     }
-    if (isLocal) {
-        extensions.configure<SigningExtension> {
-            sign(extensions.getByType<PublishingExtension>().publications["maven"])
-        }
-
-        afterEvaluate {
-            tasks.withType<PublishToMavenRepository>().configureEach {
-                if (repository.url == uri(localStagingDir)) {
-                    dependsOn(":cleanStagingRepo")
-                }
+    afterEvaluate {
+        tasks.withType<PublishToMavenRepository>().configureEach {
+            if (repository.url == uri(localStagingDir)) {
+                dependsOn(":cleanStagingRepo")
             }
+        }
+    }
+    if (shouldSign) {
+        extensions.configure<SigningExtension> {
+            useGpgCmd()
+            sign(extensions.getByType<PublishingExtension>().publications["maven"])
         }
     }
 }
