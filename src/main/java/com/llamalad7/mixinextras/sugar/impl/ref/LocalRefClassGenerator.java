@@ -115,6 +115,26 @@ public class LocalRefClassGenerator {
             code.getfield(owner, "value", innerDesc);
             code.areturn(innerType);
         });
+
+        genMethod(node, "toString", "()Ljava/lang/String;", code -> {
+            String runtime = Type.getInternalName(LocalRefRuntime.class);
+            code.aconst(interfaceName.substring(interfaceName.lastIndexOf('.') + 1));
+            code.load(0, objectType);
+            code.getfield(owner, "value", innerDesc);
+            code.invokestatic("java/lang/String", "valueOf", "(" + getToStringArgument(innerDesc) + ")Ljava/lang/String;", false);
+            code.load(0, objectType);
+            code.getfield(owner, "state", "B");
+            code.invokestatic(runtime, "localRefToString", "(Ljava/lang/String;Ljava/lang/String;B)Ljava/lang/String;", false);
+            code.areturn(Type.getType(String.class));
+        });
+    }
+
+    private static String getToStringArgument(String innerDesc) {
+        if ("B".equals(innerDesc) || "S".equals(innerDesc)) {
+            return "I";
+        } else {
+            return innerDesc;
+        }
     }
 
     private static void genMethod(ClassVisitor cv, String name, String desc, Consumer<InstructionAdapter> code) {

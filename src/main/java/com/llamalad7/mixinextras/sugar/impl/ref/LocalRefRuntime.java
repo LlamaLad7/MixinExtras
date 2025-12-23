@@ -33,4 +33,19 @@ public class LocalRefRuntime {
                 );
         }
     }
+
+    public static String localRefToString(String type, String value, byte state) {
+        switch (state) {
+            case 0:
+                return String.format("%s{value=\"%s\"}", type, value);
+            case UNINITIALIZED:
+                return String.format("%s{state=UNINITIALIZED}", type);
+            case DISPOSED:
+                return String.format("%s{state=DISPOSED}", type);
+            default:
+                throw new IllegalStateException(
+                    String.format("Unknown LocalRef state %s?", state)
+                );
+        }
+    }
 }
