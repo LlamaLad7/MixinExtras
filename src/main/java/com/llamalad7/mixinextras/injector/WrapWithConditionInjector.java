@@ -64,11 +64,7 @@ public class WrapWithConditionInjector extends Injector {
         StackExtension stack = new StackExtension(target);
 
         int[] argMap = this.storeArgs(target, currentArgTypes, before, 0);
-        int[] handlerArgMap = ArrayUtils.addAll(argMap, target.getArgIndices());
-        if (isVirtualRedirect) {
-            // We need to disregard the extra "this" which will be added for a virtual redirect.
-            handlerArgMap = ArrayUtils.remove(handlerArgMap, 0);
-        }
+        int[] handlerArgMap = InjectorUtils.handlerArgMap(target, argMap, originalArgTypes, isVirtualRedirect);
 
         stack.receiver(this.isStatic);
         stack.capturedArgs(target.arguments, handler.captureTargetArgs);

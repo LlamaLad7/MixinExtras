@@ -54,16 +54,15 @@ public class ModifyReceiverInjector extends Injector {
         StackExtension stack = new StackExtension(target);
 
         int[] argMap = this.storeArgs(target, currentArgTypes, insns, 0);
-        int[] handlerArgMap = ArrayUtils.addAll(argMap, target.getArgIndices());
-        if (isVirtualRedirect) {
-            // We need to disregard the extra "this" which will be added for a virtual redirect.
-            handlerArgMap = ArrayUtils.remove(handlerArgMap, 0);
-            // We also need to ensure it remains on the stack before the receiver
-            insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
-        }
+        int[] handlerArgMap = InjectorUtils.handlerArgMap(target, argMap, originalArgTypes, isVirtualRedirect);
 
         stack.receiver(this.isStatic);
         stack.capturedArgs(target.arguments, handler.captureTargetArgs);
+
+        if (isVirtualRedirect) {
+            // Load the extra copy of `this` before the original receiver
+            insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
+        }
 
         this.invokeHandlerWithArgs(this.methodArgs, insns, handlerArgMap);
         InjectorUtils.coerceReturnType(handler, insns, originalArgTypes[0]);

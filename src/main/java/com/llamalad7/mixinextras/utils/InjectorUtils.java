@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.utils;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -178,5 +179,16 @@ public class InjectorUtils {
                         Bytecode.describeNode(handlerCall.getNext())
                 )
         );
+    }
+
+    public static int[] handlerArgMap(Target target, int[] argMap, Type[] originalArgTypes, boolean isVirtualRedirect) {
+        if (isVirtualRedirect) {
+            // We need to disregard the extra "this" which will be added for a virtual redirect.
+            argMap = ArrayUtils.remove(argMap, 0);
+        }
+        // Remove any trailing params
+        argMap = ArrayUtils.subarray(argMap, 0, originalArgTypes.length);
+        // Add enclosing method's params
+        return ArrayUtils.addAll(argMap, target.getArgIndices());
     }
 }
