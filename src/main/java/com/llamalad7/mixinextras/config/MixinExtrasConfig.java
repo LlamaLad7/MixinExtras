@@ -32,12 +32,14 @@ public class MixinExtrasConfig {
     private final String minVersionString;
 
     private final transient String configName;
+    public final transient MixinExtrasConfig parent;
     public final transient MixinExtrasVersion minVersion;
 
-    public MixinExtrasConfig(IMixinConfig config, String minVersion) {
-        this.configName = config.getName();
+    public MixinExtrasConfig(String configName, MixinExtrasConfig parent, String minVersion) {
+        this.configName = configName;
+        this.parent = parent;
         this.minVersionString = minVersion;
-        this.minVersion = determineMinVersion();
+        this.minVersion = minVersion != null ? determineMinVersion() : parent != null ? parent.minVersion : null;
     }
 
     private MixinExtrasVersion determineMinVersion() {
