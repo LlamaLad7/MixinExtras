@@ -7,8 +7,10 @@ import com.llamalad7.mixinextras.service.MixinExtrasVersion;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
 import org.spongepowered.asm.service.MixinService;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -73,7 +75,11 @@ public class MixinConfigUtils {
     }
 
     private static <T> T readConfig(IMixinConfig config, JsonProcessor<T> compute) {
-        try (JsonReader reader = new JsonReader(new InputStreamReader(MixinService.getService().getResourceAsStream(config.getName())))) {
+        try (JsonReader reader =
+                     new JsonReader(new BufferedReader(new InputStreamReader(
+                             MixinService.getService().getResourceAsStream(config.getName()), StandardCharsets.UTF_8)
+                     ))
+        ) {
             reader.setStrictness(Strictness.LENIENT);
             return compute.process(reader);
         } catch (Exception e) {
