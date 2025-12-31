@@ -6,7 +6,6 @@ import com.llamalad7.mixinextras.config.MixinExtrasConfig;
 import com.llamalad7.mixinextras.service.MixinExtrasVersion;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
-import org.spongepowered.asm.service.MixinService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -90,7 +89,7 @@ public class MixinConfigUtils {
     private static void readConfig(String configName, JsonProcessor compute) {
         try (JsonReader reader =
                      new JsonReader(new BufferedReader(new InputStreamReader(
-                             MixinService.getService().getResourceAsStream(configName), StandardCharsets.UTF_8)
+                             ResourceUtils.getResourceAsStream(configName), StandardCharsets.UTF_8)
                      ))
         ) {
             reader.setStrictness(Strictness.LENIENT);
