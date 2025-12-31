@@ -66,4 +66,10 @@ public @interface ModifyReceiver {
     int expect() default 1;
 
     int allow() default -1;
+
+    /**
+     * Application order relative to other injectors.
+     * Only respected on Mixin 0.8.7+
+     */
+    int order() default 1000;
 }
