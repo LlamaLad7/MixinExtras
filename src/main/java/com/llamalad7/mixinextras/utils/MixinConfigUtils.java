@@ -38,7 +38,11 @@ public class MixinConfigUtils {
     }
 
     private static MixinExtrasConfig extraConfigFor(String configName) {
-        return CONFIG_CACHE.computeIfAbsent(configName, MixinConfigUtils::readMixinExtrasConfig);
+        MixinExtrasConfig result = CONFIG_CACHE.get(configName);
+        if (result == null) {
+            CONFIG_CACHE.put(configName, result = readMixinExtrasConfig(configName));
+        }
+        return result;
     }
 
     private static MixinExtrasConfig readMixinExtrasConfig(String configName) {
