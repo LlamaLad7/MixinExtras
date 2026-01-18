@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.InjectionNodes.InjectionNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
+import org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException;
 import org.spongepowered.asm.util.Annotations;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.List;
 public class WrapMethodInjector extends Injector {
     private final Type operationType = MixinExtrasService.getInstance().changePackage(Operation.class, Type.getType(CompatibilityHelper.getAnnotation(info).desc), WrapMethod.class);
     private final List<ShareInfo> shares = new ArrayList<>();
+    private boolean captureParams = true;
 
     public WrapMethodInjector(InjectionInfo info) {
         super(info, "@WrapMethod");
@@ -28,7 +30,7 @@ public class WrapMethodInjector extends Injector {
         this.checkTargetModifiers(target, true);
         this.checkSignature(target);
         info.addCallbackInvocation(methodNode);
-        WrapMethodApplicatorExtension.offerWrapper(target, methodNode, operationType, shares);
+        WrapMethodApplicatorExtension.offerWrapper(target, methodNode, operationType, shares, captureParams);
     }
 
     private void checkSignature(Target target) {
@@ -59,7 +61,18 @@ public class WrapMethodInjector extends Injector {
                         )
                 );
             }
-            checkCoerce(argIndex, theirType, description, true);
+            try {
+                checkCoerce(argIndex, theirType, description, true);
+            } catch (InvalidInjectionException e) {
+                // if the first parameter is an 'Operation',
+                // check from index 0 with param capture disabled
+                if (methodArgs[0].equals(operationType)) {
+                    captureParams = false;
+                    argIndex = 0;
+                    break;
+                }
+                throw e;
+            }
         }
         if (argIndex >= methodArgs.length || !methodArgs[argIndex++].equals(operationType)) {
             throw CompatibilityHelper.makeInvalidInjectionException(
