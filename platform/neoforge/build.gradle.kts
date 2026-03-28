@@ -22,7 +22,7 @@ java {
 jarsNamed("jar", "slimJar") {
     manifest.attributes(
         "MixinConfigs" to "mixinextras.init.mixins.json",
-        "FMLModType" to "GAMELIBRARY",
+        "FMLModType" to "LIBRARY",
         "Automatic-Module-Name" to "mixinextras.neoforge",
     )
 }
