@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras;
 
 import com.llamalad7.mixinextras.service.MixinExtrasService;
 import com.llamalad7.mixinextras.service.MixinExtrasVersion;
+import com.llamalad7.mixinextras.utils.ResourceUtils;
 
 @SuppressWarnings("unused")
 public class MixinExtrasBootstrap {
@@ -13,10 +14,14 @@ public class MixinExtrasBootstrap {
     }
 
     public static void init() {
+        init(ResourceUtils.ConfigsFinder.defaultConfigsFinder());
+    }
+    
+    public static void init(ResourceUtils.ConfigsFinder configsFinder) {
         if (initialized) {
             return;
         }
         initialized = true;
-        MixinExtrasService.setup();
+        MixinExtrasService.setup(configsFinder);
     }
 }

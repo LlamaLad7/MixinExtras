@@ -9,6 +9,7 @@ repositories {
 
 dependencies {
     compileOnly("net.neoforged.fancymodloader:language-java:1.0.2")
+    compileOnly("net.neoforged.fancymodloader:loader:1.0.2")
 }
 
 java {
