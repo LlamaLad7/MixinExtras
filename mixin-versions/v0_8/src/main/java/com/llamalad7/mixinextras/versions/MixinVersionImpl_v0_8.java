@@ -3,6 +3,7 @@ package com.llamalad7.mixinextras.versions;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
+import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
@@ -54,5 +55,10 @@ public class MixinVersionImpl_v0_8 extends MixinVersion {
     @Override
     public MemberInfo parseMemberInfo(String targetSelector, InjectionInfo info) {
         return MemberInfo.parse(targetSelector, info.getContext().getReferenceMapper(), info.getContext().getClassRef());
+    }
+
+    @Override
+    public <T> T getDecoration(IMixinConfig config, String key, T defaultValue) {
+        return defaultValue;
     }
 }

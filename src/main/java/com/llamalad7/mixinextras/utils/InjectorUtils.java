@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
+import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
 import org.spongepowered.asm.mixin.injection.code.Injector;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
@@ -86,7 +87,7 @@ public class InjectorUtils {
     }
 
     public static Context getOrCreateLocalContext(Target target, InjectionNode node, InjectionInfo info, Type targetType, boolean isArgsOnly) {
-        String decorationKey = getLocalContextKey(targetType, isArgsOnly);
+        String decorationKey = getLocalContextKey(targetType, isArgsOnly, CompatibilityHelper.getMixin(info).getMixin().getConfig());
         if (node.hasDecoration(decorationKey)) {
             return node.getDecoration(decorationKey);
         }
@@ -95,8 +96,11 @@ public class InjectorUtils {
         return context;
     }
 
-    private static String getLocalContextKey(Type targetType, boolean isArgsOnly) {
-        return String.format(Decorations.PERSISTENT + "localContext(%s,%s)", targetType, isArgsOnly ? "argsOnly" : "fullFrame");
+    private static String getLocalContextKey(Type targetType, boolean isArgsOnly, IMixinConfig config) {
+        return String.format(
+                Decorations.PERSISTENT + "localContext(%s,%s,%s)",
+                targetType, isArgsOnly ? "argsOnly" : "fullFrame", FabricMixinUtils.getCompatibility(config)
+        );
     }
 
     public static void printLocals(Target target, AbstractInsnNode node, Context context, LocalVariableDiscriminator discriminator, Type targetType, boolean isArgsOnly) {

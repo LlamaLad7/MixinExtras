@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.wrapper.WrapperInjectionInfo;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
+import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator.Context;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
@@ -51,5 +52,9 @@ public class CompatibilityHelper {
 
     public static MemberInfo parseMemberInfo(String targetSelector, InjectionInfo info) {
         return MixinVersion.getInstance().parseMemberInfo(targetSelector, info);
+    }
+
+    public static <T> T getDecoration(IMixinConfig config, String key, T defaultValue) {
+        return MixinVersion.getInstance().getDecoration(config, key, defaultValue);
     }
 }

@@ -4,6 +4,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
+import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
 import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
@@ -60,4 +61,6 @@ public abstract class MixinVersion {
     public abstract Collection<Target> getTargets(InjectionInfo info);
 
     public abstract MemberInfo parseMemberInfo(String targetSelector, InjectionInfo info);
+
+    public abstract <T> T getDecoration(IMixinConfig config, String key, T defaultValue);
 }
