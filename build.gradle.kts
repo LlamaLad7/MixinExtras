@@ -15,7 +15,7 @@ allprojects {
     apply(plugin = "java-library")
 
     group = "com.llamalad7"
-    version = "0.5.3"
+    version = "0.5.4"
 
     repositories {
         mavenCentral()
