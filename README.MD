@@ -52,7 +52,7 @@ dependencies {
 Make sure to use the `-all` jar when bundling MixinExtras yourself.
 
 </details>
-<details><summary>Forge 1.18.2+ with ForgeGradle</summary>
+<details><summary>Forge 1.18.2+ with ForgeGradle or ModDevGradle</summary>
 
 ```gradle
 dependencies {
