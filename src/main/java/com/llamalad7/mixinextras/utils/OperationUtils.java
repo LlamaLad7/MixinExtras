@@ -16,11 +16,14 @@ import java.util.stream.Collectors;
 public class OperationUtils {
     public static void makeOperation(Type[] argTypes, Type returnType, InsnList insns, boolean virtual,
                                      Type[] trailingParams, ClassNode classNode, Type operationType,
-                                     String name, OperationContents contents) {
+                                     String name, OperationContents contents, boolean useArgArray) {
         Type[] descriptorArgs = trailingParams;
         if (virtual) {
             // The receiver also needs to be a parameter in the INDY descriptor.
             descriptorArgs = ArrayUtils.add(descriptorArgs, 0, Type.getObjectType(classNode.name));
+        }
+        if (!useArgArray) {
+            descriptorArgs = ArrayUtils.addAll(descriptorArgs, argTypes);
         }
         insns.add(new InvokeDynamicInsnNode(
                 // The SAM method will be called `call`
@@ -32,7 +35,7 @@ public class OperationUtils {
                 // The SAM method will take an array of args and return an `Object` (the return value of the wrapped call)
                 Type.getMethodType(Type.getType(Object.class), Type.getType(Object[].class)),
                 // The implementation method will be generated for us to handle array unpacking
-                generateSyntheticBridge(argTypes, returnType, virtual, trailingParams, name, classNode, contents),
+                generateSyntheticBridge(argTypes, returnType, virtual, trailingParams, name, classNode, contents, useArgArray),
                 // Specialization of the SAM signature
                 Type.getMethodType(
                         ASMUtils.isPrimitive(returnType) ? Type.getObjectType(returnType == Type.VOID_TYPE ? "java/lang/Void" : Bytecode.getBoxingType(returnType)) : returnType,
@@ -42,8 +45,8 @@ public class OperationUtils {
     }
 
     private static Handle generateSyntheticBridge(Type[] argTypes, Type returnType, boolean virtual, Type[] boundParams,
-                                                 String name, ClassNode classNode, OperationContents contents) {
-        // The bridge method's args will consist of any bound parameters followed by an array
+                                                 String name, ClassNode classNode, OperationContents contents, boolean useArgArray) {
+        // The bridge method's args will consist of any bound parameters (plus passed params if useArgArray is false) followed by an array
 
         MethodNode method = new MethodNode(
                 ASM.API_VERSION,
@@ -54,16 +57,17 @@ public class OperationUtils {
                                 Type.getObjectType(
                                         returnType == Type.VOID_TYPE ? "java/lang/Void" : Bytecode.getBoxingType(returnType)
                                 ) : returnType,
-                        ArrayUtils.add(boundParams, Type.getType(Object[].class))),
+                        ArrayUtils.add(useArgArray ? boundParams : ArrayUtils.addAll(boundParams, argTypes), Type.getType(Object[].class))),
                 null, null
         );
         method.instructions = new InsnList() {{
             // Bound params have to come first.
-            int paramArrayIndex = Arrays.stream(boundParams).mapToInt(Type::getSize).sum() + (virtual ? 1 : 0);
+            int paramIndex = Arrays.stream(boundParams).mapToInt(Type::getSize).sum() + (virtual ? 1 : 0);
             // Provide a user-friendly error if the wrong args are passed.
+            int paramArrayIndex = paramIndex + (useArgArray ? 0 : Arrays.stream(argTypes).mapToInt(Type::getSize).sum());
             add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
-            add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
-            add(new LdcInsnNode(Arrays.stream(argTypes).map(Type::getClassName).collect(Collectors.joining(", ", "[", "]"))));
+            add(new IntInsnNode(Opcodes.BIPUSH, useArgArray ? argTypes.length : 0));
+            add(new LdcInsnNode(useArgArray ? Arrays.stream(argTypes).map(Type::getClassName).collect(Collectors.joining(", ", "[", "]")) : "[]"));
             add(new MethodInsnNode(
                     Opcodes.INVOKESTATIC,
                     Type.getInternalName(WrapOperationRuntime.class),
@@ -75,46 +79,62 @@ public class OperationUtils {
             if (virtual) {
                 add(new VarInsnNode(Opcodes.ALOAD, 0));
             }
-            Consumer<InsnList> loadArgs = insns -> {
-                insns.add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
-                for (int i = 0; i < argTypes.length; i++) {
-                    Type argType = argTypes[i];
-                    insns.add(new InsnNode(Opcodes.DUP));
-                    // I'm assuming a wrapped method won't have more than 127 args...
-                    insns.add(new IntInsnNode(Opcodes.BIPUSH, i));
-                    insns.add(new InsnNode(Opcodes.AALOAD));
-                    if (ASMUtils.isPrimitive(argType)) {
-                        // Primitive, cast and unbox
-                        insns.add(new TypeInsnNode(Opcodes.CHECKCAST, Bytecode.getBoxingType(argType)));
-                        insns.add(new MethodInsnNode(
-                                Opcodes.INVOKEVIRTUAL,
-                                Bytecode.getBoxingType(argType),
-                                Bytecode.getUnboxingMethod(argType),
-                                Type.getMethodDescriptor(argType),
-                                false
-                        ));
-                    } else {
-                        // Object type, just cast
-                        insns.add(new TypeInsnNode(Opcodes.CHECKCAST, argType.getInternalName()));
+            Consumer<InsnList> loadArgs;
+            if (useArgArray) {
+                loadArgs = insns -> {
+                    insns.add(new VarInsnNode(Opcodes.ALOAD, paramIndex));
+                    for (int i = 0; i < argTypes.length; i++) {
+                        Type argType = argTypes[i];
+                        insns.add(new InsnNode(Opcodes.DUP));
+                        // I'm assuming a wrapped method won't have more than 127 args...
+                        insns.add(new IntInsnNode(Opcodes.BIPUSH, i));
+                        insns.add(new InsnNode(Opcodes.AALOAD));
+                        if (ASMUtils.isPrimitive(argType)) {
+                            // Primitive, cast and unbox
+                            insns.add(new TypeInsnNode(Opcodes.CHECKCAST, Bytecode.getBoxingType(argType)));
+                            insns.add(new MethodInsnNode(
+                                    Opcodes.INVOKEVIRTUAL,
+                                    Bytecode.getBoxingType(argType),
+                                    Bytecode.getUnboxingMethod(argType),
+                                    Type.getMethodDescriptor(argType),
+                                    false
+                            ));
+                        } else {
+                            // Object type, just cast
+                            insns.add(new TypeInsnNode(Opcodes.CHECKCAST, argType.getInternalName()));
+                        }
+                        // Swap to get the array back on the top of the stack
+                        if (argType.getSize() == 2) {
+                            insns.add(new InsnNode(Opcodes.DUP2_X1));
+                            insns.add(new InsnNode(Opcodes.POP2));
+                        } else {
+                            insns.add(new InsnNode(Opcodes.SWAP));
+                        }
                     }
-                    // Swap to get the array back on the top of the stack
-                    if (argType.getSize() == 2) {
-                        insns.add(new InsnNode(Opcodes.DUP2_X1));
-                        insns.add(new InsnNode(Opcodes.POP2));
-                    } else {
-                        insns.add(new InsnNode(Opcodes.SWAP));
+                    // We have one dangling array reference, get rid of it
+                    insns.add(new InsnNode(Opcodes.POP));
+                    // Next load the bound params:
+                    int boundParamIndex = virtual ? 1 : 0;
+                    for (Type boundParamType : boundParams) {
+                        insns.add(new VarInsnNode(boundParamType.getOpcode(Opcodes.ILOAD), boundParamIndex));
+                        boundParamIndex += boundParamType.getSize();
                     }
-                }
-                // We have one dangling array reference, get rid of it
-                insns.add(new InsnNode(Opcodes.POP));
-                // Next load the bound params:
-                int boundParamIndex = virtual ? 1 : 0;
-                for (Type boundParamType : boundParams) {
-                    insns.add(new VarInsnNode(boundParamType.getOpcode(Opcodes.ILOAD), boundParamIndex));
-                    boundParamIndex += boundParamType.getSize();
-                }
-            };
-            add(contents.generate(paramArrayIndex, loadArgs));
+                };
+            } else {
+                loadArgs = insns -> {
+                    // Load the passed params
+                    for (int i = 0; i < argTypes.length; i++) {
+                        insns.add(new VarInsnNode(Opcodes.ALOAD, paramIndex + i));
+                    }
+                    // Next load the bound params:
+                    int boundParamIndex = virtual ? 1 : 0;
+                    for (Type boundParamType : boundParams) {
+                        insns.add(new VarInsnNode(boundParamType.getOpcode(Opcodes.ILOAD), boundParamIndex));
+                        boundParamIndex += boundParamType.getSize();
+                    }
+                };
+            }
+            add(contents.generate(paramIndex, loadArgs));
             if (returnType == Type.VOID_TYPE) {
                 add(new InsnNode(Opcodes.ACONST_NULL));
                 add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Void"));

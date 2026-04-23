@@ -14,10 +14,10 @@ import java.util.*;
 public class WrapMethodApplicatorExtension implements IExtension {
     private static final Map<ClassNode, Map<MethodNode, WrapMethodStage>> wrappers = new HashMap<>();
 
-    static void offerWrapper(Target target, MethodNode handler, Type operationType, List<ShareInfo> shares) {
+    static void offerWrapper(Target target, MethodNode handler, Type operationType, List<ShareInfo> shares, boolean captureParams) {
         Map<MethodNode, WrapMethodStage> relevant = wrappers.computeIfAbsent(target.classNode, k -> new LinkedHashMap<>());
         WrapMethodStage inner = relevant.computeIfAbsent(target.method, WrapMethodStage.Vanilla::new);
-        relevant.put(target.method, new WrapMethodStage.Wrapper(inner, handler, operationType, shares));
+        relevant.put(target.method, new WrapMethodStage.Wrapper(inner, handler, operationType, shares, captureParams));
     }
 
     @Override
