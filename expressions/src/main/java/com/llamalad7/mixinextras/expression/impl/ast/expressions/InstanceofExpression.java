@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
@@ -20,12 +21,12 @@ public class InstanceofExpression extends SimpleExpression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
         if (insn.getOpcode() != Opcodes.INSTANCEOF) {
-            return false;
+            return MatchResult.FAILURE;
         }
         Type checkType = Type.getObjectType(((TypeInsnNode) insn).desc);
-        return type.matches(ctx.pool, checkType) && inputsMatch(node, ctx, expression);
+        return type.matches(ctx.pool, checkType) ? matchInputs(node, ctx, expression) : MatchResult.FAILURE;
     }
 }

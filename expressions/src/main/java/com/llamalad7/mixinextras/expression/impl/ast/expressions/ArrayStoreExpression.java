@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
@@ -21,7 +22,7 @@ public class ArrayStoreExpression extends Expression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.IASTORE:
             case Opcodes.LASTORE:
@@ -31,17 +32,20 @@ public class ArrayStoreExpression extends Expression {
             case Opcodes.BASTORE:
             case Opcodes.CASTORE:
             case Opcodes.SASTORE:
-                return inputsMatch(node, ctx, arr, index, value);
+                return matchInputs(node, ctx, arr, index, value);
         }
-        return false;
+        return MatchResult.FAILURE;
     }
 
     @Override
-    public void capture(FlowValue node, ExpressionContext ctx) {
+    public MatchResult capture(FlowValue node, ExpressionContext ctx, MatchResult result) {
         Type arrayType = node.getInput(0).getType();
-        ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, ExpressionASMUtils.getInnerType(arrayType)});
-        ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, Type.VOID_TYPE);
-        ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index", "value"});
-        super.capture(node, ctx);
+        return super.capture(
+                node, ctx,
+                result
+                        .thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{arrayType, Type.INT_TYPE, ExpressionASMUtils.getInnerType(arrayType)})
+                        .thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, Type.VOID_TYPE)
+                        .thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index", "value"})
+        );
     }
 }

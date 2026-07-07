@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ComparisonInfo;
@@ -26,14 +27,16 @@ public class ComparisonExpression extends Expression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
-        return operator.matches(node, ctx) && inputsMatch(node, ctx, left, right);
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
+        return operator.match(node, ctx).then(() -> matchInputs(node, ctx, left, right));
     }
 
     @Override
-    public void capture(FlowValue node, ExpressionContext ctx) {
-        ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_EXPRESSION_TYPE, Type.BOOLEAN_TYPE);
-        super.capture(node, ctx);
+    public MatchResult capture(FlowValue node, ExpressionContext ctx, MatchResult result) {
+        return super.capture(
+                node, ctx,
+                result.thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_EXPRESSION_TYPE, Type.BOOLEAN_TYPE)
+        );
     }
 
     public enum Operator implements Opcodes {
@@ -70,11 +73,11 @@ public class ComparisonExpression extends Expression {
             this(directObject, directInt, invertedObject, invertedInt, fcmp, dcmp, fcmp, dcmp);
         }
 
-        public boolean matches(FlowValue node, ExpressionContext ctx) {
+        public MatchResult match(FlowValue node, ExpressionContext ctx) {
             AbstractInsnNode insn = node.getInsn();
             int opcode = insn.getOpcode();
             if (node.inputCount() != 2) {
-                return false;
+                return MatchResult.FAILURE;
             }
             Type input;
             boolean isComplex = false;
@@ -92,7 +95,7 @@ public class ComparisonExpression extends Expression {
                 input = Type.DOUBLE_TYPE;
                 isComplex = true;
             } else {
-                return false;
+                return MatchResult.FAILURE;
             }
             ComparisonInfo info;
             if (isComplex) {
@@ -101,17 +104,17 @@ public class ComparisonExpression extends Expression {
                 FlowValue jumpNode = node.getDecoration(FlowDecorations.COMPLEX_COMPARISON_JUMP);
                 JumpInsnNode jump = (JumpInsnNode) jumpNode.getInsn();
                 if (jump == null || jump.getOpcode() != zeroDirect && jump.getOpcode() != zeroInverted) {
-                    return false;
+                    return MatchResult.FAILURE;
                 }
                 info = new ComplexComparisonInfo(opcode, node, input, jumpNode, jump.getOpcode() == zeroDirect);
             } else {
                 info = new ComparisonInfo(opcode, node, input, opcode == directObject || opcode == directInt);
             }
-            info.attach(
-                    (k, v) -> ctx.decorate(insn, k, v),
-                    (k, v) -> ctx.decorateInjectorSpecific(insn, k, v)
+            return info.attach(
+                    MatchResult.SUCCESS,
+                    (result, k, v) -> result.thenDecorate(insn, k, v),
+                    (result, k, v) -> result.thenDecorateInjectorSpecific(insn, k, v)
             );
-            return true;
         }
     }
 }

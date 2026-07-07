@@ -4,7 +4,6 @@ import com.llamalad7.mixinextras.expression.impl.ast.expressions.Expression;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.pool.IdentifierPool;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -25,18 +24,6 @@ public class ExpressionContext {
         this.type = type;
         this.isStatic = (method.access & Opcodes.ACC_STATIC) != 0;
         this.allowIncompleteListInputs = allowIncompleteListInputs;
-    }
-
-    public void capture(FlowValue node, Expression expression) {
-        sink.capture(node, expression, this);
-    }
-
-    public void decorate(AbstractInsnNode insn, String key, Object value) {
-        sink.decorate(insn, key, value);
-    }
-
-    public void decorateInjectorSpecific(AbstractInsnNode insn, String key, Object value) {
-        sink.decorateInjectorSpecific(insn, key, value);
     }
 
     public void reportMatchStatus(FlowValue node, Expression expr, boolean matched) {

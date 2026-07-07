@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
@@ -20,18 +21,19 @@ public class CastExpression extends SimpleExpression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         Type castType = ExpressionASMUtils.getCastType(node.getInsn());
-        return castType != null && type.matches(ctx.pool, castType) && inputsMatch(node, ctx, expression);
+        return castType != null && type.matches(ctx.pool, castType) ? matchInputs(node, ctx, expression) : MatchResult.FAILURE;
     }
 
     @Override
-    public void capture(FlowValue node, ExpressionContext ctx) {
+    public MatchResult capture(FlowValue node, ExpressionContext ctx, MatchResult result) {
         if (node.getInsn().getOpcode() == Opcodes.CHECKCAST) {
-            ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{ExpressionASMUtils.OBJECT_TYPE});
-            ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, node.getType());
-            ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"object"});
+            result = result
+                    .thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{ExpressionASMUtils.OBJECT_TYPE})
+                    .thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, node.getType())
+                    .thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"object"});
         }
-        super.capture(node, ctx);
+        return super.capture(node, ctx, result);
     }
 }

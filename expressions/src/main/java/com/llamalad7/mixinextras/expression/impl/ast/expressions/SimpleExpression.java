@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
@@ -13,14 +14,14 @@ public abstract class SimpleExpression extends Expression {
     }
 
     @Override
-    public void capture(FlowValue node, ExpressionContext ctx) {
+    public MatchResult capture(FlowValue node, ExpressionContext ctx, MatchResult result) {
         Type type = node.getType();
         if (type.equals(ExpressionASMUtils.BOTTOM_TYPE)) {
             type = ExpressionASMUtils.OBJECT_TYPE;
         }
         if (!type.equals(Type.VOID_TYPE)) {
-            ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_EXPRESSION_TYPE, type);
+            result = result.thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_EXPRESSION_TYPE, type);
         }
-        super.capture(node, ctx);
+        return super.capture(node, ctx, result);
     }
 }

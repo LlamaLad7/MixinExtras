@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl.utils;
 
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.utils.InsnReference;
 import org.objectweb.asm.Type;
@@ -9,6 +10,7 @@ import org.objectweb.asm.tree.LabelNode;
 import org.spongepowered.asm.mixin.injection.struct.Target;
 
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 public class ComparisonInfo {
     protected final int comparison;
@@ -23,11 +25,12 @@ public class ComparisonInfo {
         this.jumpOnTrue = jumpOnTrue;
     }
 
-    public void attach(BiConsumer<String, Object> decorate, BiConsumer<String, Object> decorateInjectorSpecific) {
-        decorateInjectorSpecific.accept(ExpressionDecorations.COMPARISON_INFO, this);
-        decorate.accept(ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{input, input});
-        decorate.accept(ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, Type.BOOLEAN_TYPE);
-        decorate.accept(ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"left", "right"});
+    public <T> T attach(T acc, DecorateFunction<T> decorate, DecorateFunction<T> decorateInjectorSpecific) {
+        acc = decorateInjectorSpecific.decorate(acc, ExpressionDecorations.COMPARISON_INFO, this);
+        acc = decorate.decorate(acc, ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{input, input});
+        acc = decorate.decorate(acc, ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, Type.BOOLEAN_TYPE);
+        acc = decorate.decorate(acc, ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"left", "right"});
+        return acc;
     }
 
     public int copyJump(InsnList insns) {
@@ -43,5 +46,10 @@ public class ComparisonInfo {
     }
 
     public void cleanup(Target target) {
+    }
+
+    @FunctionalInterface
+    public interface DecorateFunction<T> {
+        T decorate(T acc, String key, Object value);
     }
 }

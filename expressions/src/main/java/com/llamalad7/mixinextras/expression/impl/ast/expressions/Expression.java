@@ -1,6 +1,8 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
+import com.llamalad7.mixinextras.expression.impl.flow.ComplexDataException;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -16,51 +18,57 @@ public abstract class Expression {
         return src;
     }
 
-    public final boolean matches(FlowValue node, ExpressionContext ctx) {
-        boolean result = matchesImpl(node, ctx);
-        ctx.reportMatchStatus(node, this, result);
+    public final MatchResult match(FlowValue node, ExpressionContext ctx) {
+        MatchResult result;
+        try {
+            result = matchImpl(node, ctx);
+        } catch (ComplexDataException ignored) {
+            result = MatchResult.FAILURE;
+        }
+        ctx.reportMatchStatus(node, this, result.isSuccess());
         return result;
     }
 
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
-        return false;
+    protected abstract MatchResult matchImpl(FlowValue node, ExpressionContext ctx);
+
+    protected MatchResult capture(FlowValue node, ExpressionContext ctx, MatchResult result) {
+        return result.thenCapture(node, this);
     }
 
-    protected void capture(FlowValue node, ExpressionContext ctx) {
-        ctx.capture(node, this);
+    protected MatchResult matchInputs(FlowValue node, ExpressionContext ctx, Expression... values) {
+        return matchInputs(node, ctx, false, values);
     }
 
-    protected boolean inputsMatch(FlowValue node, ExpressionContext ctx, Expression... values) {
-        return inputsMatch(node, ctx, false, values);
+    protected MatchResult matchInputs(FlowValue node, ExpressionContext ctx, boolean allowIncomplete, Expression... values) {
+        return matchInputs(0, node, ctx, allowIncomplete, values);
     }
 
-    protected boolean inputsMatch(FlowValue node, ExpressionContext ctx, boolean allowIncomplete, Expression... values) {
-        return inputsMatch(0, node, ctx, allowIncomplete, values);
+    protected MatchResult matchInputs(int start, FlowValue node, ExpressionContext ctx, Expression... values) {
+        return matchInputs(start, node, ctx, false, values);
     }
 
-    protected boolean inputsMatch(int start, FlowValue node, ExpressionContext ctx, Expression... values) {
-        return inputsMatch(start, node, ctx, false, values);
-    }
-
-    protected boolean inputsMatch(int start, FlowValue node, ExpressionContext ctx, boolean allowIncomplete, Expression... values) {
+    protected MatchResult matchInputs(int start, FlowValue node, ExpressionContext ctx, boolean allowIncomplete, Expression... values) {
         // If we're checking inputs, then we must have matched partially
         ctx.reportPartialMatch(node, this);
 
         int required = node.inputCount() - start;
         if (!(allowIncomplete && values.length < required) && values.length != required) {
-            return false;
+            return null;
         }
+        MatchResult result = MatchResult.SUCCESS;
         for (int i = 0; i < values.length; i++) {
             Expression value = values[i];
-            if (!value.matches(node.getInput(i + start), ctx)) {
-                return false;
+            MatchResult innerResult = value.match(node.getInput(i + start), ctx);
+            if (!innerResult.isSuccess()) {
+                return MatchResult.FAILURE;
             }
+            result = result.then(innerResult);
         }
-        return true;
+        return result;
     }
 
     public interface OutputSink {
-        void capture(FlowValue node, Expression expr, ExpressionContext ctx);
+        void capture(FlowValue node, Expression expr);
 
         void decorate(AbstractInsnNode insn, String key, Object value);
 

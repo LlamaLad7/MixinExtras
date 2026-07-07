@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
@@ -28,23 +29,23 @@ public class NewArrayExpression extends SimpleExpression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         if (node.hasDecoration(FlowDecorations.ARRAY_CREATION_INFO)) {
             // While a creation *is* involved, it's not the kind we're trying to target.
-            return false;
+            return MatchResult.FAILURE;
         }
         Type newInnerType = getInnerType(node.getInsn());
         if (newInnerType == null) {
-            return false;
+            return MatchResult.FAILURE;
         }
         int newBlankDims = getBlankDims(node.getInsn());
         if (newBlankDims + node.inputCount() < blankDims + dims.size()) {
-            return false;
+            return MatchResult.FAILURE;
         }
         if (!innerType.matches(ctx.pool, newInnerType)) {
-            return false;
+            return MatchResult.FAILURE;
         }
-        return inputsMatch(node, ctx, ctx.allowIncompleteListInputs, dims.toArray(new Expression[0]));
+        return matchInputs(node, ctx, ctx.allowIncompleteListInputs, dims.toArray(new Expression[0]));
     }
 
     private Type getInnerType(AbstractInsnNode insn) {

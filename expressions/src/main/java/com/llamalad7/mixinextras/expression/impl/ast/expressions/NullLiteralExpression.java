@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
@@ -11,7 +12,7 @@ public class NullLiteralExpression extends SimpleExpression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
-        return node.getInsn().getOpcode() == Opcodes.ACONST_NULL;
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
+        return MatchResult.basic(node.getInsn().getOpcode() == Opcodes.ACONST_NULL);
     }
 }

@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.LMFInfo;
@@ -17,11 +18,11 @@ public class ConstructorReferenceExpression extends SimpleExpression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         LMFInfo info = node.getDecoration(FlowDecorations.LMF_INFO);
         if (info == null || info.type != LMFInfo.Type.INSTANTIATION) {
-            return false;
+            return MatchResult.FAILURE;
         }
-        return type.matches(ctx.pool, Type.getObjectType(info.impl.getOwner()));
+        return MatchResult.basic(type.matches(ctx.pool, Type.getObjectType(info.impl.getOwner())));
     }
 }

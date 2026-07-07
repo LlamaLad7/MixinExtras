@@ -47,11 +47,11 @@ public abstract class InsnExpander implements FlowPostProcessor {
         return new InsnNode(Opcodes.NOP);
     }
 
-    public static Expansion prepareExpansion(FlowValue node, Target target, InjectionInfo info, ExpressionContext ctx) {
+    public static Expansion prepareExpansion(FlowValue node, Target target, InjectionInfo info, ExpressionContext.Type ctxType) {
         if (!hasExpansion(node)) {
             return null;
         }
-        checkSupportsExpansion(info, ctx.type);
+        checkSupportsExpansion(info, ctxType);
         Expansion expansion = node.getDecoration(EXPANSION);
         AbstractInsnNode compoundInsn = expansion.compound;
         InjectionNode compoundNode = target.addInjectionNode(compoundInsn);

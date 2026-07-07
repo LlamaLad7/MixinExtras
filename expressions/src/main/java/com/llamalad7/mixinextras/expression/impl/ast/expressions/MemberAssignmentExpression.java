@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
@@ -20,9 +21,9 @@ public class MemberAssignmentExpression extends Expression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
         return insn.getOpcode() == Opcodes.PUTFIELD
-                && name.matches(ctx.pool, node) && inputsMatch(node, ctx, receiver, value);
+                && name.matches(ctx.pool, node) ? matchInputs(node, ctx, receiver, value) : MatchResult.FAILURE;
     }
 }

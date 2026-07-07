@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
@@ -20,23 +21,24 @@ public class MemberAccessExpression extends SimpleExpression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         AbstractInsnNode insn = node.getInsn();
         switch (insn.getOpcode()) {
             case Opcodes.GETFIELD:
             case Opcodes.ARRAYLENGTH:
-                return name.matches(ctx.pool, node) && inputsMatch(node, ctx, receiver);
+                return name.matches(ctx.pool, node) ? matchInputs(node, ctx, receiver) : MatchResult.FAILURE;
         }
-        return false;
+        return MatchResult.FAILURE;
     }
 
     @Override
-    public void capture(FlowValue node, ExpressionContext ctx) {
+    public MatchResult capture(FlowValue node, ExpressionContext ctx, MatchResult result) {
         if (node.getInsn().getOpcode() == Opcodes.ARRAYLENGTH) {
-            ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{node.getInput(0).getType()});
-            ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, Type.INT_TYPE);
-            ctx.decorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index"});
+            result = result
+                    .thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_ARGS, new Type[]{node.getInput(0).getType()})
+                    .thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_RETURN_TYPE, Type.INT_TYPE)
+                    .thenDecorate(node.getInsn(), ExpressionDecorations.SIMPLE_OPERATION_PARAM_NAMES, new String[]{"array", "index"});
         }
-        super.capture(node, ctx);
+        return super.capture(node, ctx, result);
     }
 }

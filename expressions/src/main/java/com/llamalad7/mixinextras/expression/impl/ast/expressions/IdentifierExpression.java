@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
@@ -14,7 +15,7 @@ public class IdentifierExpression extends SimpleExpression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         switch (node.getInsn().getOpcode()) {
             case Opcodes.ILOAD:
             case Opcodes.LLOAD:
@@ -22,8 +23,8 @@ public class IdentifierExpression extends SimpleExpression {
             case Opcodes.DLOAD:
             case Opcodes.ALOAD:
             case Opcodes.GETSTATIC:
-                return ctx.pool.matchesMember(identifier, node);
+                return MatchResult.basic(ctx.pool.matchesMember(identifier, node));
         }
-        return false;
+        return MatchResult.FAILURE;
     }
 }

@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionDecorations;
 import com.llamalad7.mixinextras.expression.impl.utils.ExpressionUtil;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
@@ -23,23 +24,24 @@ public class BinaryExpression extends SimpleExpression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
-        if (operator.matches(node.getInsn()) && inputsMatch(node, ctx, left, right)) {
-            return true;
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
+        if (operator.matches(node.getInsn())) {
+            return matchInputs(node, ctx, left, right);
         }
         StringConcatInfo concat = node.getDecoration(FlowDecorations.STRING_CONCAT_INFO);
         if (operator != Operator.PLUS || concat == null) {
-            return false;
+            return MatchResult.FAILURE;
         }
         ctx.reportPartialMatch(node, this);
         if (node == concat.toStringCall) {
             node = node.getInput(0);
         }
-        if (!right.matches(node.getInput(1), ctx)) {
-            return false;
+        MatchResult result = right.match(node.getInput(1), ctx);
+        if (!result.isSuccess()) {
+            return MatchResult.FAILURE;
         }
         if (concat.isFirstConcat) {
-            return left.matches(concat.initialComponent, ctx);
+            return result.then(left.match(concat.initialComponent, ctx));
         }
         Expression innerLeft = ExpressionUtil.skipCapturesDown(left);
         if (innerLeft instanceof WildcardExpression) {
@@ -47,30 +49,29 @@ public class BinaryExpression extends SimpleExpression {
                 // The wildcard will match the concatenation to the left, but won't decorate it as a concat, so we do it
                 // ourselves.
                 checkSupportsStringConcat(ctx.type);
-                ctx.decorateInjectorSpecific(node.getInput(0).getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
+                result = result.thenDecorateInjectorSpecific(node.getInput(0).getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
             }
             // Do the match:
-            return left.matches(node.getInput(0), ctx);
+            return result.then(left.match(node.getInput(0), ctx));
         }
         if (innerLeft instanceof BinaryExpression && ((BinaryExpression) innerLeft).operator == Operator.PLUS) {
             // Continue matching the concat chain.
-            return left.matches(node.getInput(0), ctx);
+            return result.then(left.match(node.getInput(0), ctx));
         }
-        return false;
+        return MatchResult.FAILURE;
     }
 
     @Override
-    public void capture(FlowValue node, ExpressionContext ctx) {
+    public MatchResult capture(FlowValue node, ExpressionContext ctx, MatchResult result) {
         StringConcatInfo concat = node.getDecoration(FlowDecorations.STRING_CONCAT_INFO);
         if (concat == null) {
-            super.capture(node, ctx);
-            return;
+            return super.capture(node, ctx, result);
         }
         checkSupportsStringConcat(ctx.type);
         if (concat.isBuilder) {
-            ctx.decorateInjectorSpecific(node.getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
+            result = result.thenDecorateInjectorSpecific(node.getInsn(), ExpressionDecorations.IS_STRING_CONCAT_EXPRESSION, true);
         }
-        super.capture(node, ctx);
+        return super.capture(node, ctx, result);
     }
 
     private void checkSupportsStringConcat(ExpressionContext.Type type) {

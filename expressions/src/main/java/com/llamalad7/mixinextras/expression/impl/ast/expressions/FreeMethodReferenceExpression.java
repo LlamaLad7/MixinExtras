@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.LMFInfo;
@@ -16,11 +17,11 @@ public class FreeMethodReferenceExpression extends SimpleExpression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         LMFInfo info = node.getDecoration(FlowDecorations.LMF_INFO);
         if (info == null || info.type != LMFInfo.Type.FREE_METHOD) {
-            return false;
+            return MatchResult.FAILURE;
         }
-        return name.matches(ctx.pool, node);
+        return MatchResult.basic(name.matches(ctx.pool, node));
     }
 }

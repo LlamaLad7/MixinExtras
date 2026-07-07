@@ -3,8 +3,8 @@ package com.llamalad7.mixinextras.expression.impl.point;
 import com.llamalad7.mixinextras.expression.Definition;
 import com.llamalad7.mixinextras.expression.impl.ExpressionParserFacade;
 import com.llamalad7.mixinextras.expression.impl.ExpressionService;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.ast.expressions.Expression;
-import com.llamalad7.mixinextras.expression.impl.flow.ComplexDataException;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowInterpreter;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.expansion.InsnExpander;
@@ -82,9 +82,9 @@ public class ExpressionInjectionPoint extends InjectionPoint {
         List<AbstractInsnNode> captured = new ArrayList<>();
         Expression.OutputSink sink = new Expression.OutputSink() {
             @Override
-            public void capture(FlowValue node, Expression expr, ExpressionContext ctx) {
+            public void capture(FlowValue node, Expression expr) {
                 AbstractInsnNode capturedInsn = node.getInsn();
-                InsnExpander.Expansion expansion = InsnExpander.prepareExpansion(node, target, CURRENT_INFO, ctx);
+                InsnExpander.Expansion expansion = InsnExpander.prepareExpansion(node, target, CURRENT_INFO, contextType);
                 AbstractInsnNode targetInsn;
                 BiConsumer<String, Object> decorate;
                 BiConsumer<String, Object> decorateInjectorSpecific;
@@ -139,15 +139,14 @@ public class ExpressionInjectionPoint extends InjectionPoint {
 
         for (Expression expr : expressions) {
             for (FlowValue flow : flows) {
-                try {
-                    if (expr.matches(flow, ctx)) {
-                        result.addAll(captured);
-                    }
-                } catch (ComplexDataException ignored) {
+                MatchResult match = expr.match(flow, ctx);
+                if (match.isSuccess()) {
+                    match.perform(sink);
+                    result.addAll(captured);
+                    genericDecorations.clear();
+                    injectorSpecificDecorations.clear();
+                    captured.clear();
                 }
-                genericDecorations.clear();
-                injectorSpecificDecorations.clear();
-                captured.clear();
             }
         }
         int i = 0;

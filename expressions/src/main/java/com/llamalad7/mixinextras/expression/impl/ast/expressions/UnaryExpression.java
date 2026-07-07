@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import org.objectweb.asm.Opcodes;
@@ -17,7 +18,7 @@ public class UnaryExpression extends SimpleExpression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         switch (operator) {
             case MINUS:
                 switch (node.getInsn().getOpcode()) {
@@ -25,7 +26,7 @@ public class UnaryExpression extends SimpleExpression {
                     case Opcodes.LNEG:
                     case Opcodes.FNEG:
                     case Opcodes.DNEG:
-                        return inputsMatch(node, ctx, expression);
+                        return matchInputs(node, ctx, expression);
                 }
             case BITWISE_NOT:
                 return new BinaryExpression(
@@ -33,9 +34,9 @@ public class UnaryExpression extends SimpleExpression {
                         expression,
                         BinaryExpression.Operator.BITWISE_XOR,
                         new IntLiteralExpression(null, -1)
-                ).matchesImpl(node, ctx);
+                ).matchImpl(node, ctx);
         }
-        return false;
+        return MatchResult.FAILURE;
     }
 
     public enum Operator {

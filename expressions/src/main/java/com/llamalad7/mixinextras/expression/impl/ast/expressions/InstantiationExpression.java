@@ -1,6 +1,7 @@
 package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
+import com.llamalad7.mixinextras.expression.impl.MatchResult;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.InstantiationInfo;
@@ -20,16 +21,16 @@ public class InstantiationExpression extends Expression {
     }
 
     @Override
-    protected boolean matchesImpl(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
         InstantiationInfo instantiation = node.getDecoration(FlowDecorations.INSTANTIATION_INFO);
         if (instantiation == null || !type.matches(ctx.pool, instantiation.type)) {
-            return false;
+            return MatchResult.FAILURE;
         }
-        return inputsMatch(node, ctx, ctx.allowIncompleteListInputs, arguments.toArray(new Expression[0]));
+        return matchInputs(node, ctx, ctx.allowIncompleteListInputs, arguments.toArray(new Expression[0]));
     }
 
     @Override
-    protected void capture(FlowValue node, ExpressionContext ctx) {
+    protected MatchResult capture(FlowValue node, ExpressionContext ctx, MatchResult result) {
         if (ctx.type == ExpressionContext.Type.REDIRECT) {
             throw new UnsupportedOperationException(
                     "Factory redirects are not supported with expressions! Either switch to @WrapOperation or use " +
@@ -40,6 +41,6 @@ public class InstantiationExpression extends Expression {
             InstantiationInfo instantiation = node.getDecoration(FlowDecorations.INSTANTIATION_INFO);
             node = instantiation.initCall;
         }
-        super.capture(node, ctx);
+        return super.capture(node, ctx, result);
     }
 }
