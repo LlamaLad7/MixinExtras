@@ -1,5 +1,6 @@
 package com.llamalad7.mixinextras.expression.impl;
 
+import com.llamalad7.mixinextras.expression.impl.ast.Argument;
 import com.llamalad7.mixinextras.lib.grammar.expressions.ExpressionLexer;
 import com.llamalad7.mixinextras.lib.grammar.expressions.ExpressionParser;
 import com.llamalad7.mixinextras.lib.grammar.expressions.ExpressionParser.*;
@@ -230,7 +231,7 @@ public class ExpressionParserFacade {
     }
 
     private NewArrayExpression parse(NewArrayExpressionContext expression) {
-        return new NewArrayExpression(getSource(expression), parseTypeId(expression.innerType), parse(expression.dims), expression.blankDims.size());
+        return new NewArrayExpression(getSource(expression), parseTypeId(expression.innerType), parseExprs(expression.dims), expression.blankDims.size());
     }
 
     private ArrayLiteralExpression parse(ArrayLitExpressionContext expression) {
@@ -425,15 +426,26 @@ public class ExpressionParserFacade {
         return new ArrayTypeIdentifier(dims, elementType);
     }
 
-    private List<Expression> parse(ArgumentsContext args) {
+    private List<Argument> parse(ArgumentsContext args) {
         return parse(args.nonEmptyArguments());
     }
 
-    private List<Expression> parse(NonEmptyArgumentsContext args) {
-        return args == null ? Collections.emptyList() : parse(args.expression());
+    private List<Argument> parse(NonEmptyArgumentsContext args) {
+        return args == null ? Collections.emptyList() : parse(args.argument());
     }
 
-    private List<Expression> parse(List<ExpressionContext> exprs) {
+    private List<Argument> parse(List<ArgumentContext> args) {
+        return args.stream().map(this::parse).collect(Collectors.toList());
+    }
+
+    private Argument parse(ArgumentContext arg) {
+        if (arg.expression() != null) {
+            return new Argument.Concrete(parse(arg.expression()));
+        }
+        return Argument.ELLIPSIS;
+    }
+
+    private List<Expression> parseExprs(List<ExpressionContext> exprs) {
         return exprs.stream().map(this::parse).collect(Collectors.toList());
     }
 

@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.MatchResult;
+import com.llamalad7.mixinextras.expression.impl.ast.Argument;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.TypeIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.InstantiationInfo;
@@ -12,9 +13,9 @@ import java.util.List;
 
 public class InstantiationExpression extends Expression {
     public final TypeIdentifier type;
-    public final List<Expression> arguments;
+    public final List<Argument> arguments;
 
-    public InstantiationExpression(ExpressionSource src, TypeIdentifier type, List<Expression> arguments) {
+    public InstantiationExpression(ExpressionSource src, TypeIdentifier type, List<Argument> arguments) {
         super(src);
         this.type = type;
         this.arguments = arguments;
@@ -26,7 +27,7 @@ public class InstantiationExpression extends Expression {
         if (instantiation == null || !type.matches(ctx.pool, instantiation.type)) {
             return MatchResult.FAILURE;
         }
-        return matchInputs(node, ctx, ctx.allowIncompleteListInputs, arguments.toArray(new Expression[0]));
+        return matchArguments(node, ctx, arguments);
     }
 
     @Override

@@ -70,6 +70,10 @@ public class FlowValue implements Value {
         return parents.length;
     }
 
+    public List<FlowValue> getInputs() {
+        return new ArrayList<>(Arrays.asList(parents));
+    }
+
     public void setInsn(AbstractInsnNode insn) {
         this.insn = insn;
     }

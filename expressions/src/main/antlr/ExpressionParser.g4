@@ -65,6 +65,11 @@ arguments
    ;
 
 nonEmptyArguments
-   : (expression Comma)* expression
+   : (argument Comma)* argument
+   ;
+
+argument
+   : expression
+   | Ellipsis
    ;
 

@@ -26,6 +26,10 @@ public class ExpressionContext {
         this.allowIncompleteListInputs = allowIncompleteListInputs;
     }
 
+    public void reportMatchAttempt(FlowValue node, Expression expr) {
+        sink.reportMatchAttempt(node, expr);
+    }
+
     public void reportMatchStatus(FlowValue node, Expression expr, boolean matched) {
         sink.reportMatchStatus(node, expr, matched);
     }

@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.MatchResult;
+import com.llamalad7.mixinextras.expression.impl.ast.Argument;
 import com.llamalad7.mixinextras.expression.impl.ast.identifiers.MemberIdentifier;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.flow.postprocessing.MethodCallType;
@@ -11,9 +12,9 @@ import java.util.List;
 
 public class SuperCallExpression extends SimpleExpression {
     public final MemberIdentifier name;
-    public final List<Expression> arguments;
+    public final List<Argument> arguments;
 
-    public SuperCallExpression(ExpressionSource src, MemberIdentifier name, List<Expression> arguments) {
+    public SuperCallExpression(ExpressionSource src, MemberIdentifier name, List<Argument> arguments) {
         super(src);
         this.name = name;
         this.arguments = arguments;
@@ -27,6 +28,6 @@ public class SuperCallExpression extends SimpleExpression {
         if (!name.matches(ctx.pool, node)) {
             return MatchResult.FAILURE;
         }
-        return matchInputs(node, ctx, ctx.allowIncompleteListInputs, arguments.toArray(new Expression[0]));
+        return matchArguments(node, ctx, arguments);
     }
 }

@@ -2,10 +2,15 @@ package com.llamalad7.mixinextras.expression.impl.ast.expressions;
 
 import com.llamalad7.mixinextras.expression.impl.ExpressionSource;
 import com.llamalad7.mixinextras.expression.impl.MatchResult;
+import com.llamalad7.mixinextras.expression.impl.ast.Argument;
 import com.llamalad7.mixinextras.expression.impl.flow.ComplexDataException;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
+import com.llamalad7.mixinextras.expression.impl.utils.GlobMatching;
 import org.objectweb.asm.tree.AbstractInsnNode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class Expression {
     protected final ExpressionSource src;
@@ -19,6 +24,7 @@ public abstract class Expression {
     }
 
     public final MatchResult match(FlowValue node, ExpressionContext ctx) {
+        ctx.reportMatchAttempt(node, this);
         MatchResult result;
         try {
             result = matchImpl(node, ctx);
@@ -51,7 +57,7 @@ public abstract class Expression {
         // If we're checking inputs, then we must have matched partially
         ctx.reportPartialMatch(node, this);
 
-        int required = node.inputCount() - start;
+        int required = node.inputCount();
         if (!(allowIncomplete && values.length < required) && values.length != required) {
             return null;
         }
@@ -67,12 +73,23 @@ public abstract class Expression {
         return result;
     }
 
+    protected MatchResult matchArguments(FlowValue node, ExpressionContext ctx, List<Argument> arguments) {
+        if (ctx.allowIncompleteListInputs) {
+            arguments = new ArrayList<>(arguments);
+            arguments.add(Argument.ELLIPSIS);
+        }
+        return GlobMatching.match(ctx, node, arguments);
+    }
+
     public interface OutputSink {
         void capture(FlowValue node, Expression expr);
 
         void decorate(AbstractInsnNode insn, String key, Object value);
 
         void decorateInjectorSpecific(AbstractInsnNode insn, String key, Object value);
+
+        default void reportMatchAttempt(FlowValue node, Expression expr) {
+        }
 
         default void reportMatchStatus(FlowValue node, Expression expr, boolean matched) {
         }

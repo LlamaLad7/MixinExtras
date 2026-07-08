@@ -214,3 +214,7 @@ Decrement
    : '--'
    ;
 
+Ellipsis
+   : '...'
+   ;
+
