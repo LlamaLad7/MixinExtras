@@ -74,11 +74,15 @@ public abstract class Expression {
     }
 
     protected MatchResult matchArguments(FlowValue node, ExpressionContext ctx, List<Argument> arguments) {
+        return matchArguments(0, node, ctx, arguments);
+    }
+
+    protected MatchResult matchArguments(int start, FlowValue node, ExpressionContext ctx, List<Argument> arguments) {
         if (ctx.allowIncompleteListInputs) {
             arguments = new ArrayList<>(arguments);
             arguments.add(Argument.ELLIPSIS);
         }
-        return GlobMatching.match(ctx, node, arguments);
+        return GlobMatching.match(ctx, node, arguments, start);
     }
 
     public interface OutputSink {

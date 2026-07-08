@@ -31,8 +31,7 @@ public class MethodCallExpression extends SimpleExpression {
         if (!name.matches(ctx.pool, node)) {
             return MatchResult.FAILURE;
         }
-        List<Argument> arguments = new ArrayList<>(this.arguments);
-        arguments.add(0, new Argument.Concrete(receiver));
-        return matchArguments(node, ctx, arguments);
+        ctx.reportPartialMatch(node, this);
+        return receiver.match(node.getInput(0), ctx).then(() -> matchArguments(1, node, ctx, arguments));
     }
 }

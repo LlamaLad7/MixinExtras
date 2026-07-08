@@ -8,9 +8,9 @@ import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 import java.util.List;
 
 public class GlobMatching {
-    public static MatchResult match(ExpressionContext ctx, FlowValue node, List<Argument> arguments) {
+    public static MatchResult match(ExpressionContext ctx, FlowValue node, List<Argument> arguments, int start) {
         int m = arguments.size();
-        int n = node.inputCount();
+        int n = node.inputCount() - start;
 
         int totalEllipses = 0;
         int firstEllipsis = -1;
@@ -37,7 +37,7 @@ public class GlobMatching {
 
             MatchResult result = MatchResult.SUCCESS;
             for (int i = 0; i < k; i++) {
-                MatchResult r = ((Argument.Concrete) arguments.get(totalEllipses + i)).expression.match(node.getInput(n - k + i), ctx);
+                MatchResult r = ((Argument.Concrete) arguments.get(totalEllipses + i)).expression.match(node.getInput(n - k + i + start), ctx);
                 if (!r.isSuccess()) {
                     return MatchResult.FAILURE;
                 }
@@ -66,7 +66,7 @@ public class GlobMatching {
                 pIdx++;
             } else if (pIdx < m) {
                 // Encountered a regular predicate
-                MatchResult r = ((Argument.Concrete) arguments.get(pIdx)).expression.match(node.getInput(iIdx), ctx);
+                MatchResult r = ((Argument.Concrete) arguments.get(pIdx)).expression.match(node.getInput(iIdx + start), ctx);
                 if (r.isSuccess()) {
                     // Predicate success; append output and move forward
                     result = result.then(r);
