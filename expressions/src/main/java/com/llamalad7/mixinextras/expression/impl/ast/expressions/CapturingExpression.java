@@ -15,7 +15,7 @@ public class CapturingExpression extends SimpleExpression {
 
     @Override
     protected MatchResult matchImpl(FlowValue node, ExpressionContext ctx) {
-        MatchResult result = expression.match(node, ctx);
+        MatchResult result = expression.matchImpl(node, ctx);
         if (!result.isSuccess()) {
             return MatchResult.FAILURE;
         }
