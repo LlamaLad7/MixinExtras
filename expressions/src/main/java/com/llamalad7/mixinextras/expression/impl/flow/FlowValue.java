@@ -71,7 +71,7 @@ public class FlowValue implements Value {
     }
 
     public List<FlowValue> getInputs() {
-        return new ArrayList<>(Arrays.asList(parents));
+        return parents == null ? Collections.emptyList() : Arrays.asList(parents);
     }
 
     public void setInsn(AbstractInsnNode insn) {

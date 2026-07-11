@@ -5,7 +5,9 @@ import com.llamalad7.mixinextras.expression.impl.ast.Argument;
 import com.llamalad7.mixinextras.expression.impl.flow.FlowValue;
 import com.llamalad7.mixinextras.expression.impl.point.ExpressionContext;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class GlobMatching {
     public static MatchResult match(ExpressionContext ctx, FlowValue node, List<Argument> arguments, int start) {
@@ -55,7 +57,9 @@ public class GlobMatching {
         int backtrackEllipsisIdx = -1;
         int backtrackInputIdx = -1;
         MatchResult backtrackResult = MatchResult.SUCCESS;
+        MatchHistory backtrackHistory = initialHistory(start);
         MatchResult result = MatchResult.SUCCESS;
+        MatchHistory history = backtrackHistory;
 
         while (iIdx < n) {
             if (pIdx < m && arguments.get(pIdx) == Argument.ELLIPSIS) {
@@ -63,32 +67,32 @@ public class GlobMatching {
                 backtrackEllipsisIdx = pIdx;
                 backtrackInputIdx = iIdx;
                 backtrackResult = result;
+                backtrackHistory = history;
                 pIdx++;
-            } else if (pIdx < m) {
+                continue;
+            }
+            if (pIdx < m) {
                 // Encountered a regular predicate
                 MatchResult r = ((Argument.Concrete) arguments.get(pIdx)).expression.match(node.getInput(iIdx + start), ctx);
                 if (r.isSuccess()) {
                     // Predicate success; append output and move forward
                     result = result.then(r);
+                    history = new MatchHistory(history, iIdx + start);
                     pIdx++;
                     iIdx++;
-                } else if (backtrackEllipsisIdx != -1) {
-                    // Predicate fail; revert execution to the last seen '...'
-                    pIdx = backtrackEllipsisIdx + 1;
-                    backtrackInputIdx++;      // Force the '...' to consume 1 more element
-                    iIdx = backtrackInputIdx;
-                    result = backtrackResult;     // Abandon allocations done since the last '...'
-                } else {
-                    // Predicate fail with no '...' to fall back on
-                    return MatchResult.FAILURE;
+                    continue;
                 }
-            } else if (backtrackEllipsisIdx != -1) {
-                // Exhausted pattern but string isn't finished; revert execution to last '...'
+            }
+            if (backtrackEllipsisIdx != -1) {
+                // Backtrack to last '...'
                 pIdx = backtrackEllipsisIdx + 1;
                 backtrackInputIdx++;
                 iIdx = backtrackInputIdx;
                 result = backtrackResult;
+                history = backtrackHistory;
+                ctx.reportArgumentMatchingFork(node, history);
             } else {
+                // Predicate fail with no '...' to fall back on
                 return MatchResult.FAILURE;
             }
         }
@@ -103,6 +107,46 @@ public class GlobMatching {
             return result;
         } else {
             return MatchResult.FAILURE;
+        }
+    }
+
+    private static MatchHistory initialHistory(int start) {
+        MatchHistory result = null;
+        for (int i = 0; i < start; i++) {
+            result = new MatchHistory(result, i);
+        }
+        return result;
+    }
+
+    private static class MatchHistory implements Iterable<Integer> {
+        private final MatchHistory previous;
+        private final int matchIndex;
+
+        public MatchHistory(MatchHistory previous, int matchIndex) {
+            this.previous = previous;
+            this.matchIndex = matchIndex;
+        }
+
+        @Override
+        public Iterator<Integer> iterator() {
+            return new Iterator<Integer>() {
+                private MatchHistory current = MatchHistory.this;
+
+                @Override
+                public boolean hasNext() {
+                    return current != null;
+                }
+
+                @Override
+                public Integer next() {
+                    if (!hasNext()) {
+                        throw new NoSuchElementException();
+                    }
+                    int value = current.matchIndex;
+                    current = current.previous; // Move backward in history
+                    return value;
+                }
+            };
         }
     }
 }

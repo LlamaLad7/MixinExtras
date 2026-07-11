@@ -38,6 +38,10 @@ public class ExpressionContext {
         sink.reportPartialMatch(node, expr);
     }
 
+    public void reportArgumentMatchingFork(FlowValue node, Iterable<Integer> preserveInputs) {
+        sink.reportArgumentMatchingFork(node, preserveInputs);
+    }
+
     public enum Type {
         CUSTOM,
         INJECT,

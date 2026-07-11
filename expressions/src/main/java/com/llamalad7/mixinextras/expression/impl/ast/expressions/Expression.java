@@ -78,6 +78,9 @@ public abstract class Expression {
     }
 
     protected MatchResult matchArguments(int start, FlowValue node, ExpressionContext ctx, List<Argument> arguments) {
+        // If we're checking arguments, then we must have matched partially
+        ctx.reportPartialMatch(node, this);
+
         if (ctx.allowIncompleteListInputs) {
             arguments = new ArrayList<>(arguments);
             arguments.add(Argument.ELLIPSIS);
@@ -99,6 +102,9 @@ public abstract class Expression {
         }
 
         default void reportPartialMatch(FlowValue node, Expression expr) {
+        }
+
+        default void reportArgumentMatchingFork(FlowValue node, Iterable<Integer> preserveInputs) {
         }
     }
 }
