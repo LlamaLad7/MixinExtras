@@ -104,7 +104,7 @@ public abstract class Expression {
         default void reportPartialMatch(FlowValue node, Expression expr) {
         }
 
-        default void reportArgumentMatchingFork(FlowValue node, Iterable<Integer> preserveInputs) {
+        default void reportArgumentMatchingFork(FlowValue node, int preserveInputs) {
         }
     }
 }
