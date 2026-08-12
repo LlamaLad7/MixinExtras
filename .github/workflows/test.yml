@@ -1,0 +1,26 @@
+name: Test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: eclipse-temurin:21-jdk
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: MixinExtras
+      - run: ./gradlew :platform:common:assemble --stacktrace
+        working-directory: MixinExtras
+      - uses: actions/checkout@v4
+        with:
+          repository: LlamaLad7/MixinTests
+          path: MixinTests
+      - run: ./gradlew check -PmixinExtrasDir=../MixinExtras --stacktrace
+        working-directory: MixinTests
