@@ -8,7 +8,7 @@ buildscript {
 
 plugins {
     `java-library`
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "8.3.11"
 }
 
 allprojects {
@@ -35,6 +35,14 @@ allprojects {
 
     tasks.withType<Jar> {
         dependsOn(":expressions:generateGrammarSource")
+    }
+
+    configurations {
+        for (config in listOf(apiElements, runtimeElements)) {
+            config {
+                outgoing.variants.removeIf { it.name == "classes" }
+            }
+        }
     }
 }
 
