@@ -2,6 +2,7 @@ package com.llamalad7.mixinextras.service;
 
 import com.llamalad7.mixinextras.utils.Blackboard;
 import com.llamalad7.mixinextras.utils.ProxyUtils;
+import com.llamalad7.mixinextras.utils.ResourceUtils;
 import org.spongepowered.asm.mixin.injection.InjectionPoint;
 import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
 import org.spongepowered.asm.mixin.transformer.ext.IExtension;
@@ -25,15 +26,15 @@ public interface MixinExtrasService {
 
     void initialize();
 
-    static void setup() {
+    static void setup(ResourceUtils.ConfigsFinder configsFinder) {
         Object latestImpl = Blackboard.get("MixinExtrasServiceInstance");
         if (latestImpl == null) {
-            MixinExtrasService newImpl = new MixinExtrasServiceImpl();
+            MixinExtrasService newImpl = new MixinExtrasServiceImpl(configsFinder);
             Blackboard.put("MixinExtrasServiceInstance", newImpl);
             newImpl.takeControlFrom(null);
             return;
         }
-        MixinExtrasService ourImpl = new MixinExtrasServiceImpl();
+        MixinExtrasService ourImpl = new MixinExtrasServiceImpl(configsFinder);
         if (ourImpl.shouldReplace(latestImpl)) {
             getFrom(latestImpl).concedeTo(ourImpl, true);
             Blackboard.put("MixinExtrasServiceInstance", ourImpl);

@@ -9,6 +9,7 @@ repositories {
 
 dependencies {
     compileOnly("net.neoforged.fancymodloader:language-java:1.0.2")
+    compileOnly("net.neoforged.fancymodloader:loader:1.0.2")
 }
 
 java {
@@ -22,7 +23,7 @@ java {
 jarsNamed("jar", "slimJar") {
     manifest.attributes(
         "MixinConfigs" to "mixinextras.init.mixins.json",
-        "FMLModType" to "GAMELIBRARY",
+        "FMLModType" to "LIBRARY",
         "Automatic-Module-Name" to "mixinextras.neoforge",
     )
 }

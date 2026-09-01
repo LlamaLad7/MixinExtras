@@ -12,6 +12,7 @@ import com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo;
 import com.llamalad7.mixinextras.transformer.MixinTransformerExtension;
 import com.llamalad7.mixinextras.utils.MixinExtrasLogger;
 import com.llamalad7.mixinextras.utils.MixinInternals;
+import com.llamalad7.mixinextras.utils.ResourceUtils;
 import com.llamalad7.mixinextras.wrapper.factory.FactoryRedirectWrapperInjectionInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Type;
@@ -55,8 +56,13 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
             ExpressionInjectorWrapperInjectionInfo.class
     );
     private final List<String> registeredInjectors = new ArrayList<>();
+    private final ResourceUtils.ConfigsFinder mixinConfigsFinder;
 
     boolean initialized;
+
+    public MixinExtrasServiceImpl(ResourceUtils.ConfigsFinder mixinConfigsFinder) {
+        this.mixinConfigsFinder = mixinConfigsFinder;
+    }
 
     @Override
     public int getVersion() {
@@ -249,5 +255,9 @@ public class MixinExtrasServiceImpl implements MixinExtrasService {
             );
             return MixinExtrasVersion.V0_2_0_BETA_1;
         }
+    }
+    
+    public ResourceUtils.ConfigsFinder getMixinConfigsFinder() {
+        return mixinConfigsFinder;
     }
 }
