@@ -106,13 +106,15 @@ public abstract class WrapMethodStage {
         private final Type operationType;
         private final List<ShareInfo> shares;
         private final boolean isStatic;
+        private final boolean captureParams;
 
-        public Wrapper(WrapMethodStage inner, MethodNode handler, Type operationType, List<ShareInfo> shares) {
+        public Wrapper(WrapMethodStage inner, MethodNode handler, Type operationType, List<ShareInfo> shares, boolean captureParams) {
             this.inner = inner;
             this.handler = handler;
             this.operationType = operationType;
             this.shares = shares;
             this.isStatic = Bytecode.isStatic(handler);
+            this.captureParams = captureParams;
         }
 
         @Override
@@ -145,16 +147,26 @@ public abstract class WrapMethodStage {
             allocateShares(sharesToAllocate, insns);
 
             // Load the params for the handler call;
-            if (!isStatic) {
-                insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
+            if (captureParams) {
+                if (!isStatic) {
+                    insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                }
+                Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
             }
-            Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
 
             // Make the `Operation`:
             if (!isStatic) {
                 insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
             }
-            loadShares(newShares, insns);
+            if (!captureParams) {
+                if (!isStatic) {
+                    insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                }
+                loadShares(newShares, insns);
+                Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
+            } else {
+                loadShares(newShares, insns);
+            }
             Type[] trailing =
                     newShares.stream()
                             .map(it -> it.getShareType().getImplType())
@@ -167,7 +179,8 @@ public abstract class WrapMethodStage {
                         loadArgs.accept(call);
                         call.add(ASMUtils.getInvokeInstruction(targetClass, inner));
                         return call;
-                    }
+                    },
+                    captureParams
             );
 
             // Load any `@Share`s that the handler method wants:

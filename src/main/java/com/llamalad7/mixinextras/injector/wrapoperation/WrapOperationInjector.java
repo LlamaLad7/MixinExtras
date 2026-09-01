@@ -125,7 +125,8 @@ class WrapOperationInjector extends Injector {
                     InsnList copied = new InsnList();
                     operation.copyNode(copied, paramArrayIndex, loadArgs, returnType);
                     return copied;
-                }
+                },
+                true
         );
     }
 
